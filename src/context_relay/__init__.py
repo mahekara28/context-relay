@@ -36,12 +36,14 @@ from .persistence import named_storage_path
 from .storage_privacy import HistoryRetention
 from .organization import Principal, SessionManager, AccessDenied, CapacityExceeded
 from .pilot import run_pilot
+from .harness_eval import (HarnessCase, HarnessBudget, HarnessBudgetExceeded,
+                           evaluate_harness, assess_improvement, improve_harness)
 from .langchain import connect_langchain, LangChainRelay, LangChainPrepared, LangChainResponseError
 from .conversation import (Conversation, AsyncConversation, ConversationPending, ConversationBusy,
                            ConversationAlreadyCompleted, ConversationLimitExceeded, ConversationResponseError,
                            ConversationArchived, HistoryPolicy, TaskContextLimitExceeded)
 
-__version__ = "0.21.0a1"
+__version__ = "0.22.0a1"
 __all__ = ["Relay", "RelayStore", "StoreBusy", "guarded_tool_call", "ContextGuard", "GuardedTurn", "ActionRejected",
            "ContextPlan", "compile_context", "PreparedTurn",
            "TokenBudget", "TokenBudgetExceeded", "make_hf_token_counter",
@@ -52,6 +54,8 @@ __all__ = ["Relay", "RelayStore", "StoreBusy", "guarded_tool_call", "ContextGuar
            "AutomaticMemory", "MemoryPolicy", "MemoryHistoryError", "MemoryBudgetExceeded", "MemoryConflictError",
            "RelayAttachment", "attach", "auto_connect", "named_storage_path", "HistoryRetention",
            "Principal", "SessionManager", "AccessDenied", "CapacityExceeded", "run_pilot", "HistoryPolicy", "TaskContextLimitExceeded",
+           "HarnessCase", "HarnessBudget", "HarnessBudgetExceeded",
+           "evaluate_harness", "assess_improvement", "improve_harness",
            "connect_langchain", "LangChainRelay", "LangChainPrepared", "LangChainResponseError",
            "connect_openai", "compile_openai_chat_context", "Conversation", "AsyncConversation",
            "connect_anthropic", "OutputPolicy", "OutputReport", "OutputRejected",

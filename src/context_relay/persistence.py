@@ -44,8 +44,8 @@ def named_storage_path(conversation: str, *, storage: str | Path | None = None,
     directory = Path(storage).resolve()
     digest = hashlib.sha256(encode([namespace, conversation]).encode("utf-8")).hexdigest()
     database = directory / (digest + ".sqlite3")
-    if database.resolve().parent != directory:
-        raise ValueError("Named database must stay within the selected directory.")
+    # The digest is one path component. Inspect leaves without resolving them:
+    # Windows can change canonical spelling as another opener creates the parent.
     for path in (database, Path(str(database) + "-wal"), Path(str(database) + "-shm")):
         # Sidecars disappear during ordinary SQLite shutdown. One lstat-style
         # observation avoids racing exists()/is_file() or resolving a removed WAL.
