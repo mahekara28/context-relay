@@ -59,7 +59,9 @@ class NamedPersistenceTests(unittest.TestCase):
                 self.assertEqual(second.guard.store.facts(second.session_id), {})
             self.assertFalse((self.directory / ".relay").exists())
             with auto_connect(answer, conversation="chosen") as persistent:
-                self.assertEqual(Path(persistent.config.db_path).parent, self.directory / ".relay" / "sessions")
+                # Windows temp roots can use an 8.3 alias; storage returns a resolved path.
+                expected = (self.directory / ".relay" / "sessions").resolve()
+                self.assertEqual(Path(persistent.config.db_path).parent, expected)
         finally:
             os.chdir(previous)
 

@@ -206,13 +206,14 @@ class StoreBusyTests(unittest.TestCase):
     def test_error_codes_not_message_substrings_determine_busy(self):
         store = self.store()
         error = sqlite3.OperationalError("database is locked")
-        error.sqlite_errorcode = sqlite3.SQLITE_ERROR
+        # Python 3.10 does not expose SQLite's named result-code constants.
+        error.sqlite_errorcode = getattr(sqlite3, "SQLITE_ERROR", 1)
         with self.assertRaises(sqlite3.OperationalError) as caught:
             with store._transaction():
                 raise error
         self.assertIs(caught.exception, error)
         locked = sqlite3.OperationalError("fixed test detail")
-        locked.sqlite_errorcode = sqlite3.SQLITE_LOCKED
+        locked.sqlite_errorcode = getattr(sqlite3, "SQLITE_LOCKED", 6)
         with self.assertRaises(StoreBusy) as caught:
             with store._transaction():
                 raise locked
