@@ -82,6 +82,15 @@ A completed workflow record can contain a declined or unknown business result: r
 
 A model/network interruption retains `provider_pending`; explicitly inspect and abandon that request before starting new work. An exception after a tool starts retains `action_pending`. Look up the request at the destination and call `workflow.reconcile(request_id, result=destination_receipt, expected_phase="action_pending")`. Reconciliation records a host-obtained result and never calls the original tool. It does not authenticate an arbitrary receipt: the host must match it to the destination request. Do not invent a successful receipt to clear a pending operation.
 
+From 0.22.0a2, the original tool transaction retains a link to that action's checked
+receipt. Reconciliation supplies its actual arguments to the destination verifier
+and includes `checked_arguments` in the native tool output, including after repair
+and restart. Current preferences cannot replace those executed arguments. If the
+transaction rolled back, or an older interrupted record has no retained receipt,
+the arguments remain unknown. An unavailable repair-attempt count is omitted from
+reconciled output instead of being reported as zero. See the
+[upgrade notes](RELEASE-v0.22.0a2.md#upgrade) for existing sessions.
+
 Only explicit new user text enters automatic memory. Prior native reasoning, signatures and function items remain original data. Corrected arguments appear in the subsequent function result alongside the original proposal. A supported native function result is linked to its original call ID. Unknown/mixed output formats fail before effects. The tested Ollama Responses envelope can include typed `store`, `presence_penalty` and `frequency_penalty` metadata; these are retained and do not change tool permissions. The local pilot uses normal OpenAI SDK parsing. OpenAI 3.36.0's optional strict response validation rejects Ollama 0.40.1's omitted `cache_write_tokens` usage field; Relay does not invent that field or disable a caller's strict setting. A changed resume configuration, missing authorization callback, competing request or stale captured revision cannot silently acquire permission.
 
 ## Bounds

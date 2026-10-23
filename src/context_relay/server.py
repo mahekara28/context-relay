@@ -6,6 +6,8 @@ from importlib.resources import files
 import json
 import logging
 import re
+import socket
+import time
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -14,6 +16,8 @@ from .demo import SIMULATED_TOOLS, demo_context, display_context, seed_session, 
 
 LOG = logging.getLogger("context_relay.server")
 MAX_REQUEST = 131072
+REJECTION_DRAIN_SECONDS = 0.25
+REJECTION_DRAIN_BYTES = 8 * MAX_REQUEST
 
 QUICKSTART = '''from context_relay import Relay, RelayStore, guarded_tool_call
 
@@ -86,6 +90,7 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
     def setup(self) -> None:
         super().setup()
         self.connection.settimeout(10)
+        self._body_consumed = False
 
     def log_message(self, fmt: str, *args: Any) -> None:
         LOG.debug(fmt, *args)
@@ -105,8 +110,33 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
 
     def _json(self, status: int, value: Any, **headers: str) -> None:
         payload = json.dumps(value, ensure_ascii=True, allow_nan=False).encode("utf-8")
+        if status >= 400:
+            self.close_connection = True
+            headers["Connection"] = "close"
         self._headers(status, "application/json; charset=utf-8", len(payload), **headers)
         self.wfile.write(payload)
+        if status >= 400 and not self._body_consumed:
+            self._drain_rejected_body()
+
+    def _drain_rejected_body(self) -> None:
+        # Closing with unread input can reset TCP before the client sees the error.
+        # Half-close the response first; never wait for an unbounded upload.
+        self.wfile.flush()
+        try:
+            self.connection.shutdown(socket.SHUT_WR)
+            deadline = time.monotonic() + REJECTION_DRAIN_SECONDS
+            remaining = REJECTION_DRAIN_BYTES
+            while remaining > 0:
+                timeout = deadline - time.monotonic()
+                if timeout <= 0:
+                    break
+                self.connection.settimeout(timeout)
+                chunk = self.rfile.read1(min(65536, remaining))
+                if not chunk:
+                    break
+                remaining -= len(chunk)
+        except OSError:
+            pass
 
     def _validate_request(self) -> None:
         port = self.server.server_port
@@ -135,6 +165,7 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
             self.close_connection = True
             raise APIError(413, "request_too_large", "Request exceeds 128 KiB.")
         raw = self.rfile.read(length)
+        self._body_consumed = True
         if len(raw) != length:
             raise APIError(400, "incomplete_body", "Request body is incomplete.")
         def invalid_constant(value: str) -> None:

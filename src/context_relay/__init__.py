@@ -43,7 +43,7 @@ from .conversation import (Conversation, AsyncConversation, ConversationPending,
                            ConversationAlreadyCompleted, ConversationLimitExceeded, ConversationResponseError,
                            ConversationArchived, HistoryPolicy, TaskContextLimitExceeded)
 
-__version__ = "0.22.0a1"
+__version__ = "0.22.0a3"
 __all__ = ["Relay", "RelayStore", "StoreBusy", "guarded_tool_call", "ContextGuard", "GuardedTurn", "ActionRejected",
            "ContextPlan", "compile_context", "PreparedTurn",
            "TokenBudget", "TokenBudgetExceeded", "make_hf_token_counter",

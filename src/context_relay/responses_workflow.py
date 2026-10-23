@@ -261,6 +261,14 @@ class ResponsesWorkflow(_WorkflowHistory):
             # authorization decision unnoticed.
             if self._authorize is not None and _sync_result(self._authorize()) is not True:
                 raise PermissionError("Workflow action authorization was denied.")
+            # The engine appends this callback's tool_result as the next event.
+            # Its write transaction and callback mutation guard keep the sequence
+            # exclusive. Persist only the linkage, not a second copy of possibly
+            # large arguments. A normal exception commits it with the receipt;
+            # a process/transaction interruption rolls both back to unknown.
+            current["action_receipt_sequence"] = self._store._session(self.session_id)["revision"] + 1
+            self._save_record(current)
+            active["action_receipt_sequence"] = current["action_receipt_sequence"]
             self._original_started = True
             return function(*args, **kwargs)
         return effect
@@ -288,6 +296,21 @@ class ResponsesWorkflow(_WorkflowHistory):
             raise WorkflowLimitExceeded("Workflow request exceeds its bounded record size; reconcile the retained pending operation.")
         self._store._connection.execute("INSERT INTO responses_workflow_requests VALUES (?,?,?) ON CONFLICT(session_id,request_id) DO UPDATE SET payload=excluded.payload",
                                         (self.session_id, record["request_id"], serialized))
+
+    def _action_receipt(self, record):
+        sequence = record.get("action_receipt_sequence")
+        if sequence is None:
+            # Workflows saved before receipt linkage can retain a receipt when
+            # destination verification returned unavailable. Never guess from
+            # the original proposal or the latest result for the same tool.
+            return record.get("verification_pending", {}).get("receipt")
+        row = self._store._connection.execute(
+            "SELECT payload FROM events WHERE session_id=? AND sequence=? AND kind='tool_result'",
+            (self.session_id, sequence)).fetchone()
+        if row is None:
+            return None
+        receipt = json.loads(row[0])
+        return receipt if receipt.get("tool") == record["tool"] else None
 
     @property
     def history(self):
@@ -398,11 +421,12 @@ class ResponsesWorkflow(_WorkflowHistory):
     @staticmethod
     def _function_output(record, execution):
         output = {key: execution[key] for key in ("status", "executed", "completed", "business_status") if key in execution}
-        output["repair_attempts"] = execution.get("repair_attempts", 0)
+        if "repair_attempts" in execution or not execution.get("reconciled"):
+            output["repair_attempts"] = execution.get("repair_attempts", 0)
         if "result" in execution:
             output["result"] = execution["result"]
         receipt = execution.get("receipt", {})
-        if execution.get("executed") and "arguments" in receipt:
+        if (execution.get("executed") or execution.get("reconciled")) and "arguments" in receipt:
             output["checked_arguments"] = receipt["arguments"]
         if execution.get("reconciled"):
             output["reconciled"] = True
@@ -669,9 +693,12 @@ class ResponsesWorkflow(_WorkflowHistory):
                 outcome = self._outcomes[record["tool"]].check(result)
                 execution = {"status": "reconciled", "executed": False, "result": result,
                              "reconciled": True, "callback_reexecuted": False, **outcome}
-                retained = record.get("verification_pending", {}).get("receipt")
+                retained = self._action_receipt(record)
                 if retained is not None:
                     execution["receipt"] = clone(retained)
+                previous = record.get("verification_pending", {})
+                if "repair_attempts" in previous:
+                    execution["repair_attempts"] = previous["repair_attempts"]
                 return self._verify_and_complete(record, execution)
         finally:
             self._run_lock.release()

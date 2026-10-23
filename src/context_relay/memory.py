@@ -96,6 +96,18 @@ _SUBJECT = r"[A-Za-z][A-Za-z0-9 _-]{0,79}"
 _VALUE = r"[^\s;!?][^\n\r;!?]{0,255}?"
 _COURTESY_WORDS = r"thanks|thank\s+you|ok(?:ay)?"
 _COURTESY = re.compile(rf"(?:{_COURTESY_WORDS}|please)[.!]?", re.IGNORECASE)
+# Complete acknowledgments only: never remove an arbitrary explanation, condition,
+# reported statement or trailing request. These clauses carry no setting value.
+_ACKNOWLEDGMENT = re.compile(
+    r"(?:thanks|thank\s+you)(?:\s+for\s+(?:helping|checking|clarifying|your\s+help|the\s+help)|"
+    r",?\s+(?:this|that|it)\s+(?:helps|will\s+help|is\s+helpful))[.!]?", re.IGNORECASE)
+_REPORTED_SUFFIX = re.compile(
+    r"(?:these|those|the\s+(?:above|preceding)(?:\s+(?:statements|instructions|settings))?)\s+"
+    r"(?:are|were)\s+(?:(?:just|only)\s+)?(?:examples?|samples?|sample\s+settings|illustrative\s+values)[.!]?",
+    re.IGNORECASE)
+_MATERIAL_PREFIX = re.compile(
+    r"\b(?:demo|examples?|samples?|illustrative|documentation|document|fixtures?|quotations?|"
+    r"transcripts?|snippets?|copied|pasted|following|above|below|claims?|said|says|sent)\b", re.IGNORECASE)
 _PREFIX = re.compile(rf"^(?:(?:{_COURTESY_WORDS})[, ]+)?(?:(actually)[, ]+)?(?:please\s+)?(?:remember\s+(?:that\s+)?)?", re.IGNORECASE)
 _STYLE = r"short|brief|concise|detailed"
 _STYLE_PHRASE = rf"{_STYLE}|to[ -]the[ -]point"
@@ -384,6 +396,34 @@ def _quoted_instructions(text: str) -> str | None:
         elif quoted_literal(clause) is None or _extract(clause) is None:
             return None
     return "".join(characters)
+
+
+def _without_acknowledgments(text: str) -> str:
+    """Mask bounded acknowledgments without changing source evidence offsets.
+
+    Run only after the whole-message quote/framing checks. This affects the
+    deterministic grammar, not eligibility for the optional interpreter.
+    """
+    characters = list(text)
+    for start, end, quote in _statements(text, split_clauses=False):
+        if _ACKNOWLEDGMENT.fullmatch(quote):
+            characters[start:end] = " " * (end - start)
+    return "".join(characters)
+
+
+def _candidate_targets(candidates, entries) -> set[str]:
+    """Existing targets implicated by an incomplete message, never new facts."""
+    targets = set()
+    for _, _, _, candidate in candidates:
+        if candidate.get("aliases"):
+            targets.update(key for key in candidate["aliases"] if key in entries)
+        elif candidate["key"] is not None:
+            if candidate["key"] in entries:
+                targets.add(candidate["key"])
+        elif candidate.get("old") is not None:
+            targets.update(key for key, entry in entries.items()
+                           if entry["value"].casefold() == candidate["old"].casefold())
+    return targets
 
 
 def _can_interpret(text: str) -> bool:
@@ -807,19 +847,6 @@ class AutomaticMemory:
                     "history_id": archive.history_id, "index": current_user, "role": "user",
                     "message_sha256": _digest(message), "text": text, "quote": text,
                     "start": 0, "end": len(text), "method": "structured_review_required"})
-        previous = state.pop("previous_turn_scope", None) if current_user is not None else None
-        if state.get("turn_scope") is not None and current_user != state["turn_scope"]["index"]:
-            previous = state.pop("turn_scope")
-        if previous is not None:
-            if current_user is not None and is_continuation(history[current_user]["content"]):
-                message = history[current_user]
-                source = {"history_id": archive.history_id, "index": current_user, "role": "user",
-                    "text": message["content"], "quote": message["content"], "start": 0,
-                    "end": len(message["content"]), "message_sha256": _digest(message), "scope": "turn",
-                    "method": "continuation_needs_scope"}
-                state["turn_scope"] = {"index": current_user, "message_sha256": _digest(message), "entries": {
-                    key: {"key": key, "value": None, "disputed": True, "source": source,
-                          "sequence": revision + 1} for key in previous["entries"]}}
         for index in range(state["processed_count"], len(history)):
             message = history[index]
             if message["role"] != "user":
@@ -828,6 +855,20 @@ class AutomaticMemory:
             text = original_text = message["content"]
             if len(text) > self.policy.max_message_chars:
                 raise MemoryBudgetExceeded(f"User message {index} exceeds max_message_chars. No change was saved.")
+            # Advance through every new user message, including an imported
+            # backlog. Scope and persistent disputes must not depend on how the
+            # caller partitions the same append-only history into batches.
+            previous = state.pop("previous_turn_scope", None)
+            if state.get("turn_scope") is not None:
+                previous = state.pop("turn_scope")
+            if previous is not None and is_continuation(text):
+                source = {"history_id": archive.history_id, "index": index, "role": "user",
+                    "text": text, "quote": text, "start": 0, "end": len(text),
+                    "message_sha256": _digest(message), "scope": "turn",
+                    "method": "continuation_needs_scope"}
+                state["turn_scope"] = {"index": index, "message_sha256": _digest(message), "entries": {
+                    key: {"key": key, "value": None, "disputed": True, "source": source,
+                          "sequence": revision + 1} for key in previous["entries"]}}
             processed.append(index)
             extracted, uncertain = [], []
             unsupported = False
@@ -835,8 +876,7 @@ class AutomaticMemory:
             if normalized is not None and not _FRAMING.search(text):
                 remainder, scoped = partition_scopes(normalized, _statements, _LOCAL_SCOPE)
                 if scoped:
-                    if index == current_user:
-                        self._consume_scopes(state, scoped, archive, message, index, revision, created)
+                    self._consume_scopes(state, scoped, archive, message, index, revision, created)
                     text = remainder
                     if not text.strip():
                         continue
@@ -857,7 +897,8 @@ class AutomaticMemory:
                 if _FRAMING.search(text):
                     ignored.append({"index": index, "reason": "negation_hypothetical_or_reported"})
                     continue
-                statements = [(start, end, quote) for start, end, quote in _statements(text)
+                grammar_text = _without_acknowledgments(text)
+                statements = [(start, end, quote) for start, end, quote in _statements(grammar_text)
                               if not _COURTESY.fullmatch(quote)]
                 if len(statements) == 2 and re.match(_RECONSIDERED, _request_body(statements[0][2])[0], re.IGNORECASE):
                     # A named reconsideration can ground a following value-only
@@ -880,7 +921,7 @@ class AutomaticMemory:
                     # State-aware subject resolution also prevents generic capture
                     # from inventing fields for saved/standing preference aliases.
                     plan = None if _LOCAL_SCOPE.search(text) or _SECRET.search(text) else plan_corrections(
-                        text, state["entries"], subjects=_SETTING_SUBJECTS, values=_FINITE_SETTINGS,
+                        grammar_text, state["entries"], subjects=_SETTING_SUBJECTS, values=_FINITE_SETTINGS,
                         extract=_extract, request_body=_request_body, polite_question=_polite_question)
             if plan is not None:
                 extracted = []
@@ -893,7 +934,19 @@ class AutomaticMemory:
                 unsupported = bool(plan["uncertain"])
             if unsupported or not extracted:
                 reason = "mixed_or_unsupported_context" if extracted else "unsupported_statement"
-                uncertain = plan["uncertain"] if plan is not None else _uncertain_targets(text, state)
+                uncertain = plan["uncertain"] if plan is not None else _uncertain_targets(grammar_text, state)
+                if plan is None and unsupported:
+                    # An unhandled qualifier can cancel or alter an otherwise
+                    # complete instruction. Do not apply a partial update, but
+                    # also do not let a stale target remain usable by repair.
+                    # Reported material cannot ground a correction merely by
+                    # containing a setter. Ordinary unsupported commentary is
+                    # different: retain uncertainty regardless of clause order.
+                    first_candidate = min((item[0] for item in extracted), default=0)
+                    framed = any(start < first_candidate and _MATERIAL_PREFIX.search(quote)
+                                 for start, _, quote in statements)
+                    if not framed and not any(_REPORTED_SUFFIX.fullmatch(quote) for _, _, quote in statements):
+                        uncertain = sorted(set(uncertain) | _candidate_targets(extracted, state["entries"]))
                 proposals = []
                 if self.interpreter is not None and _can_interpret(text):
                     self._check_cancelled(cancellation_event)

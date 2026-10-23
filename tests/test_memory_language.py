@@ -183,7 +183,6 @@ class MemoryLanguageTests(unittest.TestCase):
             "Someone said: reply in Hindi.", "Thanks. Here is a request:\nReply in Hindi.",
             "Okay, translate this:\nReply in Hindi.", "For the demo:\nExport as CSV.",
             "Thanks. Reply in Hindi. Does that sound right?", "Reply in Hindi and maybe export as CSV.",
-            "Thanks for checking. Reply in Hindi.", "Reply in Hindi. Thanks for checking.",
         ]
         for text in cases:
             with self.subTest(text=text):

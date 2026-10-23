@@ -201,10 +201,10 @@ class MemoryTests(unittest.TestCase):
         self.assertEqual(self.values(), {})
         self.assertEqual(report["ignored"], [{"index": 0, "reason": "mixed_or_unsupported_context"}])
 
-    def test_mixed_message_does_not_partially_apply_earlier_candidates(self):
+    def test_bounded_acknowledgment_does_not_discard_complete_statements(self):
         self.memory.process([user("The deployment region is eu-west-1. Use CSV for the export format. Thanks for helping.")])
-        self.assertEqual(self.values(), {})
-        self.assertEqual(self.store.events(self.session), [])
+        self.assertEqual(self.values(), {"deployment_region": "eu-west-1", "export_format": "CSV"})
+        self.assertEqual(len(self.store.events(self.session)), 1)
 
     def test_unsupported_natural_statement_is_reported_without_claiming_memory(self):
         report = self.memory.process([user("I like explanations that get to the point.")])

@@ -15,7 +15,7 @@ Instruction memory and tool checks for Python agents.
 
 ![Context Relay: carry intent forward. Instruction memory and configured action checks for Python agents.](docs/context-relay-overview.svg)
 
-**Public alpha · v0.22.0a1.** See the [current limits](#limits-and-trust) before choosing Relay for your workflow.
+**Public alpha · v0.22.0a3.** See the [current limits](#limits-and-trust) before choosing Relay for your workflow.
 
 ## Why Relay?
 
@@ -41,7 +41,7 @@ install the wheel included in the repository:
 ```sh
 git clone https://github.com/mahekara28/context-relay.git
 cd context-relay
-python -m pip install --no-index --no-deps dist/context_relay_local-0.22.0a1-py3-none-any.whl
+python -m pip install --no-index --no-deps dist/context_relay_local-0.22.0a3-py3-none-any.whl
 python -m context_relay quickstart
 ```
 
