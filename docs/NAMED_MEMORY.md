@@ -19,6 +19,11 @@ Named conversations use `.relay/sessions` relative to the working directory. Set
 
 Each named conversation has its own SQLite database, reducing contention between unrelated conversations. Simultaneous openers select one canonical root inside a transaction. Reopening follows completed history rollover to its latest segment. Pending requests and unresolved crash claims stay pending: reopening never silently repeats a provider call.
 
+During startup, Relay can retry SQLite's journal-mode transition within the
+configured `busy_timeout_ms` lock wait. Zero allows one immediate attempt.
+Exhaustion raises `StoreBusy`; this does not retry a transaction, model request
+or tool action, and it is not a total startup or callback deadline.
+
 `agent.conversation()` manages the transcript. If the application instead calls `agent(messages=...)` directly, it still owns the full message history and must provide the appropriate continuation. Named persistence saves Relay's state; it cannot recover messages that the host never supplied or retained. Native provider replay still requires the host's complete native history.
 
 Existing `auto_connect(client)` calls remain temporary, preserving the previous API and avoiding surprise disk storage. A name explicitly opts into saving. Named mode cannot be combined with an external guard, session ID, or configured `db_path`; those are separate explicit storage APIs.

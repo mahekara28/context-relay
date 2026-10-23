@@ -1,20 +1,20 @@
-# Relay 0.21.0a1 local alpha
+# Relay 0.22.0a1 local alpha
 
 Relay is a library for existing Python agents. Basic connection adds supported
 preference memory. The optional [protection profile](PROTECTION_PROFILE.md)
 combines explicit instruction review, checked tools, source verification,
 destination readback and bounded history continuation.
 
-The package is not published to PyPI by this work. CI configuration does not
-mean its remote jobs have run, and local demonstrations are not a customer
-pilot. [Validation](VALIDATION.md) records completed checks and their limits.
+The package is not published to PyPI. [Release validation](RELEASE-v0.22.md)
+records the local checks and links to hosted CI. Local demonstrations are not a
+customer pilot.
 
 ## Install the supplied wheel
 
 Use Python 3.10+ in your project's environment. From the public source root:
 
 ```sh
-python -m pip install --no-index --no-deps dist/context_relay_local-0.21.0a1-py3-none-any.whl
+python -m pip install --no-index --no-deps dist/context_relay_local-0.22.0a1-py3-none-any.whl
 python -m context_relay quickstart
 ```
 
@@ -53,7 +53,7 @@ From the public source root, replace `YOUR_INSTALLED_MODEL` with your local mode
 name. This first command presents a review plan without model inference:
 
 ```sh
-python examples/verified_release_desk.py --directory .relay/alpha-release-desk --release 0.21.0a1 --artifact dist/context_relay_local-0.21.0a1-py3-none-any.whl --request-id demo-001 --message "For this export only, use JSON." --model YOUR_INSTALLED_MODEL
+python examples/verified_release_desk.py --directory .relay/alpha-release-desk --release 0.22.0a1 --artifact dist/context_relay_local-0.22.0a1-py3-none-any.whl --request-id demo-001 --message "For this export only, use JSON." --model YOUR_INSTALLED_MODEL
 ```
 
 Read the request and plan. If you explicitly choose JSON for this export,
@@ -117,7 +117,8 @@ Host code must still enforce destination idempotency and atomic version checks;
 Relay cannot atomically commit an external service with its own receipt.
 
 Use a separate development database or back up existing state before an alpha
-upgrade. New assurance state uses memory schema 4; older releases cannot read it.
+upgrade. Assurance state uses memory schema 4, introduced in 0.21; earlier
+releases cannot read it. Version 0.22 adds no memory schema migration.
 Resuming a workflow requires its identical configuration. A changed protection
 profile needs a deliberate migration or a separately identified workflow.
 
@@ -156,10 +157,10 @@ acceptance or model quality.
 
 The [CI workflow](../.github/workflows/alpha.yml) configures core checks on
 Ubuntu/Python 3.10 and 3.12, Windows/Python 3.12, and optional SDK checks on
-Ubuntu/Python 3.12. These are configured targets, not recorded passes. The
-workflow has no publishing step or model calls. Read the actual runner results
+Ubuntu/Python 3.12. The workflow has no publishing step or model calls.
+Read the [actual runner results](https://github.com/mahekara28/context-relay/actions/workflows/alpha.yml)
 before claiming that matrix passes. Use the public folder as the GitHub
 repository root so its `.github/workflows` directory is discovered.
 
-[Release changes](RELEASE-v0.21.md) · [Validation](VALIDATION.md) ·
+[Release changes](RELEASE-v0.22.md) · [Validation](VALIDATION.md) ·
 [Storage privacy](STORAGE_PRIVACY.md) · [Clean publishing](PUBLISHING.md)

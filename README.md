@@ -15,7 +15,7 @@ Instruction memory and tool checks for Python agents.
 
 ![Context Relay: carry intent forward. Instruction memory and configured action checks for Python agents.](docs/context-relay-overview.svg)
 
-**Public alpha · v0.21.0a1.** See the [current limits](#limits-and-trust) before choosing Relay for your workflow.
+**Public alpha · v0.22.0a1.** See the [current limits](#limits-and-trust) before choosing Relay for your workflow.
 
 ## Why Relay?
 
@@ -41,7 +41,7 @@ install the wheel included in the repository:
 ```sh
 git clone https://github.com/mahekara28/context-relay.git
 cd context-relay
-python -m pip install --no-index --no-deps dist/context_relay_local-0.21.0a1-py3-none-any.whl
+python -m pip install --no-index --no-deps dist/context_relay_local-0.22.0a1-py3-none-any.whl
 python -m context_relay quickstart
 ```
 
@@ -137,6 +137,26 @@ For a working example with real file writes, see
 [check fresh source data](docs/PROTECTION_PROFILE.md#check-the-source-and-the-destination), or
 [continue a long task across history segments](docs/WORKFLOW_CONTINUATION.md).
 
+## Improve a workflow from its failures
+
+Relay can now test a proposed configuration change against your existing setup.
+`improve_harness()` gives your proposal function the failed development examples,
+then tests its suggestion on the full case set, including separate holdout cases.
+It keeps the original configuration if the candidate makes a wrong action, breaks
+a previously completed task, exceeds its call budget or fails to improve completion.
+
+Try the offline example:
+
+```sh
+python examples/harness_improvement.py
+```
+
+It uses Relay's protected export tool and reads back real temporary files. The
+responses are fixed test cases, so this demonstrates the mechanism, not model
+accuracy. The selected configuration is returned for your application to review
+and adopt. Relay does not rewrite live code or train the model.
+[Connect your own workflow](docs/HARNESS_EVALUATION.md).
+
 ## Integrations
 
 | Your project uses | Relay supports |
@@ -192,7 +212,6 @@ Historical raw runs are not included in this public repository.
 
 ## Roadmap
 
-- [ ] Fix the cross-platform CI failures and publish a reproducible package release.
 - [ ] Improve correction recognition using unfamiliar wording and languages.
 - [ ] Run a real pilot against the same workflow's existing memory and validator.
 - [ ] Expand provider support and measure shared-deployment performance from those results.
@@ -214,9 +233,10 @@ Optional SDK tests may skip without their dependencies; see the
 [validation requirements](requirements-validation.txt). For behavior changes,
 include a regression test with the fix.
 
-The bundled wheel and manifest describe the
+The original wheel and `PUBLIC_MANIFEST.json` describe the
 [original alpha snapshot](https://github.com/mahekara28/context-relay/tree/8d93ec2d2148c16a79c4777e215cd810f7d7576a).
-README updates are separate; see the [distribution notes](PUBLIC_DISTRIBUTION.md).
+The current wheel includes the later fixes and evaluation API; see the
+[distribution notes](PUBLIC_DISTRIBUTION.md).
 
 ## License
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import threading
+import time
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
@@ -15,8 +16,9 @@ from ._storage_files import permission_status, private_database
 
 
 class StoreBusy(RuntimeError):
-    """One bounded lock wait failed; no automatic retry was attempted.
+    """One bounded lock wait failed; transactions and actions are never replayed.
 
+    Startup may retry only the journal-mode pragma within the configured wait.
     before_transaction describes this operation only. False means an executor
     may already have run; retrying a non-idempotent action can duplicate effects.
     """
@@ -63,7 +65,7 @@ class RelayStore:
             self._connection.execute(f"PRAGMA busy_timeout = {busy_timeout_ms}")
             self._connection.execute("PRAGMA secure_delete = ON")
             self._connection.execute("PRAGMA temp_store = MEMORY")
-            self._connection.execute("PRAGMA journal_mode = WAL")
+            self._enable_wal()
             version = self._connection.execute("PRAGMA user_version").fetchone()[0]
             if version not in (0, 1):
                 raise ValueError(f"Unsupported database schema version {version}.")
@@ -128,6 +130,26 @@ class RelayStore:
             if _busy(error):
                 raise StoreBusy(busy_timeout_ms, "initialize", before_transaction=True) from error
             raise
+
+    def _enable_wal(self) -> None:
+        # SQLite may skip its busy handler when competing connections change
+        # journal mode. This startup-only pragma is safe to retry; actions are not.
+        deadline = time.monotonic() + self.busy_timeout_ms / 1000
+        self._connection.execute("PRAGMA busy_timeout = 0")
+        while True:
+            try:
+                self._connection.execute("PRAGMA journal_mode = WAL").close()
+                break
+            except sqlite3.OperationalError as error:
+                remaining = deadline - time.monotonic()
+                if not _busy(error) or remaining <= 0:
+                    raise
+                time.sleep(min(0.01, remaining))
+                if time.monotonic() >= deadline:
+                    raise
+        # On failure the constructor closes the handle. Restore only on success
+        # so cleanup cannot replace the original SQLite error.
+        self._connection.execute(f"PRAGMA busy_timeout = {self.busy_timeout_ms}")
 
     @contextmanager
     def _locked(self) -> Iterator[None]:

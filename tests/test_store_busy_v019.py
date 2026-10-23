@@ -171,6 +171,112 @@ class StoreBusyTests(unittest.TestCase):
         with self.assertRaises(sqlite3.ProgrammingError):
             captured[0].execute("SELECT 1")
 
+    def test_initial_wal_transition_waits_for_a_reader_then_recovers(self):
+        reader = sqlite3.connect(self.path, isolation_level=None)
+        self.addCleanup(reader.close)
+        reader.execute("CREATE TABLE seed(value)")
+        reader.execute("BEGIN")
+        reader.execute("SELECT * FROM seed").fetchall()
+        retrying, result = threading.Event(), {}
+        sleep = time.sleep
+
+        def observe_retry(delay):
+            retrying.set()
+            sleep(delay)
+
+        def open_store():
+            try:
+                with RelayStore(self.path, busy_timeout_ms=2000) as store:
+                    result["mode"] = store.privacy_status()["journal_mode"]
+                    result["timeout"] = store._connection.execute("PRAGMA busy_timeout").fetchone()[0]
+                    result["session"] = store.create_session("after reader released")["name"]
+            except BaseException as error:
+                result["error"] = error
+
+        worker = threading.Thread(target=open_store)
+        with patch("context_relay.store.time.sleep", observe_retry):
+            worker.start()
+            try:
+                self.assertTrue(retrying.wait(3), result)
+            finally:
+                reader.execute("ROLLBACK")
+                worker.join(4)
+        self.assertFalse(worker.is_alive())
+        self.assertEqual(result, {"mode": "wal", "timeout": 2000, "session": "after reader released"})
+
+    def test_wal_retry_has_one_deadline_and_zero_timeout_never_waits(self):
+        connect_sqlite = sqlite3.connect
+        for timeout, expected_attempts in ((0, 1), (25, 3)):
+            with self.subTest(timeout=timeout):
+                clock, attempts, sleeps, captured = [10.0], [], [], []
+                locked = sqlite3.OperationalError("injected startup contention")
+                locked.sqlite_errorcode = getattr(sqlite3, "SQLITE_BUSY", 5)
+
+                class LockedConnection(sqlite3.Connection):
+                    def execute(self, statement, *args):
+                        if statement == "PRAGMA journal_mode = WAL":
+                            attempts.append(super().execute("PRAGMA busy_timeout").fetchone()[0])
+                            raise locked
+                        return super().execute(statement, *args)
+
+                def capture(*args, **kwargs):
+                    connection = connect_sqlite(*args, factory=LockedConnection, **kwargs)
+                    captured.append(connection)
+                    return connection
+
+                def advance(delay):
+                    sleeps.append(delay)
+                    clock[0] += delay
+
+                with patch("context_relay.store.sqlite3.connect", capture), \
+                        patch("context_relay.store.time.monotonic", lambda: clock[0]), \
+                        patch("context_relay.store.time.sleep", advance):
+                    with self.assertRaises(StoreBusy) as caught:
+                        RelayStore(self.path, busy_timeout_ms=timeout)
+                self.assertEqual(attempts, [0] * expected_attempts)
+                self.assertAlmostEqual(sum(sleeps), timeout / 1000)
+                self.assertIs(caught.exception.__cause__, locked)
+                self.assertEqual(caught.exception.phase, "initialize")
+                self.assertTrue(caught.exception.before_transaction)
+                with self.assertRaises(sqlite3.ProgrammingError):
+                    captured[0].execute("SELECT 1")
+
+    def test_wal_non_lock_failure_is_not_retried_or_replaced(self):
+        connect_sqlite = sqlite3.connect
+        not_busy = sqlite3.OperationalError("database is locked")
+        not_busy.sqlite_errorcode = getattr(sqlite3, "SQLITE_ERROR", 1)
+        for failure in (not_busy, sqlite3.DatabaseError("file is not a database")):
+            with self.subTest(failure=type(failure).__name__):
+                captured, attempts = [], []
+
+                class FailedConnection(sqlite3.Connection):
+                    def execute(self, statement, *args):
+                        if statement == "PRAGMA journal_mode = WAL":
+                            attempts.append(statement)
+                            raise failure
+                        return super().execute(statement, *args)
+
+                def capture(*args, **kwargs):
+                    connection = connect_sqlite(*args, factory=FailedConnection, **kwargs)
+                    captured.append(connection)
+                    return connection
+
+                with patch("context_relay.store.sqlite3.connect", capture), \
+                        patch("context_relay.store.time.sleep") as sleep:
+                    with self.assertRaises(sqlite3.DatabaseError) as caught:
+                        RelayStore(self.path)
+                self.assertIs(caught.exception, failure)
+                self.assertEqual(len(attempts), 1)
+                sleep.assert_not_called()
+                with self.assertRaises(sqlite3.ProgrammingError):
+                    captured[0].execute("SELECT 1")
+
+    def test_memory_database_keeps_memory_mode_and_configured_wait(self):
+        with RelayStore(busy_timeout_ms=17) as store:
+            self.assertEqual(store.privacy_status()["journal_mode"], "memory")
+            self.assertEqual(store._connection.execute("PRAGMA busy_timeout").fetchone()[0], 17)
+            self.assertEqual(store.list_sessions(), [])
+
     def test_non_lock_operational_error_is_preserved_and_rolled_back(self):
         store = self.store(busy_timeout_ms=30)
         with self.assertRaises(sqlite3.OperationalError) as caught:
@@ -206,13 +312,14 @@ class StoreBusyTests(unittest.TestCase):
     def test_error_codes_not_message_substrings_determine_busy(self):
         store = self.store()
         error = sqlite3.OperationalError("database is locked")
-        error.sqlite_errorcode = sqlite3.SQLITE_ERROR
+        # Python 3.10 does not expose SQLite's named result-code constants.
+        error.sqlite_errorcode = getattr(sqlite3, "SQLITE_ERROR", 1)
         with self.assertRaises(sqlite3.OperationalError) as caught:
             with store._transaction():
                 raise error
         self.assertIs(caught.exception, error)
         locked = sqlite3.OperationalError("fixed test detail")
-        locked.sqlite_errorcode = sqlite3.SQLITE_LOCKED
+        locked.sqlite_errorcode = getattr(sqlite3, "SQLITE_LOCKED", 6)
         with self.assertRaises(StoreBusy) as caught:
             with store._transaction():
                 raise locked

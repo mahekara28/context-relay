@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "context-relay-local"
-version = "0.21.0a1"
+version = "0.22.0a1"
 description = "Local Python context preparation and current-state checks for existing AI agent projects."
 readme = "README.md"
 requires-python = ">=3.10"

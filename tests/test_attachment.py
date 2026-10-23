@@ -157,6 +157,21 @@ class AttachmentTests(unittest.TestCase):
         handle.close()
         self.assertIs(vars(client)["chat"], original)
 
+    def test_namespace_attachment_prepares_calls_and_restores_callable(self):
+        class NamespaceClient(types.SimpleNamespace):
+            pass
+
+        for client_type in (types.SimpleNamespace, NamespaceClient):
+            with self.subTest(client=client_type.__name__):
+                original = lambda *, messages: messages
+                client = client_type(chat=original)
+                with attach(client, method="chat") as handle:
+                    handle.agent.remember("format", "json")
+                    delivered = client.chat(messages=history())
+                    self.assertEqual(packet(delivered)["state"]["facts"]["format"], "json")
+                self.assertIs(client.chat, original)
+                self.assertFalse(handle.attached)
+
     def test_later_method_replacement_survives_detach(self):
         client = Provider()
         handle = self.attached(client, method="chat")
@@ -250,6 +265,29 @@ class AttachmentTests(unittest.TestCase):
                 attach(client, method="chat")
             with self.assertRaisesRegex(TypeError, "callable"):
                 attach(client, method="not_callable")
+            connected.assert_not_called()
+
+    def test_namespace_custom_attribute_access_rejected_before_store(self):
+        class CustomLookup(types.SimpleNamespace):
+            def __getattribute__(self, name):
+                return super().__getattribute__(name)
+
+        class CustomSetter(types.SimpleNamespace):
+            def __setattr__(self, name, value):
+                super().__setattr__(name, value)
+
+        class CustomDelete(types.SimpleNamespace):
+            def __delattr__(self, name):
+                super().__delattr__(name)
+
+        with patch("context_relay.attachment.connect") as connected:
+            for client_type in (CustomLookup, CustomSetter, CustomDelete):
+                client = client_type(chat=lambda *, messages: messages)
+                original = client.chat
+                with self.subTest(client=client_type.__name__):
+                    with self.assertRaisesRegex(TypeError, "custom attribute access"):
+                        attach(client, method="chat")
+                    self.assertIs(client.chat, original)
             connected.assert_not_called()
 
     def test_call_binding_rejects_invalid_calls_before_provider(self):

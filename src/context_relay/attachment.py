@@ -67,10 +67,14 @@ def _target(client: Any, method: str) -> tuple[Any, str, dict, Any]:
     # Restrict mutation to normal writable instance dictionaries. Properties,
     # frozen objects and custom setters cannot be safely patched/restored without
     # invoking arbitrary setter behavior. Reject them before creating a store.
-    if (type(owner).__getattribute__ is not object.__getattribute__ or
-            type(owner).__setattr__ is not object.__setattr__ or
-            type(owner).__delattr__ is not object.__delattr__):
-        raise TypeError("This client has custom attribute access; use connect(client.method) instead.")
+    # Python 3.10 exposes SimpleNamespace's own wrappers for ordinary attribute
+    # access; newer versions reuse object's. Subclass overrides remain unsafe.
+    baseline = types.SimpleNamespace if isinstance(owner, types.SimpleNamespace) else object
+    for attribute in ("__getattribute__", "__setattr__", "__delattr__"):
+        implementation = getattr(type(owner), attribute)
+        if (implementation is not getattr(object, attribute) and
+                implementation is not getattr(baseline, attribute)):
+            raise TypeError("This client has custom attribute access; use connect(client.method) instead.")
     try:
         namespace = vars(owner)
     except TypeError as exc:
