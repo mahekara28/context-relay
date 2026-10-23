@@ -41,7 +41,7 @@ _SUBJECTS = {
 }
 _REPLIES = r"answers?|replies|responses?|reply|jawab|javaab|जवाब(?:ों)?|उत्तर|respuestas|r[eé]ponses"
 _MARKER = re.compile(
-    r"[\u0900-\u097f]|\b(?:ab\s+se|aaj\s+se|karo|kar\s+do|rakho|badlo|badal|galat|chahiye|jawab|bhasha|nahi|mat|samjhao|samjhaiye|"
+    r"[\u0900-\u097f]|\b(?:ab\s*se|aaj\s+se|karo|kar\s+(?:do|dena)|karna|kijiye|rakho|rakhna|rakha|bolo|bolna|boliye|badlo|badal|galat|chahiye|jawab|bhasha|nahi|mat|samjhao|samjhaiye|"
     r"cambia|cambiar|usa|utiliza|responde|resp[oó]ndeme|responder|exporta|exportar|exportaciones|formato|idioma|respuestas|español|ingl[eé]s|traduce|traduis|traduire|anuvad|"
     r"r[eé]ponds|r[eé]pondez|utilise|utilisez|modifie|exporte|langue|r[eé]ponses|d[eé]sormais|dor[eé]navant|fran[cç]ais|je\s+(?:pr[eé]f[eè]re|veux|voudrais))\b|"
     r"\b(?:a\s+partir\s+de\s+ahora|en\s+adelante|por\s+favor|s['’]il\s+(?:te|vous)\s+pla[iî]t|format\s+(?:d['’]export(?:ation)?|de\s+sortie))\b",
@@ -61,7 +61,7 @@ _EXCLUDED = re.compile(
     r"(?:^|[.;\n])\s*(?:si\s|if\s|example\b|ejemplo\b|exemple\b)", re.I,
 )
 _PREFIX = re.compile(
-    r"^(?:(?:please|actually|from\s+now\s+on|going\s+forward|ab\s+se|aaj\s+se|aage\s+se|आगे\s+से|अब\s+से|आज\s+से|ab|अब|कृपया|"
+    r"^(?:(?:please|actually|from\s+now\s+on|going\s+forward|ab\s*se|aaj\s+se|aage\s+se|आगे\s+से|अब\s+से|आज\s+से|ab|अब|कृपया|"
     r"a\s+partir\s+de\s+ahora|de\s+ahora\s+en\s+adelante|en\s+adelante|ahora|maintenant|por\s+favor|d[eé]sormais|dor[eé]navant|"
     r"[aà]\s+l['’]avenir|[aà]\s+partir\s+de\s+maintenant|s['’]il\s+(?:te|vous)\s+pla[iî]t)[,:\s]+)+", re.I,
 )
@@ -73,9 +73,9 @@ _INTENT = re.compile(
     r"^(?:(?:no\s+|ne\s+|n['’])?(?:change|set|switch|use|keep|reply|respond|answer|cambia|cambies|actualiza|usa|uses|utiliza|"
     r"responde|contesta|establece|quiero|prefiero|utilise|utilisez|modifie|mets|r[eé]ponds|r[eé]pondez|"
     r"je\s+(?:veux|pr[eé]f[eè]re)|exporta|exporte)\b)|"
-    r"\b(?:karo|rakho|badlo|chahiye|badal\s+do|ne\s+me\s+convient\s+plus|ya\s+no\s+(?:quiero|sirve)|"
+    r"\b(?:karo|kar\s+(?:do|dena)|karna|kijiye|rakho|rakhna|rakha|bolo|bolna|boliye|baat\s+karo|badlo|chahiye|badal\s+do|ne\s+me\s+convient\s+plus|ya\s+no\s+(?:quiero|sirve)|"
     r"nahi\s+(?:chahiye|sahi)|sahi\s+nahi|galat|ya\s+no\s+me\s+sirve|ya\s+no\s+quiero|deben\s+cambiar|"
-    r"doit\s+changer|doivent\s+changer|je\s+ne\s+veux\s+plus|wrong|outdated)\b|(?:करो|रखो|बदलो|चाहिए|बदलन[ाी]|गलत|सही\s+नहीं)", re.I,
+    r"doit\s+changer|doivent\s+changer|je\s+ne\s+veux\s+plus|wrong|outdated)\b|(?:करो|करना|करें|रखो|रखना|रखें|बोलो|बदलना|बदलो|चाहिए|बदलन[ाी]|गलत|सही\s+नहीं)", re.I,
 )
 
 
@@ -88,6 +88,14 @@ def _rx(pattern):
 _SUBJECT_WORDS = r"the|my|our|el|la|las|los|le|les|ma|mon|mes|tes|vos|mis|tus|mi|todas|toutes|mere|mera|meri|मेरे|मेरा|मेरी|future|futuras|futures|prochaines"
 _SUBJECT_PATTERN = r"(?P<subject>(?:(?:" + _SUBJECT_WORDS + r")\s+)*(?:" + "|".join(_SUBJECTS.values()) + "|" + _REPLIES + r")(?:\s+(?:futures|futuras))?)"
 _RULES = tuple((_rx(pattern.replace("(?P<subject>.+?)", _SUBJECT_PATTERN).replace("(?P<subject>.+)", _SUBJECT_PATTERN)), key) for pattern, key in (
+    (r"(?P<value>.+?)\s+(?:mein|me)\s+(?:export|निर्यात|एक्सपोर्ट)\s+(?:karo|kar\s+(?:do|dena)|karna|kijiye)", "export_format"),
+    (r"(?P<value>.+?)\s+में\s+(?:export|निर्यात|एक्सपोर्ट)\s+(?:करो|कर\s+दो|करना|करें|कीजिए)", "export_format"),
+    (r"(?P<value>.+?)\s+(?:mein|me)\s+(?:baat\s+karo|baat\s+karna|bolo|bolna|boliye)", "response_language"),
+    (r"(?P<value>.+?)\s+में\s+(?:बात\s+करो|बात\s+करना|बात\s+करें|बोलो|बोलना|बोलिए)", "response_language"),
+    (r"(?P<old>.+?)\s+(?:ki\s+jagah|ke\s+bajay)\s+(?P<value>.+?)\s+(?:mein|me)\s+(?:baat\s+karo|bolo)", "response_language"),
+    (r"(?P<old>.+?)\s+(?:की\s+जगह|के\s+बजाय)\s+(?P<value>.+?)\s+में\s+(?:बात\s+करो|बोलो)", "response_language"),
+    (r"(?P<subject>.+?)\s+(?:ko\s+)?(?P<value>.+?)\s+(?:mein\s+)?(?:kar\s+dena|karna|kijiye|rakhna|rakha\s+karo)", None),
+    (r"(?P<subject>.+?)\s+(?:को\s+)?(?P<value>.+?)\s+(?:में\s+)?(?:करना|कीजिए|रखना|रखा\s+करो)", None),
     (r"(?P<value>.+?)\s+(?:samjhao|samjhaiye)", "response_style"),
     (rf"aage\s+ke\s+(?:{_REPLIES})\s+(?P<value>.+?)\s+(?:hi\s+)?rehne\s+chahiye", "response_style"),
     (r"(?P<subject>.+?)\s+(?P<old>.+?)\s+(?:ke\s+bajay|ki\s+jagah)\s+(?P<value>.+?)\s+(?:mein\s+)?(?:chahiye|hona\s+chahiye)", None),
@@ -167,6 +175,8 @@ def _targets(text):
         keys.update(cues or ("response_language", "response_style"))
     if re.search(r"\b(?:exporta|exportar|exporte)\b", text, re.I):
         keys.add("export_format")
+    if re.search(r"\b(?:baat\s+kar(?:o|na)|bolo|bolna|boliye)\b|(?:बात\s+करो|बात\s+करना|बोलो|बोलना|बोलिए)", text, re.I):
+        keys.add("response_language")
     return keys, named
 
 

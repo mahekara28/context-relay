@@ -1,14 +1,15 @@
 # Public distribution
 
-## Current source and wheel: 0.22.0a3
+## Current source and wheel: 0.23.0a1
 
-The current source includes the harness evaluation API and fixes mixed-message
-memory, scoped history import, interrupted-action recovery and early HTTP request
-rejection. The `0.22.0a3`
+The current source includes broader bounded instruction rules, conflicting-value
+and scope clarification, optional local Ollama interpretation, and a paired
+workflow pilot kit. It retains the earlier memory, recovery and HTTP fixes. The `0.23.0a1`
 wheel is built from this source; its SHA-256 is recorded beside
-it in `dist/SHA256SUMS`. See [release notes](docs/RELEASE-v0.22.0a3.md) for validation
-and reproduction instructions. No raw conversations, session databases or local
-test journals are included. This release is not on PyPI.
+it in `dist/SHA256SUMS`. See [release notes](docs/RELEASE-v0.23.0a1.md) for validation
+and reproduction instructions. Authored synthetic fixtures and selected validation
+summaries are included; private conversations, session databases and local test
+journals are excluded. This release is not on PyPI.
 
 ## Original filtered snapshot: 0.21.0a1
 

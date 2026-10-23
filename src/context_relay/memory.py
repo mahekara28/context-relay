@@ -18,7 +18,7 @@ from .interpretation import MemoryInterpretationError, MemoryInterpreter
 from .memory_values import normalize_memory_value
 from .memory_plan import plan_corrections
 from .memory_languages import plan_multilingual
-from .memory_scope import is_continuation, partition_scopes, quoted_literal, quoted_spans, reported_quote, scalar_quotes
+from .memory_scope import is_continuation, partition_scopes, quoted_literal, quoted_spans, reported_quote, scalar_quotes, scope_marker
 from .models import ConflictError, clone, encode, nonempty_string, validate_revision
 from .store import RelayStore
 
@@ -123,12 +123,17 @@ _SETTING_SUBJECTS = {
     "response_style": r"(?:response|reply)[ _-]+style",
 }
 _OUTPUT_ALIAS = r"output|results|data"
-_INTERPRETABLE = re.compile(r"(?:I\s+(?:want|need|like|prefer)|make|keep|use|switch|change|set|update|reply|respond|answer|export|give|send|return|be|replace|choose|leave|move|shift|adjust|have|go\s+with)\b", re.IGNORECASE)
+_INTERPRETABLE = re.compile(r"(?:I\s+(?:want|need|like|prefer)|make|keep|use|switch|change|set|update|reply|respond|answer|export|give|send|return|be|replace|choose|leave|move|shift|adjust|have|go\s+with|stick\s+to)\b", re.IGNORECASE)
 _FUTURE = r"(?:from\s+(?:now|here)\s+on|from\s+this\s+point\s+(?:on|onward|onwards)|as\s+of\s+now|going\s+forward|in\s+(?:the\s+)?future|permanently)"
 _RECONSIDERED = r"I(?:'ve|\s+have)?\s+(?:reconsidered|rethought)"
 _POLITE_REQUEST = re.compile(r"^(?:can|could|would|will)\s+(?:you|we)\s+(?:please\s+)?", re.IGNORECASE)
 _CORRECTION_PREFIX = re.compile(r"^(?:on\s+second\s+thought|I(?:'ve|\s+have)?\s+changed\s+my\s+mind|scratch\s+that)[,:\s\u2014-]+", re.IGNORECASE)
-_LOCAL_SCOPE = re.compile(r"\b(?:for\s+(?:now|today|(?:this|the\s+next)\s+(?:(?:single|one)\s+)?(?:reply|response|answer|export|request|task|session|download|run|turn|message|occasion))|(?:only|just)\s+(?:this|today)|this\s+time|today\s+only)\b", re.IGNORECASE)
+_LOCAL_SCOPE = re.compile(r"\b(?:for\s+(?:now|today|(?:this|the\s+next)\s+(?:(?:single|one)\s+)?(?:reply|response|answer|export|request|task|session|download|run|turn|message|occasion|report|document|file|job|workflow))|(?:only|just)\s+(?:this|today)|this\s+time|today\s+only)\b", re.IGNORECASE)
+_INTERPRETER_FRAME = re.compile(
+    r"\b(?:when|whenever|once|after|until|during|temporar(?:y|ily)|assuming|provided|reports?|reported|states?|claims?|"
+    r"told|asked|requested|example|sample|translate|summari[sz]e|rewrite|quoted|quotation|"
+    r"agar|yadi|kaha|bola|shayad|anuvad|traduce|traduis|dijo|dice|selon|según)\b|"
+    r"(?:^|[,;])\s*before\b|(?:अगर|यदि|कहा|बोला|शायद|अनुवाद|उदाहरण)", re.I)
 _UNSPECIFIED = re.compile(r"\b(?:whatever|something|anything|whichever)\b|^(?:the|that|some)\s+(?:other|different)\b", re.IGNORECASE)
 _STYLE_WORDS = {"briefly": "brief", "concisely": "concise", "succinctly": "concise",
                 "in detail": "detailed", "to the point": "concise"}
@@ -144,7 +149,8 @@ def _setting_patterns(subject: str, values: str):
     value = rf"(?P<value>{values})"
     return tuple(re.compile(pattern, re.IGNORECASE) for pattern in (
         rf"(?:(?:I\s+(?:want|need|prefer)|have)\s+)?{target}\s*(?:\s(?:in|as|should\s+(?:be|become)|needs?\s+to\s+(?:be|become)|must\s+(?:be|become))\s+|[=:]\s*){value}",
-        rf"(?:(?:use|keep|choose|go\s+with)\s+)?{value}\s+(?:for|as)\s+{target}",
+        rf"(?:(?:use|keep|choose|go\s+with|stick\s+to)\s+)?{value}\s+(?:for|as)\s+{target}",
+        rf"{target}\s+(?:should|must|need\s+to)\s+(?:come|be\s+provided)\s+(?:in|as)\s+{value}",
         rf"(?:keep|leave)\s+{target}\s+(?:in|as)\s+{value}",
         rf"make\s+{value}\s+(?:(?:the|our)\s+)?default\s+(?:for|as)\s+{target}",
         rf"for\s+{target},?\s+(?:(?:let's|let\s+us)\s+)?(?:(?:use|choose|go\s+with)\s+{value}|make\s+(?P<default>{values})\s+(?:(?:the|our)\s+)?default)",
@@ -187,7 +193,7 @@ _NAMED_SETTERS = (
     (_named_setter(rf"I\s+(?:want|need|prefer)\s+(?:the\s+)?(?:{_REPLIES})\s+(?:to\s+be\s+)?in\s+", _LANGUAGE), "response_language"),
     (_named_setter(r"use\s+", _LANGUAGE, rf"\s+for\s+(?:(?:the|your)\s+)?(?:{_REPLIES})"), "response_language"),
     (_named_setter(r"switch\s+(?:the\s+)?response\s+language\s+to\s+", _LANGUAGE), "response_language"),
-    (_named_setter(r"export(?:\s+(?:the\s+)?(?:results|data))?\s+(?:as|in)\s+", _FORMAT), "export_format"),
+    (_named_setter(r"export(?:\s+(?:the\s+)?(?:results|data))?\s+(?:(?:as|in)\s+)?", _FORMAT), "export_format"),
     (_named_setter(r"(?:I\s+(?:want|need|prefer)|(?:give|send|return)(?:\s+me)?)\s+(?:the\s+)?(?P<format_subject>output|exports?|results|data)\s+(?:in|as)\s+", _FORMAT), "export_format"),
     (_named_setter(r"switch\s+(?:the\s+)?(?:export\s+format|exports?)\s+to\s+", _FORMAT), "export_format"),
 )
@@ -355,7 +361,7 @@ def _statements(text: str, *, split_clauses: bool = True):
     """Yield exact spans; avoid periods within domains, versions and numbers."""
     start = 0
     quoted = quoted_spans(text) or []
-    boundary_pattern = r"[.!?;](?=\s|$)|\n" + (r"|(?<!\s)(?:,\s+|\s+(?:,\s+)?)and\s+" if split_clauses else "")
+    boundary_pattern = r"[.!?;।](?=\s|$)|\n" + (r"|(?<!\s)(?:,\s+|\s+(?:,\s+)?)and\s+" if split_clauses else "")
     for boundary in re.finditer(boundary_pattern, text, re.IGNORECASE):
         if any(left <= boundary.start() < right for left, right in quoted):
             continue
@@ -426,11 +432,16 @@ def _candidate_targets(candidates, entries) -> set[str]:
     return targets
 
 
-def _can_interpret(text: str) -> bool:
+def _can_interpret(text: str, *, review_unmatched: bool = False) -> bool:
     """Only direct user requests can reach the optional interpretation callback."""
-    if _SECRET.search(text) or _LOCAL_SCOPE.search(text):
+    if _SECRET.search(text) or scope_marker(text, _LOCAL_SCOPE) or _FRAMING.search(text):
         return False
-    statements = [quote for _, _, quote in _statements(text, split_clauses=False) if not _COURTESY.fullmatch(quote)]
+    normalized = scalar_quotes(text)
+    if normalized is None:
+        return False
+    eligible = _without_acknowledgments(normalized) if review_unmatched else normalized
+    statements = [quote for _, _, quote in _statements(eligible, split_clauses=False)
+                  if not _COURTESY.fullmatch(quote)]
     for quote in statements:
         raw = quote.rstrip(".;").strip()
         if raw.endswith("?"):
@@ -438,9 +449,35 @@ def _can_interpret(text: str) -> bool:
                 return False
             raw = raw[:-1].strip()
         body, _ = _request_body(raw)
-        if _CAUTION.search(body) or ":" in body or not _INTERPRETABLE.match(body):
+        if (_CAUTION.search(body) or _INTERPRETER_FRAME.search(body) or ":" in body
+                or not review_unmatched and not _INTERPRETABLE.match(body)):
             return False
     return bool(statements)
+
+
+def _conflicting_targets(candidates, entries) -> set[str]:
+    """A message cannot silently assign different values to the same target."""
+    choices = {}
+    for _, _, _, candidate in candidates:
+        key = candidate["key"]
+        targets = candidate.get("aliases", [key])
+        if candidate.get("aliases"):
+            targets = [target for target in targets if target in entries] or [key]
+        if key is None:
+            targets = [target for target, entry in entries.items()
+                       if entry["value"].casefold() == candidate["old"].casefold()]
+        for target in targets:
+            choices.setdefault(target, set()).add(normalize_memory_value(target, candidate["value"]))
+    return {key for key, values in choices.items() if len(values) > 1}
+
+
+def _scope_default(text: str) -> bool:
+    """A contrast may follow a complete preference, never discard its framing."""
+    text = re.sub(r"\s+(?:normally|by\s+default)$", "", text.strip(), flags=re.I)
+    text = re.sub(r"^(?:keep|continue)\s+using\s+", "use ", text, flags=re.I)
+    candidate = _extract(text)
+    return bool(candidate and candidate["key"] in _FINITE_SETTINGS
+                and not candidate.get("unfamiliar"))
 
 
 def _request_targets(body: str, patterns: dict[str, str]) -> set[str]:
@@ -452,7 +489,7 @@ def _request_targets(body: str, patterns: dict[str, str]) -> set[str]:
     targets, allow_bare = set(), True
     for clause in re.split(r"(?<!\s)(?:,\s+|\s+(?:,\s+)?)and\s+", body, flags=re.IGNORECASE):
         clause, _ = _request_body(clause.strip())
-        value_first = re.fullmatch(r"(?:use|choose|keep|go\s+with|I\s+prefer)\s+\S.*?(?<!\s)\s+for\s+(.+)", clause, re.IGNORECASE)
+        value_first = re.fullmatch(r"(?:use|choose|keep|go\s+with|stick\s+to|I\s+prefer)\s+\S.*?(?<!\s)\s+for\s+(.+)", clause, re.IGNORECASE)
         if value_first:
             subject = value_first[1]
         else:
@@ -498,7 +535,7 @@ def _uncertain_targets(text: str, state: dict) -> list[str]:
         declared, changed = set(), set()
         for key, pattern in patterns.items():
             target = _setting_target(pattern)
-            match = re.fullmatch(rf"{target}\s+(?:is|should\s+be|needs?\s+to\s+be|must\s+be)\s+(?P<value>{_VALUE})", body, re.IGNORECASE)
+            match = re.fullmatch(rf"{target}\s+(?:is|should\s+be|needs?\s+to\s+be|must\s+be|(?:should|must|need\s+to)\s+(?:come|be\s+provided)\s+(?:in|as))\s+(?P<value>{_VALUE})", body, re.IGNORECASE)
             if match and not _CAUTION.search(match["value"]):
                 declared.add(key)
             if re.fullmatch(rf"(?:{target}\s+(?:has\s+changed|{rejection})|{_RECONSIDERED}\s+{target})", body, re.IGNORECASE):
@@ -874,7 +911,7 @@ class AutomaticMemory:
             unsupported = False
             normalized = _quoted_instructions(text)
             if normalized is not None and not _FRAMING.search(text):
-                remainder, scoped = partition_scopes(normalized, _statements, _LOCAL_SCOPE)
+                remainder, scoped = partition_scopes(normalized, _statements, _LOCAL_SCOPE, _scope_default)
                 if scoped:
                     self._consume_scopes(state, scoped, archive, message, index, revision, created)
                     text = remainder
@@ -932,9 +969,12 @@ class AutomaticMemory:
                     candidate.pop("end", None)
                     extracted.append((start, end, text[start:end], candidate))
                 unsupported = bool(plan["uncertain"])
+            conflicts = _conflicting_targets(extracted, state["entries"])
+            unsupported = unsupported or bool(conflicts)
             if unsupported or not extracted:
                 reason = "mixed_or_unsupported_context" if extracted else "unsupported_statement"
                 uncertain = plan["uncertain"] if plan is not None else _uncertain_targets(grammar_text, state)
+                uncertain = sorted(set(uncertain) | conflicts)
                 if plan is None and unsupported:
                     # An unhandled qualifier can cancel or alter an otherwise
                     # complete instruction. Do not apply a partial update, but
@@ -948,12 +988,13 @@ class AutomaticMemory:
                     if not framed and not any(_REPORTED_SUFFIX.fullmatch(quote) for _, _, quote in statements):
                         uncertain = sorted(set(uncertain) | _candidate_targets(extracted, state["entries"]))
                 proposals = []
-                if self.interpreter is not None and _can_interpret(text):
+                if self.interpreter is not None and _can_interpret(
+                        original_text, review_unmatched=self.interpreter.review_unmatched):
                     self._check_cancelled(cancellation_event)
                     disputed = {target for pending in state["pending"].values() for target in pending["targets"]}
                     known = [{"key": key, "value": state["entries"][key]["value"], "disputed": key in disputed}
                              for key in sorted(state["entries"])]
-                    proposals = self.interpreter.suggest(text=text, index=index, known_memory=known)
+                    proposals = self.interpreter.suggest(text=original_text, index=index, known_memory=known)
                     reason = "interpreter_no_proposal"
                 extracted = [(p["start"], p["end"], p["quote"], {
                     "key": p["key"], "value": p["value"], "old": None,
@@ -982,7 +1023,9 @@ class AutomaticMemory:
                 source = source_base | {"quote": original_text, "start": 0, "end": len(original_text), "method": "uncertain"}
                 for key in uncertain:
                     if key not in covered:
-                        self._apply_candidate(state, {"key": key, "value": None, "old": state["entries"][key]["value"],
+                        if key not in state["entries"]:
+                            state["schema"] = max(state["schema"], 3)
+                        self._apply_candidate(state, {"key": key, "value": None, "old": state["entries"].get(key, {}).get("value"),
                                                       "explicit": False, "uncertain": True}, source, revision + 1, created)
         return {"processed_indices": processed, "ignored": ignored, "pending_ids": created}
 
@@ -1110,17 +1153,23 @@ class AutomaticMemory:
             for field in ("value", "old"):
                 candidate[field] = normalize_memory_value(key, candidate[field])
         existing = entries.get(key)
+        current_scope_disputes = {pid for pid, pending in state["pending"].items()
+            if pending["source"].get("scope") == "unsupported_lifetime"
+            and pending["source"]["index"] == source["index"]
+            and pending["source"]["message_sha256"] == source["message_sha256"]}
         clarifies = [pid for pid, pending in state["pending"].items()
                      if not candidate.get("uncertain") and pending["reason"] == "unparsed_correction"
-                     and set(targets).intersection(pending["targets"])]
+                     and pid not in current_scope_disputes and set(targets).intersection(pending["targets"])]
         if reason is None and candidate["old"] is not None and candidate["key"] is not None:
             if existing is None or existing["value"].casefold() != candidate["old"].casefold():
                 reason = "old_value_mismatch"
         if reason is None and candidate["explicit"] and self.policy.mode == "auto":
             # A later statement naming the same subject explicitly resolves its
-            # older direct proposal. Multi-target ambiguity remains for review.
+            # older direct proposal. An unsupported lifetime in this very same
+            # message remains a question even beside a clear durable default.
             state["pending"] = {pid: p for pid, p in state["pending"].items()
-                                if not (p["key"] == key or p["targets"] == [key])}
+                                if not (p["key"] == key or p["targets"] == [key])
+                                or pid in current_scope_disputes}
         if existing is not None and existing["value"] == candidate["value"] and not clarifies:
             return
         if reason is None and existing is not None and not candidate["explicit"]:

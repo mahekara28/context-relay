@@ -15,7 +15,7 @@ Instruction memory and tool checks for Python agents.
 
 ![Context Relay: carry intent forward. Instruction memory and configured action checks for Python agents.](docs/context-relay-overview.svg)
 
-**Public alpha · v0.22.0a3.** See the [current limits](#limits-and-trust) before choosing Relay for your workflow.
+**Public alpha · v0.23.0a1.** See the [current limits](#limits-and-trust) before choosing Relay for your workflow.
 
 ## Why Relay?
 
@@ -41,7 +41,7 @@ install the wheel included in the repository:
 ```sh
 git clone https://github.com/mahekara28/context-relay.git
 cd context-relay
-python -m pip install --no-index --no-deps dist/context_relay_local-0.22.0a3-py3-none-any.whl
+python -m pip install --no-index --no-deps dist/context_relay_local-0.23.0a1-py3-none-any.whl
 python -m context_relay quickstart
 ```
 
@@ -176,11 +176,11 @@ Streaming, parallel actions and other native formats have limits; check the
 
 ## Limits and trust
 
-- **It can miss instructions.** In a separate wording test, the default parser
-  recognised only **1 of 11 clear changes** and missed both unclear cases.
-  Optional instruction review asks for a decision on selected fields on every
-  new user turn, even when nothing changed. That adds a manual check, not better
-  language understanding. [Test details](docs/VALIDATION.md).
+- **It can miss instructions.** The rules recognise a finite set of wording.
+  An optional [local model](docs/LOCAL_INTERPRETATION.md) can suggest more changes,
+  but those suggestions need review and add latency. Unclear task lifetimes need
+  clarification; Relay does not guess when a report or project finishes.
+  [Current tests and limits](docs/RELEASE-v0.23.0a1.md).
 - **Checks cover what you define.** Relay cannot judge every explanation or
   business decision. Wrong source data or a wrong verification rule can still
   produce a wrong result. Only calls through Relay and its registered tools
@@ -198,7 +198,9 @@ Streaming, parallel actions and other native formats have limits; check the
 
 The [CI runs](https://github.com/mahekara28/context-relay/actions/workflows/alpha.yml)
 show the current automated checks. The [validation report](docs/VALIDATION.md)
-records the earlier local tests and their limitations.
+records the local tests and their limitations. The [pilot kit](docs/PILOT_KIT.md)
+compares complete export tasks against reviewed memory and an ordinary validator,
+and gives another developer a starting point for testing their own workflow.
 
 A small local-model export experiment completed with explicit reviews and
 repairs. A baseline using framework memory and an ordinary validator did just as

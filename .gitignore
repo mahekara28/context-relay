@@ -38,3 +38,6 @@ evaluations/**
 !evaluations/framework-v020-fixtures.json
 !evaluations/content-integrity-v0.16-cases.json
 !evaluations/interpretation-v0.12-corpus.json
+!evaluations/instructions-v023.json
+!evaluations/instructions-v023-results.json
+!evaluations/pilot-participant-template.json

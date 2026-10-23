@@ -2,7 +2,7 @@
 
 import unittest
 
-from context_relay import AutomaticMemory, RelayStore
+from context_relay import AutomaticMemory, MemoryConflictError, RelayStore
 
 
 def user(text):
@@ -71,7 +71,6 @@ class ComposedCorrectionSafetyTests(unittest.TestCase):
             f"`{correction}`",
             f"> {correction}",
             "Please correct my saved response style: brief replaces detailed for this one answer only.",
-            "For this report only, please correct my saved response style: brief replaces detailed.",
             "My saved response style has not changed. Keep detailed as my standing response-style preference.",
             "I considered changing my response style to brief, then rejected the idea. Keep detailed as my standing preference.",
         )
@@ -83,6 +82,36 @@ class ComposedCorrectionSafetyTests(unittest.TestCase):
                 memory.process(history)
                 self.assertEqual(memory.snapshot(), before)
                 self.assert_integrity(memory, history)
+
+    def test_report_scoped_saved_preference_requires_a_known_lifetime(self):
+        # v0.23 recognizes this report scope instead of ignoring the request;
+        # it still must not promote brief to a durable or one-turn preference.
+        text = "For this report only, please correct my saved response style: brief replaces detailed."
+        memory, history = self.memory("Keep responses detailed.")
+        history.append(user(text))
+        memory.process(history)
+        self.assertEqual(self.values(memory), {"response_style": "detailed"})
+        self.assertEqual(len(memory.pending()), 1)
+        pending = memory.pending()[0]
+        self.assertEqual(pending["targets"], ["response_style"])
+        self.assertEqual(pending["reason"], "unparsed_correction")
+        self.assertIsNone(pending["value"])
+        self.assertEqual(pending["source"]["scope"], "unsupported_lifetime")
+        self.assertEqual(pending["source"]["quote"], text)
+        self.assertTrue(memory.effective_snapshot()["entries"][0]["disputed"])
+        self.assertNotIn("turn_scope", memory.effective_snapshot())
+        with self.assertRaises(MemoryConflictError):
+            memory.confirm(pending["id"])
+        self.assert_integrity(memory, history)
+        history.append(user("Continue working."))
+        memory.process(history)
+        self.assertEqual(memory.pending()[0]["id"], pending["id"])
+        self.assertTrue(memory.effective_snapshot()["entries"][0]["disputed"])
+        history.append(user("Keep responses detailed."))
+        memory.process(history)
+        self.assertEqual(memory.pending(), [])
+        self.assertFalse(memory.effective_snapshot()["entries"][0]["disputed"])
+        self.assert_integrity(memory, history)
 
     def test_two_same_domain_targets_do_not_supply_a_unique_pronoun_target(self):
         cases = (

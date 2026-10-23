@@ -1,0 +1,29 @@
+{
+  "record_kind": "unfilled_template_not_pilot_evidence",
+  "workflow": null,
+  "participant": null,
+  "dataset_origin": null,
+  "baseline_memory_and_validator": null,
+  "relay_version": null,
+  "python_version": null,
+  "framework_version": null,
+  "model_and_runtime_versions": null,
+  "frozen_case_sha256": null,
+  "journal_paths": [],
+  "integration_minutes": null,
+  "baseline": {
+    "tasks": null, "completed": null, "wrong_actions": null,
+    "unresolved_tasks": null, "errors_and_timeouts": null,
+    "model_calls": null, "tool_calls": null, "clarification_requests": null,
+    "human_review_minutes": null, "elapsed_seconds": null
+  },
+  "relay": {
+    "tasks": null, "completed": null, "wrong_actions": null,
+    "unresolved_tasks": null, "errors_and_timeouts": null,
+    "model_calls": null, "tool_calls": null, "clarification_requests": null,
+    "human_review_minutes": null, "elapsed_seconds": null
+  },
+  "regressions": [],
+  "limitations": [],
+  "participant_feedback": null
+}

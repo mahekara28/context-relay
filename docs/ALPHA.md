@@ -1,11 +1,11 @@
-# Relay 0.22.0a3 local alpha
+# Relay 0.23.0a1 local alpha
 
 Relay is a library for existing Python agents. Basic connection adds supported
 preference memory. The optional [protection profile](PROTECTION_PROFILE.md)
 combines explicit instruction review, checked tools, source verification,
 destination readback and bounded history continuation.
 
-The package is not published to PyPI. [Release validation](RELEASE-v0.22.0a3.md)
+The package is not published to PyPI. [Release validation](RELEASE-v0.23.0a1.md)
 records the checks completed for this patch. Local demonstrations are not a
 customer pilot.
 
@@ -14,7 +14,7 @@ customer pilot.
 Use Python 3.10+ in your project's environment. From the public source root:
 
 ```sh
-python -m pip install --no-index --no-deps dist/context_relay_local-0.22.0a3-py3-none-any.whl
+python -m pip install --no-index --no-deps dist/context_relay_local-0.23.0a1-py3-none-any.whl
 python -m context_relay quickstart
 ```
 
@@ -53,7 +53,7 @@ From the public source root, replace `YOUR_INSTALLED_MODEL` with your local mode
 name. This first command presents a review plan without model inference:
 
 ```sh
-python examples/verified_release_desk.py --directory .relay/alpha-release-desk --release 0.22.0a3 --artifact dist/context_relay_local-0.22.0a3-py3-none-any.whl --request-id demo-001 --message "For this export only, use JSON." --model YOUR_INSTALLED_MODEL
+python examples/verified_release_desk.py --directory .relay/alpha-release-desk --release 0.23.0a1 --artifact dist/context_relay_local-0.23.0a1-py3-none-any.whl --request-id demo-001 --message "For this export only, use JSON." --model YOUR_INSTALLED_MODEL
 ```
 
 Read the request and plan. If you explicitly choose JSON for this export,
@@ -84,7 +84,9 @@ the checkout. Keep that distinction in any evaluation report.
 ## Boundaries to understand
 
 - **Instructions:** default extraction is bounded and can miss clear changes.
-  It found only 1 of 11 clear updates in the fresh synthetic diagnostic.
+  See the [current wording evaluation](RELEASE-v0.23.0a1.md) for misses as well
+  as improvements. Optional [local interpretation](LOCAL_INTERPRETATION.md)
+  suggests changes for review; it does not establish their correctness.
   `MemoryPolicy(assurance_fields=(...))` requires explicit review for selected
   fields on every new user turn, including unchanged messages. That is a
   deliberate confirmation cost, not better language understanding.
@@ -118,7 +120,7 @@ Relay cannot atomically commit an external service with its own receipt.
 
 Use a separate development database or back up existing state before an alpha
 upgrade. Assurance state uses memory schema 4, introduced in 0.21; earlier
-releases cannot read it. Version 0.22 adds no memory schema migration.
+releases cannot read it. Versions 0.22 and 0.23 add no memory schema migration.
 Resuming a workflow requires its identical configuration. A changed protection
 profile needs a deliberate migration or a separately identified workflow.
 

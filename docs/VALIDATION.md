@@ -2,6 +2,14 @@
 
 # Validation and next evaluation
 
+## Version 0.23.0a1: instruction understanding and pilot tools
+
+See the [release validation](RELEASE-v0.23.0a1.md) for the frozen wording
+comparison, local-model experiment, complete-task checks and package validation.
+The [pilot kit](PILOT_KIT.md) is ready for an outside participant; preparing it is
+not evidence of an organisational pilot. Earlier numerical results below are
+historical observations on their named versions and corpora.
+
 ## Version 0.22.0a3: early HTTP rejection
 
 See the [patch validation](RELEASE-v0.22.0a3.md) for the Windows connection-abort

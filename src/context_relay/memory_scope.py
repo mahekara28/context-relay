@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 
 
-_SCALAR = r"[A-Za-z][A-Za-z0-9_.+-]{0,63}"
+_SCALAR = r"[^\W\d_][\w\u0900-\u097f.+-]{0,63}"
 _QUOTED = re.compile(
     rf'"\s*{_SCALAR}\s*"|“\s*{_SCALAR}\s*”|«\s*{_SCALAR}\s*»|'
     rf"(?<!\w)'\s*{_SCALAR}\s*'(?!\w)|‘\s*{_SCALAR}\s*’")
@@ -17,15 +17,18 @@ _TURN = re.compile(
     r"(?:only|just)\s+this\s+(?:reply|response|answer|export|download|request|turn|message)|"
     r"(?:only\s+)?this\s+time)", re.I)
 _FOREIGN_TURN = re.compile(
-    r"(?:sirf\s+(?:is\s+(?:jawab|reply|response)\s+ke\s+liye|is\s+baar)|"
+    r"(?:(?:sirf\s+)?is\s+(?:jawab|reply|response)\s+ke\s+liye|sirf\s+is\s+baar|"
     r"solo\s+(?:esta\s+vez|para\s+esta\s+respuesta)|"
-    r"pour\s+cette\s+r[eé]ponse|cette\s+fois|इस\s+बार)", re.I)
+    r"pour\s+cette\s+r[eé]ponse|cette\s+fois|(?:सिर्फ\s+|केवल\s+)?इस\s+(?:जवाब|उत्तर|प्रतिक्रिया)\s+के\s+लिए|इस\s+बार)", re.I)
 _FOREIGN_LOCAL = re.compile(
     r"(?:abhi\s+ke\s+liye|sirf\s+aaj|solo\s+hoy|por\s+ahora|"
-    r"pour\s+l['’]instant|aujourd['’]hui\s+seulement|सिर्फ\s+आज|केवल\s+आज|अभी\s+के\s+लिए)", re.I)
+    r"pour\s+l['’]instant|aujourd['’]hui\s+seulement|सिर्फ\s+आज|केवल\s+आज|अभी\s+के\s+लिए|"
+    r"(?:sirf\s+)?is\s+(?:report|task|kaam|session|run|file)\s+ke\s+liye|"
+    r"(?:सिर्फ\s+|केवल\s+)?इस\s+(?:रिपोर्ट|काम|कार्य|सत्र|फ़ाइल|फाइल)\s+के\s+लिए)", re.I)
 _CALENDAR_SCOPE = re.compile(r"^today(?=\s|,)", re.I)
 _CONTINUATION = re.compile(r"(?:please\s+)?(?:continue|go\s+ahead|proceed|carry\s+on)"
-                           r"(?:\s+[^.!?;\n]{1,160})?[.!]?|(?:please\s+)?(?:do\s+it|yes)(?:\s+please)?[.!]?", re.I)
+                           r"(?:\s+[^.!?;\n]{1,160})?[.!]?|(?:please\s+)?(?:do\s+it|yes)(?:\s+please)?[.!]?|"
+                           r"(?:aage\s+badho|jaari\s+rakho|जारी\s+रखो|आगे\s+बढ़ो)[.!।]?", re.I)
 _REPORTED_QUOTE = re.compile(
     r"^(?:(?:the|this|my|our)\s+[\w -]{1,80}\s+(?:says|said|reads|contains|states|wrote))\s*:?[\s]*$", re.I)
 
@@ -89,16 +92,32 @@ def scalar_quotes(text: str) -> str | None:
     return result
 
 
-def partition_scopes(text: str, statements, local_pattern):
+def scope_marker(text: str, local_pattern):
+    """Find a known lifetime marker, including unsupported task lifetimes."""
+    return (local_pattern.search(text) or _FOREIGN_TURN.search(text)
+            or _FOREIGN_LOCAL.search(text) or _CALENDAR_SCOPE.search(text))
+
+
+def partition_scopes(text: str, statements, local_pattern, valid_default):
     """Return a same-length durable remainder and explicitly scoped clauses.
 
     Scope markers must be at a complete clause boundary. Unknown lifetimes are
     separated too, but marked unsupported for the caller's clarification path.
     """
     scoped, characters = [], list(text)
+    clauses = []
     for start, end, quote in statements(text, split_clauses=False):
-        match = (local_pattern.search(quote) or _FOREIGN_TURN.search(quote)
-                 or _FOREIGN_LOCAL.search(quote) or _CALENDAR_SCOPE.search(quote))
+        # An explicit second command may carry its own lifetime. Do not split
+        # "export as JSON, but only for this task": that qualifier scopes the
+        # first command. The unconsumed remainder is still parsed as a whole.
+        split = re.search(r",\s*but\s+(?=(?:use|export|reply|respond|answer|keep|set|change)\b)", quote, re.I)
+        if (split and scope_marker(quote[split.end():], local_pattern)
+                and valid_default(quote[:split.start()])):
+            clauses.append((start + split.end(), end, quote[split.end():]))
+        else:
+            clauses.append((start, end, quote))
+    for start, end, quote in clauses:
+        match = scope_marker(quote, local_pattern)
         if match is None:
             continue
         marker = match.group()

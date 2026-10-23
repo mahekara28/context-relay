@@ -13,7 +13,7 @@ and install the current bundled wheel:
 ```sh
 git clone https://github.com/mahekara28/context-relay.git
 cd context-relay
-python -m pip install --no-index --no-deps dist/context_relay_local-0.22.0a3-py3-none-any.whl
+python -m pip install --no-index --no-deps dist/context_relay_local-0.23.0a1-py3-none-any.whl
 python -m context_relay quickstart
 ```
 

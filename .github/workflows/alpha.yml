@@ -43,8 +43,10 @@ jobs:
         run: |
           python -I -c "import context_relay as r; from importlib.metadata import requires, version; assert r.__version__ == version('context-relay-local'); assert not requires('context-relay-local')"
           python -I -m context_relay quickstart
-      - name: Exercise the offline harness improvement example
-        run: python examples/harness_improvement.py
+      - name: Exercise the offline harness and pilot examples
+        run: |
+          python examples/harness_improvement.py
+          python examples/instruction_pilot.py --report ci-results/instruction-pilot.jsonl
       - name: Run source regression suite (optional SDK tests may skip)
         env:
           PYTHONPATH: src

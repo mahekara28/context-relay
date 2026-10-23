@@ -1,0 +1,610 @@
+{
+  "schema": 1,
+  "release": "0.23.0a1",
+  "evaluation_date": "2026-10-24",
+  "status": "local_synthetic_validation_not_an_organisational_pilot",
+  "instruction_decisions": {
+    "dataset_kind": "agent_authored_synthetic",
+    "corpus": "instructions-v023.json",
+    "corpus_sha256": "95eb86212cf6dc30704ccd8623a40efd8f24c85ac198f976a5c473a0883325f0",
+    "runner": "examples/evaluate_instructions_v023.py",
+    "runner_sha256": "ed2000e0a265b897a662873d1bacd2d9d4ab2aa5486b47f31870fc79fef37f7b",
+    "optional_model_enabled": false,
+    "baseline": {
+      "version": "0.22.0a3",
+      "reference": "git:139d3c44df7882750db59c1ed87a6a45da7bfb53",
+      "evidence_sha256": "d732f454e6ce5c89dbbf2b8ac3bacdda159ddba2916dee4aa5f796629512f76a",
+      "complete": true,
+      "source_unchanged_during_run": true,
+      "runner_unchanged_during_run": true,
+      "source_files_sha256": {
+        "context_relay/__init__.py": "21bab2a8d8696de79b8bc6e1ad23ccb59bcf9ab7f0c61d600d58d9c1bea3967f",
+        "context_relay/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
+        "context_relay/_storage_files.py": "0b17c8543f9a42aee85ecb717f66868708a50f3b46fd801d4e682926caafaf97",
+        "context_relay/action_repair.py": "4c195c0d853f9ff6314831b11f7e745489005a557319e782599aa783fdae3a1f",
+        "context_relay/actions.py": "8f9f86d82e762d54f02c3b60b4c137a2ceb9ad6d1894b4c6cdd5b6980d6a3b2e",
+        "context_relay/adapters.py": "97addaafc32b0759b93daa7a4fb7be610be478e489c05cce31409c50bac052ff",
+        "context_relay/anthropic.py": "5474227a637f555201fc10c078eb668d7c6437de0f08633fb95789ca94def05d",
+        "context_relay/attachment.py": "79c6babccb4ba691abd57f92d4343bdfb4fd527487c1f0e4b8e3ba3c673414b6",
+        "context_relay/automatic.py": "89661e957d5151fe52c7674d59bf9b33bec9bdc9cbe1e8fd622c434498e90da9",
+        "context_relay/budget.py": "8ef30e61799803324ad4d46563503360f56b71d8e3c4656090da3307cd474f13",
+        "context_relay/cli.py": "48d20afadc29dd1de97c2a73abcecf0d8df981473febec7452e3b80e1c0a0169",
+        "context_relay/config.py": "70297000a199d1de20294ca3c8a072e130af21e17f6e65a9cf9e92020f09c25c",
+        "context_relay/connection.py": "3e3d2358bca3ba84dc98850b9909dde473095f41036db9c4c051ed5105d2d1b2",
+        "context_relay/content.py": "f1a49288e42b20d92eeb64bba6f55f138b0320492c2547977d63d4ec1d64a8e0",
+        "context_relay/context.py": "5474346186307d4b0a0edd4ac5f8ce8a6bfafacc736584e4c3f0486bfbdb10f5",
+        "context_relay/conversation.py": "dea3c84543290233623e465811aeab1966f72cb6b81d082f99d8e8ddb3859eab",
+        "context_relay/corrections.py": "2c0c9a4039871d41851431b688f7a64cb4495a688584510d97b1adf68694cf82",
+        "context_relay/coverage.py": "454f0a7265d81d8b9358d8d50994901dc6e910d5008e638d1ee5443a51da9c8c",
+        "context_relay/demo.py": "75f88ef5ad74f741f983e95c7e832bfa38353eb81fc80e5e7572a697a7c15e59",
+        "context_relay/engine.py": "09c76f0b14a628d76c0f82de3c3c19e87c392afbfacd411ed5dc24c3288a06da",
+        "context_relay/evidence.py": "beb5eb07de5320fbfcbd0911445ef2ccab7626e54b526f341e5b54805b265cba",
+        "context_relay/fresh_evidence.py": "65c68220cc456a4cd7a3aecc9a9f70a9196d94385f449131da6fbf0adcc0a3d9",
+        "context_relay/grounding.py": "b650f5c1b779460765ca1fb173be244032e01987239f95732bde73a6eaeef253",
+        "context_relay/harness_eval.py": "69fab42b07e259fd64678ecb3a3371a1a29f50b4842a2a8e07c51e5e2b95984c",
+        "context_relay/interpretation.py": "4b38aa1999619c1c4a32fc8579c670e2f0b2fbaad706a5f4f8d77d7ec30741d0",
+        "context_relay/langchain.py": "57b08b754f7ec6e77d64ba755cfadc1cb0bfc6a5ccedc6720e955ec9667cee3e",
+        "context_relay/memory.py": "7771ac1a9ef6a5d9fca89d70bad2ea473182cc161f8a39d13b0d17b5be259b32",
+        "context_relay/memory_languages.py": "01db47ede7d253da5a1a026ecaa2a010d886e09e02df76bbb2e1fdb422a47edb",
+        "context_relay/memory_plan.py": "00eeb90aca80ec1da8ad04ec7924a90bb46b0be9577cbdf6c027fb9c2ed1d86f",
+        "context_relay/memory_scope.py": "c525e2dd21c85e79f5ed8849d0712782c77772fd36531ab75cb8329b70fc7a0c",
+        "context_relay/memory_values.py": "a3130519d280666da5c34547157546f7bd8a58c61d7a9a04824dd1faa523d3fc",
+        "context_relay/middleware.py": "c831b8c8a7f1126d8133db26ada21643b69452e2d994cc11c46c4364ebc555da",
+        "context_relay/models.py": "04d9cd1c1d914f33c3113d24c960b055d381f78adfbba06309d8c448be157800",
+        "context_relay/native.py": "346113bd2306059510596936bbcdf563021665981f5617922b182e7baaee71c9",
+        "context_relay/native_anthropic.py": "4b0f0299343948ae89723189df5e59c133583061bb6139231b8275b96f4dc051",
+        "context_relay/native_openai.py": "1d77600b4486d9a3b1401566c1bdb5354b37718de433adbef891f3addd740a54",
+        "context_relay/openai.py": "5ea769b641de80c88c5cf7f344b8d4febea6074a8d158206e1c9d0c1642fd039",
+        "context_relay/organization.py": "95c090bc8aa64380c9f81a095bd7063b7ba5f3c68d82e730291abe3cd4b88b35",
+        "context_relay/outcomes.py": "bcb508aa822e1ddd7d426bb06e7c081f8eb797eed0fe05ede51379c107506bb2",
+        "context_relay/output.py": "129e7abf2987688eeafa59781bf34cc8e0a72b5e2aefd65c7296153930f4d1b1",
+        "context_relay/persistence.py": "64b60be7476932ff3240467097a252890f577b6db108555a76c3ab2dbbe407ee",
+        "context_relay/pilot.py": "92d8a559c30705789935ced2e0c02d9df514cac5be46bf00387f4b7a60df508c",
+        "context_relay/protocols.py": "50bc971776ba09b4ce4d793342077dc949d926daf01dfb75894b80e9c495cdde",
+        "context_relay/provider_actions.py": "a851bded07692dbed5ded790c651884433db61242ba9460e993f6ad3f8adc19c",
+        "context_relay/recovery.py": "a2e89aa87a602b4b9613a4dfef2282b77b5074187ee90191a2cd259c48384c2d",
+        "context_relay/responses_workflow.py": "0630716803148ba61f2b04d27ed12a75d1d2bcac64c6b2b1e6fe509c04197efc",
+        "context_relay/server.py": "5f9e999d6c24cec5ecd300c0790755eb6a002b5dafe33f3619f7bf089407a91f",
+        "context_relay/storage_privacy.py": "bb3d215ab0fe3e3f6de3da9d094f2ef2767a14b9b11393cbb34a6829aed6ce00",
+        "context_relay/store.py": "72c8f9771e9b8e879e6785ff05409686d58782ef8d0c91464b2dfb793bc8dcb7",
+        "context_relay/tool_schema.py": "6718d68b1b19671517317547fbe1e73f4c808526d4542ec729c992a124d86fa1",
+        "context_relay/tools.py": "6e7bfcca5d75ac89366539bdbf7c56c3c49e66ba4b3facd99396ce100f740fc3",
+        "context_relay/verification.py": "b264e3e2c29175072568c2c1e66150acca5a916e98c7a5f823419c03ab3fc3c3",
+        "context_relay/workflow_history.py": "d4b091f7bccfb5d28af97e00030ca25a0f9546ea4507198904685091fca3a460"
+      },
+      "summary": {
+        "development": {
+          "cases": 30,
+          "decisions_correct": 25,
+          "correct_suggestions_requiring_review": 0,
+          "incorrect_mutations": 1,
+          "unknown_mutation_states": 0,
+          "unnecessary_reviews": 0,
+          "unknown_review_states": 0,
+          "interpreter_calls": 0,
+          "outcomes": {
+            "recognized": 14,
+            "missed_change": 1,
+            "review_needed": 1,
+            "clarification": 3,
+            "missed_clarification": 3,
+            "unchanged": 8
+          }
+        },
+        "holdout": {
+          "cases": 30,
+          "decisions_correct": 17,
+          "correct_suggestions_requiring_review": 0,
+          "incorrect_mutations": 0,
+          "unknown_mutation_states": 0,
+          "unnecessary_reviews": 0,
+          "unknown_review_states": 0,
+          "interpreter_calls": 0,
+          "outcomes": {
+            "recognized": 7,
+            "missed_change": 5,
+            "review_needed": 4,
+            "missed_clarification": 4,
+            "clarification": 2,
+            "unchanged": 8
+          }
+        },
+        "all": {
+          "cases": 60,
+          "decisions_correct": 42,
+          "correct_suggestions_requiring_review": 0,
+          "incorrect_mutations": 1,
+          "unknown_mutation_states": 0,
+          "unnecessary_reviews": 0,
+          "unknown_review_states": 0,
+          "interpreter_calls": 0,
+          "outcomes": {
+            "recognized": 21,
+            "missed_change": 6,
+            "review_needed": 5,
+            "clarification": 5,
+            "missed_clarification": 7,
+            "unchanged": 16
+          }
+        }
+      },
+      "cases_not_correct": [
+        {
+          "id": "d03",
+          "split": "development",
+          "kind": "change",
+          "outcome": "missed_change",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "d08",
+          "split": "development",
+          "kind": "change",
+          "outcome": "review_needed",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "d14",
+          "split": "development",
+          "kind": "uncertain",
+          "outcome": "missed_clarification",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "d20",
+          "split": "development",
+          "kind": "scope_question",
+          "outcome": "missed_clarification",
+          "incorrect_mutation": true
+        },
+        {
+          "id": "d30",
+          "split": "development",
+          "kind": "scope_question",
+          "outcome": "missed_clarification",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h03",
+          "split": "holdout",
+          "kind": "change",
+          "outcome": "missed_change",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h04",
+          "split": "holdout",
+          "kind": "change",
+          "outcome": "review_needed",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h05",
+          "split": "holdout",
+          "kind": "change",
+          "outcome": "missed_change",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h06",
+          "split": "holdout",
+          "kind": "change",
+          "outcome": "missed_change",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h07",
+          "split": "holdout",
+          "kind": "change",
+          "outcome": "missed_change",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h08",
+          "split": "holdout",
+          "kind": "change",
+          "outcome": "review_needed",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h09",
+          "split": "holdout",
+          "kind": "change",
+          "outcome": "missed_change",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h10",
+          "split": "holdout",
+          "kind": "change",
+          "outcome": "review_needed",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h13",
+          "split": "holdout",
+          "kind": "uncertain",
+          "outcome": "missed_clarification",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h14",
+          "split": "holdout",
+          "kind": "uncertain",
+          "outcome": "missed_clarification",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h20",
+          "split": "holdout",
+          "kind": "scope_question",
+          "outcome": "missed_clarification",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h29",
+          "split": "holdout",
+          "kind": "change",
+          "outcome": "review_needed",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h30",
+          "split": "holdout",
+          "kind": "scope_question",
+          "outcome": "missed_clarification",
+          "incorrect_mutation": false
+        }
+      ]
+    },
+    "candidate": {
+      "version": "0.23.0a1",
+      "reference": "candidate identified by source_files_sha256",
+      "evidence_sha256": "c40389c2f9c3414ef04bbc81d057cb384199c218026933469196afba8abc9f22",
+      "complete": true,
+      "source_unchanged_during_run": true,
+      "runner_unchanged_during_run": true,
+      "source_files_sha256": {
+        "context_relay/__init__.py": "a2c5f4a9b8c523286086a6fc80842585f6cc03ff7f272bff99f0e2efcdb3c616",
+        "context_relay/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
+        "context_relay/_storage_files.py": "0b17c8543f9a42aee85ecb717f66868708a50f3b46fd801d4e682926caafaf97",
+        "context_relay/action_repair.py": "4c195c0d853f9ff6314831b11f7e745489005a557319e782599aa783fdae3a1f",
+        "context_relay/actions.py": "8f9f86d82e762d54f02c3b60b4c137a2ceb9ad6d1894b4c6cdd5b6980d6a3b2e",
+        "context_relay/adapters.py": "97addaafc32b0759b93daa7a4fb7be610be478e489c05cce31409c50bac052ff",
+        "context_relay/anthropic.py": "5474227a637f555201fc10c078eb668d7c6437de0f08633fb95789ca94def05d",
+        "context_relay/attachment.py": "79c6babccb4ba691abd57f92d4343bdfb4fd527487c1f0e4b8e3ba3c673414b6",
+        "context_relay/automatic.py": "89661e957d5151fe52c7674d59bf9b33bec9bdc9cbe1e8fd622c434498e90da9",
+        "context_relay/budget.py": "8ef30e61799803324ad4d46563503360f56b71d8e3c4656090da3307cd474f13",
+        "context_relay/cli.py": "48d20afadc29dd1de97c2a73abcecf0d8df981473febec7452e3b80e1c0a0169",
+        "context_relay/config.py": "70297000a199d1de20294ca3c8a072e130af21e17f6e65a9cf9e92020f09c25c",
+        "context_relay/connection.py": "3e3d2358bca3ba84dc98850b9909dde473095f41036db9c4c051ed5105d2d1b2",
+        "context_relay/content.py": "f1a49288e42b20d92eeb64bba6f55f138b0320492c2547977d63d4ec1d64a8e0",
+        "context_relay/context.py": "5474346186307d4b0a0edd4ac5f8ce8a6bfafacc736584e4c3f0486bfbdb10f5",
+        "context_relay/conversation.py": "dea3c84543290233623e465811aeab1966f72cb6b81d082f99d8e8ddb3859eab",
+        "context_relay/corrections.py": "2c0c9a4039871d41851431b688f7a64cb4495a688584510d97b1adf68694cf82",
+        "context_relay/coverage.py": "454f0a7265d81d8b9358d8d50994901dc6e910d5008e638d1ee5443a51da9c8c",
+        "context_relay/demo.py": "75f88ef5ad74f741f983e95c7e832bfa38353eb81fc80e5e7572a697a7c15e59",
+        "context_relay/engine.py": "09c76f0b14a628d76c0f82de3c3c19e87c392afbfacd411ed5dc24c3288a06da",
+        "context_relay/evidence.py": "beb5eb07de5320fbfcbd0911445ef2ccab7626e54b526f341e5b54805b265cba",
+        "context_relay/fresh_evidence.py": "65c68220cc456a4cd7a3aecc9a9f70a9196d94385f449131da6fbf0adcc0a3d9",
+        "context_relay/grounding.py": "b650f5c1b779460765ca1fb173be244032e01987239f95732bde73a6eaeef253",
+        "context_relay/harness_eval.py": "69fab42b07e259fd64678ecb3a3371a1a29f50b4842a2a8e07c51e5e2b95984c",
+        "context_relay/interpretation.py": "24468c2e7dd9fffaedb37d21a8d2b62be5fcbe0bf05fe66a4ceebc966d697b01",
+        "context_relay/langchain.py": "57b08b754f7ec6e77d64ba755cfadc1cb0bfc6a5ccedc6720e955ec9667cee3e",
+        "context_relay/local_interpreter.py": "8704c05134bcc927a834c44cc418e7a33b022e3f04a5518fd8c39f7c7d1fc4ae",
+        "context_relay/memory.py": "9dd7a42ddee96cc233971949806d45a9e0c1eda7447edbc42c46e4adefd2a84b",
+        "context_relay/memory_languages.py": "e99622ff1dc76fe23c49920d5137f9a98a25b3fe36bb4ee52221c4209249cff3",
+        "context_relay/memory_plan.py": "00eeb90aca80ec1da8ad04ec7924a90bb46b0be9577cbdf6c027fb9c2ed1d86f",
+        "context_relay/memory_scope.py": "454e0d498183bc6c12909ac4de2906a2298f99f983ae5439edb66353ae3eeac9",
+        "context_relay/memory_values.py": "a3130519d280666da5c34547157546f7bd8a58c61d7a9a04824dd1faa523d3fc",
+        "context_relay/middleware.py": "c831b8c8a7f1126d8133db26ada21643b69452e2d994cc11c46c4364ebc555da",
+        "context_relay/models.py": "04d9cd1c1d914f33c3113d24c960b055d381f78adfbba06309d8c448be157800",
+        "context_relay/native.py": "346113bd2306059510596936bbcdf563021665981f5617922b182e7baaee71c9",
+        "context_relay/native_anthropic.py": "4b0f0299343948ae89723189df5e59c133583061bb6139231b8275b96f4dc051",
+        "context_relay/native_openai.py": "1d77600b4486d9a3b1401566c1bdb5354b37718de433adbef891f3addd740a54",
+        "context_relay/openai.py": "5ea769b641de80c88c5cf7f344b8d4febea6074a8d158206e1c9d0c1642fd039",
+        "context_relay/organization.py": "95c090bc8aa64380c9f81a095bd7063b7ba5f3c68d82e730291abe3cd4b88b35",
+        "context_relay/outcomes.py": "bcb508aa822e1ddd7d426bb06e7c081f8eb797eed0fe05ede51379c107506bb2",
+        "context_relay/output.py": "129e7abf2987688eeafa59781bf34cc8e0a72b5e2aefd65c7296153930f4d1b1",
+        "context_relay/persistence.py": "64b60be7476932ff3240467097a252890f577b6db108555a76c3ab2dbbe407ee",
+        "context_relay/pilot.py": "92d8a559c30705789935ced2e0c02d9df514cac5be46bf00387f4b7a60df508c",
+        "context_relay/protocols.py": "50bc971776ba09b4ce4d793342077dc949d926daf01dfb75894b80e9c495cdde",
+        "context_relay/provider_actions.py": "a851bded07692dbed5ded790c651884433db61242ba9460e993f6ad3f8adc19c",
+        "context_relay/recovery.py": "a2e89aa87a602b4b9613a4dfef2282b77b5074187ee90191a2cd259c48384c2d",
+        "context_relay/responses_workflow.py": "0630716803148ba61f2b04d27ed12a75d1d2bcac64c6b2b1e6fe509c04197efc",
+        "context_relay/server.py": "5f9e999d6c24cec5ecd300c0790755eb6a002b5dafe33f3619f7bf089407a91f",
+        "context_relay/storage_privacy.py": "bb3d215ab0fe3e3f6de3da9d094f2ef2767a14b9b11393cbb34a6829aed6ce00",
+        "context_relay/store.py": "72c8f9771e9b8e879e6785ff05409686d58782ef8d0c91464b2dfb793bc8dcb7",
+        "context_relay/tool_schema.py": "6718d68b1b19671517317547fbe1e73f4c808526d4542ec729c992a124d86fa1",
+        "context_relay/tools.py": "6e7bfcca5d75ac89366539bdbf7c56c3c49e66ba4b3facd99396ce100f740fc3",
+        "context_relay/verification.py": "b264e3e2c29175072568c2c1e66150acca5a916e98c7a5f823419c03ab3fc3c3",
+        "context_relay/workflow_history.py": "d4b091f7bccfb5d28af97e00030ca25a0f9546ea4507198904685091fca3a460"
+      },
+      "summary": {
+        "development": {
+          "cases": 30,
+          "decisions_correct": 27,
+          "correct_suggestions_requiring_review": 0,
+          "incorrect_mutations": 0,
+          "unknown_mutation_states": 0,
+          "unnecessary_reviews": 0,
+          "unknown_review_states": 0,
+          "interpreter_calls": 0,
+          "outcomes": {
+            "recognized": 14,
+            "missed_change": 1,
+            "review_needed": 1,
+            "clarification": 5,
+            "missed_clarification": 1,
+            "unchanged": 8
+          }
+        },
+        "holdout": {
+          "cases": 30,
+          "decisions_correct": 18,
+          "correct_suggestions_requiring_review": 0,
+          "incorrect_mutations": 0,
+          "unknown_mutation_states": 0,
+          "unnecessary_reviews": 0,
+          "unknown_review_states": 0,
+          "interpreter_calls": 0,
+          "outcomes": {
+            "recognized": 7,
+            "missed_change": 3,
+            "review_needed": 6,
+            "missed_clarification": 3,
+            "clarification": 3,
+            "unchanged": 8
+          }
+        },
+        "all": {
+          "cases": 60,
+          "decisions_correct": 45,
+          "correct_suggestions_requiring_review": 0,
+          "incorrect_mutations": 0,
+          "unknown_mutation_states": 0,
+          "unnecessary_reviews": 0,
+          "unknown_review_states": 0,
+          "interpreter_calls": 0,
+          "outcomes": {
+            "recognized": 21,
+            "missed_change": 4,
+            "review_needed": 7,
+            "clarification": 8,
+            "missed_clarification": 4,
+            "unchanged": 16
+          }
+        }
+      },
+      "cases_not_correct": [
+        {
+          "id": "d03",
+          "split": "development",
+          "kind": "change",
+          "outcome": "missed_change",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "d08",
+          "split": "development",
+          "kind": "change",
+          "outcome": "review_needed",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "d14",
+          "split": "development",
+          "kind": "uncertain",
+          "outcome": "missed_clarification",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h03",
+          "split": "holdout",
+          "kind": "change",
+          "outcome": "missed_change",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h04",
+          "split": "holdout",
+          "kind": "change",
+          "outcome": "review_needed",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h05",
+          "split": "holdout",
+          "kind": "change",
+          "outcome": "missed_change",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h06",
+          "split": "holdout",
+          "kind": "change",
+          "outcome": "missed_change",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h07",
+          "split": "holdout",
+          "kind": "change",
+          "outcome": "review_needed",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h08",
+          "split": "holdout",
+          "kind": "change",
+          "outcome": "review_needed",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h09",
+          "split": "holdout",
+          "kind": "change",
+          "outcome": "review_needed",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h10",
+          "split": "holdout",
+          "kind": "change",
+          "outcome": "review_needed",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h13",
+          "split": "holdout",
+          "kind": "uncertain",
+          "outcome": "missed_clarification",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h14",
+          "split": "holdout",
+          "kind": "uncertain",
+          "outcome": "missed_clarification",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h20",
+          "split": "holdout",
+          "kind": "scope_question",
+          "outcome": "missed_clarification",
+          "incorrect_mutation": false
+        },
+        {
+          "id": "h29",
+          "split": "holdout",
+          "kind": "change",
+          "outcome": "review_needed",
+          "incorrect_mutation": false
+        }
+      ]
+    },
+    "candidate_sources_match_workspace_when_summary_created": true,
+    "new_correct_case_ids": [
+      "d20",
+      "d30",
+      "h30"
+    ],
+    "regressed_case_ids": [],
+    "interpretation": "Correct decisions increased from 42/60 to 45/60. The three newly correct cases request appropriate scope clarification; recognized-value outcomes remain 21. This does not establish broader language understanding or completed work.",
+    "limits": [
+      "Thirty development and thirty originally held-out examples; agent-authored, not independently collected.",
+      "Fifteen candidate cases still fail the expected decision: four missed changes, seven requiring review, and four missed clarifications.",
+      "Zero observed incorrect standing-memory mutations in the candidate applies only to these sixty cases.",
+      "The published holdout is now exposed; a new untouched set is needed for a fresh generalization claim."
+    ]
+  },
+  "paired_workflow_starter": {
+    "dataset_kind": "synthetic_fixed_proposals_scripted_reviews_real_temporary_export_files",
+    "design": "alternating_pairs",
+    "report_sha256": "56a08ae531187690fac51024c0a5d98e545fdd77cd596f3914a3f78bd86a20f0",
+    "journal_sha256": "b4c31ac5b1db8d6512a3fcfebd3b66c7872ca04037881697dc4f9dbd4fd9c7d9",
+    "observations_journal_sha256": "999ced2931a66d082db70962ad69fa139bd9b6ae2ccd3e5bd0c2f868f3af0f9f",
+    "baseline_configuration_sha256": "3b473947b0917ea13879735105d5286e63dc44bda0ae903171a67fcf74d04493",
+    "candidate_configuration_sha256": "7a1c0da08e94085be09d751e6c50a9a3cbf3ad9a7644bfe96558272930620865",
+    "baseline_description": "Application memory supplied by a scripted reviewer, ordinary validation, and repair from known source values.",
+    "candidate_description": "Relay instruction memory, registered tool checks, and repair from the same known source values.",
+    "baseline": {
+      "cases": 9,
+      "completed": 8,
+      "wrong_actions": 0,
+      "unresolved_cases": [
+        "unknown-identity"
+      ],
+      "errors": 0,
+      "model_calls": 10,
+      "tool_calls": 9,
+      "scripted_review_decisions": 10,
+      "clarification_requests": 1,
+      "repair_attempts": 8,
+      "human_review_time_measured": false
+    },
+    "relay": {
+      "cases": 9,
+      "completed": 8,
+      "wrong_actions": 0,
+      "unresolved_cases": [
+        "unknown-identity"
+      ],
+      "errors": 0,
+      "model_calls": 10,
+      "tool_calls": 9,
+      "scripted_review_decisions": 3,
+      "clarification_requests": 4,
+      "repair_attempts": 9,
+      "human_review_time_measured": false
+    },
+    "outside_participant_runs": 0,
+    "measured_human_time_saving": null,
+    "interpretation": "Both variants completed eight of nine workflows and wrote no wrong export. The unresolved unknown-identity case was blocked by both. Fewer scripted review decisions are not measured human time savings or evidence of superiority over a real framework."
+  },
+  "local_model_development": {
+    "dataset_kind": "development_examples_not_holdout",
+    "evidence_sha256": "e84d907668872d32c77f1a711418f6f4500688cc1d10d8b09f5cc5ba392991b7",
+    "runtime": "Ollama",
+    "runtime_version": "0.40.1",
+    "model": "qwen2.5:3b",
+    "model_digest_prefix": "357c53fb659c",
+    "cases": 4,
+    "useful_suggestions_on_inspection": 3,
+    "empty_results": 1,
+    "assessment": "The implementing agent inspected these four development examples; there was no independent human assessor.",
+    "automatic_approvals": 0,
+    "completed_agent_tasks_measured": false,
+    "per_case": [
+      {
+        "label": "measurement_units",
+        "outcome": "useful_suggestion",
+        "elapsed_seconds": 64.219
+      },
+      {
+        "label": "citation_placement",
+        "outcome": "useful_suggestion",
+        "elapsed_seconds": 25.296
+      },
+      {
+        "label": "english_request_for_hindi_replies",
+        "outcome": "useful_suggestion",
+        "elapsed_seconds": 24.438
+      },
+      {
+        "label": "hinglish_request_for_hindi_replies",
+        "outcome": "no_suggestion",
+        "elapsed_seconds": 28.437
+      }
+    ],
+    "elapsed_seconds_range": [
+      24.438,
+      64.219
+    ],
+    "timing_scope": "Wall time of direct suggest() calls including local metadata request, generation and client validation; one busy local computer, no controlled warmup or throughput comparison.",
+    "limits": [
+      "Direct extraction examples do not evaluate integration eligibility, approval, protected tools or completed workflows.",
+      "The Hinglish request returned no suggestion. Three useful suggestions out of four development examples do not establish population accuracy.",
+      "This development run is separate from the frozen rules-only comparison; no model-assisted improvement over that baseline is claimed."
+    ]
+  },
+  "excluded_exploratory_model_run": {
+    "included_in_comparison": false,
+    "evidence_sha256": "12952e274b4a957c68e540a5c5f826934ea6a83f2694d1d705bf60df3a6e3e64",
+    "model": "qwen2.5:3b",
+    "cases": 21,
+    "interpreter_calls": 14,
+    "recorded_correct_decisions": 10,
+    "recorded_correct_suggestions": 0,
+    "timeout_errors": 3,
+    "configured_timeout_seconds": 30,
+    "reason": "Exploratory subset on changing source with an older grader and 30-second timeout; the older report did not record a source-stability check. Not comparable with the final frozen reports and not evidence of model benefit."
+  },
+  "overall_limits": [
+    "No outside developer or organisation has completed the pilot.",
+    "No hosted-provider experiment, production throughput result or measured human review-time comparison is included.",
+    "Hashes identify evidence and code; they are not independent verification of reliability.",
+    "No raw model responses, machine-specific paths or private logs are included in this public summary."
+  ]
+}

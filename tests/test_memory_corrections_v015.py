@@ -59,6 +59,22 @@ class CorrectionIntentTests(unittest.TestCase):
                         self.assertEqual({p["key"] for p in memory.pending()}, set(case["targets"]))
                         self.assertTrue(all(p["value"] is None for p in memory.pending()))
                         self.assertEqual({e["key"] for e in memory.snapshot()["entries"] if e["disputed"]}, set(case["targets"]))
+                    elif case["id"] == "v015-abstain-04":
+                        # Keep the historical corpus unchanged. v0.23 recognizes
+                        # report scope but cannot infer its end, so the default
+                        # stays CSV and its use pauses for scope clarification.
+                        self.assertEqual(self.values(memory)["export_format"], "CSV")
+                        self.assertEqual(len(memory.pending()), 1)
+                        pending = memory.pending()[0]
+                        self.assertEqual(pending["targets"], ["export_format"])
+                        self.assertEqual(pending["reason"], "unparsed_correction")
+                        self.assertIsNone(pending["value"])
+                        self.assertEqual(pending["source"]["scope"], "unsupported_lifetime")
+                        self.assertEqual(pending["source"]["quote"], "For this report only, export as JSON;")
+                        self.assertEqual({e["key"] for e in memory.snapshot()["entries"] if e["disputed"]}, {"export_format"})
+                        self.assertNotIn("turn_scope", memory.effective_snapshot())
+                        with self.assertRaises(MemoryConflictError):
+                            memory.confirm(pending["id"])
                     else:
                         self.assertEqual(memory.pending(), [])
                 self.check_sources_and_replay(memory, history)

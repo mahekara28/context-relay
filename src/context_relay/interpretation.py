@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 import json
+import math
 import re
 from dataclasses import dataclass
 from typing import Callable
@@ -13,6 +14,36 @@ from .models import clone, encode
 
 class MemoryInterpretationError(ValueError):
     """An interpreter failed or returned invalid suggestions; the batch is unsaved."""
+
+
+def _json_object(pairs: list[tuple]) -> dict:
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise MemoryInterpretationError("Extraction JSON must not contain duplicate object keys.")
+        result[key] = value
+    return result
+
+
+def _invalid_constant(value: str):
+    raise MemoryInterpretationError("Extraction JSON must not contain non-finite numbers.")
+
+
+def _json_float(value: str) -> float:
+    parsed = float(value)
+    if not math.isfinite(parsed):
+        _invalid_constant(value)
+    return parsed
+
+
+def _load_json(text: str):
+    try:
+        return json.loads(text, object_pairs_hook=_json_object, parse_constant=_invalid_constant,
+                          parse_float=_json_float)
+    except (ValueError, RecursionError) as error:
+        if isinstance(error, MemoryInterpretationError):
+            raise
+        raise MemoryInterpretationError("The interpreter returned invalid JSON. No change was saved.") from error
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,10 +59,13 @@ class MemoryInterpreter:
     callback: Callable[[dict], list[dict]]
     max_proposals: int = 4
     max_output_chars: int = 4096
+    review_unmatched: bool = False
 
     def __post_init__(self) -> None:
         if not callable(self.callback) or inspect.iscoroutinefunction(self.callback):
             raise TypeError("MemoryInterpreter needs a synchronous callable.")
+        if type(self.review_unmatched) is not bool:
+            raise TypeError("review_unmatched must be a boolean.")
         for name, maximum in (("max_proposals", 64), ("max_output_chars", 2000000)):
             value = getattr(self, name)
             if type(value) is not int or not 1 <= value <= maximum:
@@ -40,7 +74,7 @@ class MemoryInterpreter:
     @classmethod
     def from_model(cls, model_call: Callable, *, decoder: Callable | None = None,
                    model_options: dict | None = None, max_proposals: int = 4,
-                   max_output_chars: int = 4096) -> MemoryInterpreter:
+                   max_output_chars: int = 4096, review_unmatched: bool = False) -> MemoryInterpreter:
         """Reuse an existing synchronous model call, including a local model.
 
         The model receives ``messages=...`` plus ``model_options`` and must return
@@ -74,7 +108,9 @@ class MemoryInterpreter:
             '"quote":"Switch deliveries to the afternoon."}]. '
             "Use the actual input, not the example, for your answer. Return [] for ambiguous "
             "targets, reported or hypothetical statements, secrets, unchanged settings, or no "
-            "durable preference. Never propose permissions or verified facts. "
+            "durable preference. Temporary exceptions, task-only changes, and uncertain scope "
+            "must return []; this schema only represents durable preferences. "
+            "Never propose permissions or verified facts. "
             "All proposals require human review."
         )
 
@@ -92,7 +128,7 @@ class MemoryInterpreter:
                 raise MemoryInterpretationError("The extraction decoder returned an awaitable.")
             if type(result) is not str or len(result) > max_output_chars:
                 raise MemoryInterpretationError("The extraction model must return bounded JSON text.")
-            proposals = json.loads(result)
+            proposals = _load_json(result)
             if type(proposals) is not list or len(proposals) > max_proposals:
                 raise MemoryInterpretationError("The extraction model must return a bounded JSON array.")
             for proposal in proposals:
@@ -106,11 +142,36 @@ class MemoryInterpreter:
                 proposal["end"] = proposal["start"] + len(quote)
             return proposals
 
-        return cls(interpret, max_proposals=max_proposals, max_output_chars=max_output_chars)
+        return cls(interpret, max_proposals=max_proposals, max_output_chars=max_output_chars,
+                   review_unmatched=review_unmatched)
+
+    @classmethod
+    def from_ollama(cls, *, model: str, endpoint: str = "http://127.0.0.1:11434",
+                    timeout: float = 120.0, max_input_chars: int = 12000,
+                    max_output_chars: int = 4096, max_proposals: int = 4,
+                    max_tokens: int = 768, review_unmatched: bool = True) -> MemoryInterpreter:
+        """Use an explicitly selected, installed local Ollama model for review.
+
+        Sends bounded requests directly to a loopback Ollama daemon. No SDK,
+        model download, proxy, cloud fallback, retry or auto-approval is used.
+        ``timeout`` is the total network deadline for metadata and extraction.
+        ``max_input_chars`` bounds the serialized text/index/known_memory envelope.
+        """
+        from .local_interpreter import ollama_model_call
+
+        # Validate the shared limits before constructing a transport or schema.
+        cls(lambda request: [], max_proposals, max_output_chars, review_unmatched)
+        call = ollama_model_call(model=model, endpoint=endpoint, timeout=timeout,
+            max_input_chars=max_input_chars, max_output_chars=max_output_chars,
+            max_proposals=max_proposals, max_tokens=max_tokens)
+        return cls.from_model(call, max_proposals=max_proposals,
+            max_output_chars=max_output_chars, review_unmatched=review_unmatched)
 
     def suggest(self, *, text: str, index: int, known_memory: list[dict]) -> list[dict]:
         try:
             result = self.callback(clone({"text": text, "index": index, "known_memory": known_memory}))
+        except MemoryInterpretationError:
+            raise
         except Exception as error:
             raise MemoryInterpretationError("Memory interpreter failed. No change was saved; retry explicitly.") from error
         if inspect.isawaitable(result):
