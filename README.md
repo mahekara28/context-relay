@@ -2,42 +2,36 @@
 
 # Context Relay
 
-### Keep current instructions available. Check important actions before they run.
+### Current instructions. Checked actions.
 
-A local Python library for memory and guarded tool workflows in the AI agent you already use.
+A local Python library that carries current preferences into model requests and checks configured tool actions.
 
 [![Alpha checks](https://github.com/mahekara28/context-relay/actions/workflows/alpha.yml/badge.svg?branch=main)](https://github.com/mahekara28/context-relay/actions/workflows/alpha.yml)
-[![Status: public alpha](https://img.shields.io/badge/status-public%20alpha-amber)](docs/ALPHA.md)
+[![Status: public alpha](https://img.shields.io/badge/status-public%20alpha-d97706)](docs/ALPHA.md)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
 [![Core dependencies: 0](https://img.shields.io/badge/core%20dependencies-0-14866d)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-[Quick start](#quick-start) · [Connect](#connect-to-your-agent) · [How it works](#how-it-works) · [Validation](#what-has-been-tested) · [Limits](#limits-and-trust) · [Roadmap](#roadmap)
+[Install](#install) · [Quick start](#quick-start) · [How it works](#how-it-works) · [Integrations](#integrations) · [Validation](#what-has-been-tested) · [Limits](#limits-and-trust) · [Roadmap](#roadmap)
 
 </div>
 
----
-
-An agent can have a long conversation, receive a correction, and still act on
-the old instruction. Relay keeps supported preferences outside that conversation
-and puts the current values into later model requests. For actions that matter,
-you can also configure checks before a tool runs and verify its result afterward.
-
-Your project keeps its model, tools and UI. Relay fits around the calls it already makes.
+![Introducing Context Relay. Carry supported preferences into later model requests; configure checks for registered tools and verify results with your application.](docs/context-relay-overview.svg)
 
 > [!IMPORTANT]
-> **Public alpha · v0.21.0a1.** Basic memory is easy to connect. Tool protection,
-> instruction review and outcome verification require explicit configuration.
-> Relay does not guarantee that an agent understands every correction or follows
-> every instruction. See the [current limits](#limits-and-trust).
+> **Public alpha · v0.21.0a1.** Basic memory connects through a supported client.
+> Action checks and outcome verification require configuration. Correction
+> recognition remains limited; see the [current limits](#limits-and-trust).
 
 ## The problem, in one example
 
-You ask an agent to export a report as CSV. Later, you say:
+Long conversations can leave an agent acting on an old instruction. For example,
+you ask for a CSV report, then change your mind:
 
 > “Actually, use JSON instead of CSV.”
 
-The conversation continues. When it is time to export, the agent proposes CSV again.
+Later, the agent proposes CSV again. Relay gives your application several ways
+to handle this while keeping its existing model, tools and UI:
 
 | With Relay configured | What happens |
 | --- | --- |
@@ -50,7 +44,7 @@ These are separate controls. Adding memory alone does not enable the other three
 For critical preferences, an optional review gate asks for an explicit decision
 on every new user turn, before inference or action.
 
-## Quick start
+## Install
 
 You need **Python 3.10+**. In your Python environment, clone the repository and
 install the bundled alpha wheel:
@@ -97,7 +91,9 @@ does not need it to use the library.
 
 </details>
 
-## Connect to your agent
+<a id="connect-to-your-agent"></a>
+
+## Quick start
 
 Wrap the client your project already uses and send calls through the returned connection:
 
@@ -155,21 +151,25 @@ follows that preference.
 
 </details>
 
-## What is available today
+## More control when you need it
 
-| Capability | What you can configure |
+Add these controls when your workflow needs them:
+
+| Capability | What it adds |
 | --- | --- |
-| **Current preferences** | Supported corrections and current-request exceptions; optional persistent memory. |
 | **Explicit instruction review** | Require a decision on selected fields before each new user turn proceeds. |
-| **Checked tool actions** | Declare the tool inventory, permissions, protected arguments and intentional exceptions. |
 | **Fresh evidence** | Read current source values and validate them with an application-owned callback. |
-| **Checked recovery** | Repair known values before execution; reconcile interrupted actions without automatically repeating them. |
-| **Verified outcomes** | Check receipts and optionally read the destination independently before marking work complete. |
+| **Recovery after interruption** | Inspect and reconcile the destination without automatically repeating an action that started. |
 | **Long-workflow continuation** | Archive original native segments and continue with bounded task state; retrieve omitted details when needed. |
 
 ## How it works
 
-The complete guarded workflow adds checks around your model and registered tools:
+The complete guarded workflow has three stages: prepare current instructions,
+check the proposed action, then verify its outcome. Your application defines the
+rules, permissions, trusted sources and evidence needed to call the work complete.
+
+<details>
+<summary>See the complete execution flow</summary>
 
 ```mermaid
 flowchart TD
@@ -185,10 +185,10 @@ flowchart TD
     H -->|Unavailable| K[Pending reconciliation]
 ```
 
-**Your application defines what correct means:** which instructions need review,
-which arguments must be preserved, which sources to trust, who can act and what
-evidence proves completion. The diagram shows the configured workflow, including
-optional destination verification; it is not the behavior of `auto_connect()` alone.
+The diagram includes optional instruction review and destination verification.
+These require configuration beyond `auto_connect()`.
+
+</details>
 
 Start with the [protection profile](docs/PROTECTION_PROFILE.md) and the runnable
 [Verified Release Desk example](examples/verified_release_desk.py). They combine
