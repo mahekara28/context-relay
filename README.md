@@ -1,132 +1,335 @@
+<div align="center">
+
 # Context Relay
 
-**Keep current instructions and check actions in the Python AI agent you already use.**
+### Keep current instructions available. Check important actions before they run.
 
-**v0.21.0a1 · Local alpha · Python 3.10+ · Zero runtime dependencies · MIT**
+A local Python library for memory and guarded tool workflows in the AI agent you already use.
 
-Long conversations can leave an agent following an old instruction, acting on
-stale data or claiming success after a failed action. Relay keeps supported
-preferences outside the model's working context and checks registered actions
-against your application's rules. Your project keeps its model, tools and UI.
+[![Alpha checks](https://github.com/mahekara28/context-relay/actions/workflows/alpha.yml/badge.svg?branch=main)](https://github.com/mahekara28/context-relay/actions/workflows/alpha.yml)
+[![Status: public alpha](https://img.shields.io/badge/status-public%20alpha-amber)](docs/ALPHA.md)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
+[![Core dependencies: 0](https://img.shields.io/badge/core%20dependencies-0-14866d)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-Relay is a library, not an LLM-training system or a guarantee against context
-rot. Basic memory is easy to connect. Stronger protection requires explicit
-tools, trusted data, permissions and outcome checks.
+[Quick start](#quick-start) · [Connect](#connect-to-your-agent) · [How it works](#how-it-works) · [Validation](#what-has-been-tested) · [Limits](#limits-and-trust) · [Roadmap](#roadmap)
 
-## Install locally
+</div>
 
-From the extracted `relay-v0.21.0a1-public` directory, in your project's Python
-environment:
+---
+
+An agent can have a long conversation, receive a correction, and still act on
+the old instruction. Relay keeps supported preferences outside that conversation
+and puts the current values into later model requests. For actions that matter,
+you can also configure checks before a tool runs and verify its result afterward.
+
+Your project keeps its model, tools and UI. Relay fits around the calls it already makes.
+
+> [!IMPORTANT]
+> **Public alpha · v0.21.0a1.** Basic memory is easy to connect. Tool protection,
+> instruction review and outcome verification require explicit configuration.
+> Relay does not guarantee that an agent understands every correction or follows
+> every instruction. See the [current limits](#limits-and-trust).
+
+## The problem, in one example
+
+You ask an agent to export a report as CSV. Later, you say:
+
+> “Actually, use JSON instead of CSV.”
+
+The conversation continues. When it is time to export, the agent proposes CSV again.
+
+| With Relay configured | What happens |
+| --- | --- |
+| **Basic memory** | A supported correction updates the saved preference to JSON. Later model requests include that current value. |
+| **Tool protection** | A registered export tool checks its proposed format against the active preference before writing. |
+| **Known-value repair** | If the configured rule supplies a valid replacement, Relay can correct the proposal and check it again before execution. |
+| **Outcome verification** | Your application's verifier reads the destination to check that the expected result actually exists. |
+
+These are separate controls. Adding memory alone does not enable the other three.
+For critical preferences, an optional review gate asks for an explicit decision
+on every new user turn, before inference or action.
+
+## Quick start
+
+You need **Python 3.10+**. In your Python environment, clone the repository and
+install the bundled alpha wheel:
 
 ```sh
+git clone https://github.com/mahekara28/context-relay.git
+cd context-relay
 python -m pip install --no-index --no-deps dist/context_relay_local-0.21.0a1-py3-none-any.whl
 python -m context_relay quickstart
 ```
 
-The quickstart runs offline with a fixed stand-in and prints `CSV -> JSON`. It
-tests the connection, not model quality. The wheel is supplied with the source
-bundle; this release is not published on PyPI. No API account, hosting or model
-download is needed for this check.
+The check prints:
 
-## Connect basic memory
+```text
+Offline connection check: PASSED
+Preference received by the local stand-in: CSV -> JSON
+No AI, SDK or network calls. This checks memory wiring, not model quality.
+Next: use auto_connect(existing_client) once per conversation and send messages through it.
+```
+
+After cloning, installation and this check work offline. No API key, hosting or
+model download is needed. The core has no runtime dependencies; your chosen
+provider keeps its usual costs. **This alpha is not published on PyPI.**
+
+<details>
+<summary>Install from source or try the optional local UI</summary>
+
+From the cloned repository:
+
+```sh
+python -m pip install .
+python -m context_relay quickstart
+```
+
+Source installation may download Python build tools. The bundled wheel avoids
+that download. To open the optional inspection UI:
+
+```sh
+python run.py serve
+```
+
+Visit `http://127.0.0.1:8765`. The UI is a local demonstration; your application
+does not need it to use the library.
+
+</details>
+
+## Connect to your agent
+
+Wrap the client your project already uses and send calls through the returned connection:
 
 ```python
 from context_relay import auto_connect
 
 with auto_connect(existing_client, conversation="customer-42") as ai:
     response = ai(messages=full_history, model=your_model)
+    # Keep using this connection for this conversation's later calls.
 ```
 
-Send later calls through the same `ai` connection with the full original,
-append-only history. Relay recognises supported Ollama, OpenAI and Anthropic
-clients and Python callables. Keep your normal provider options; Anthropic also
-needs `max_tokens`. OpenAI uses Chat Completions by default. Async clients use
-`async with` and `await`.
+`existing_client`, `full_history` and `your_model` are your application's existing
+values. Keep your usual provider options; Anthropic also needs `max_tokens`.
+Async clients use `async with` and `await ai(...)`.
 
-The conversation name opts into local persistent storage. Use the same name and
-storage location after restart; omit it for temporary memory. Relay leaves your
-existing client open. Installing it alone does not intercept other calls or
-protect tools. This default connection adds no model calls; your chosen provider retains its
-usual costs.
+Use one connection per conversation and pass the **full original, append-only
+history** each time. The conversation name saves memory locally; reuse that name
+and storage location after a restart. Omit the name for temporary memory.
+Closing Relay leaves your provider client open. Direct calls through the original
+client bypass Relay.
 
-[Beginner setup](docs/GETTING_STARTED.md) ·
-[Supported connection options](docs/AUTO_CONNECT.md) ·
-[Named memory](docs/NAMED_MEMORY.md)
+For completed text replies, `ai.conversation()` can manage history for you.
+[Connection guide](docs/AUTO_CONNECT.md) · [Clarification handling](docs/INSTRUCTION_CLARIFICATION.md) · [Persistent memory](docs/NAMED_MEMORY.md)
 
-## Protect important work
+<details>
+<summary>Try a complete Python example without an AI provider</summary>
 
-The synchronous `ResponsesWorkflow` combines these options for an OpenAI
-Responses client or a compatible local endpoint:
+```python
+from context_relay import auto_connect
 
-| Layer | What your application declares |
+def local_client(*, messages):
+    """An offline stand-in, not an AI model."""
+    return "Ready."
+
+with auto_connect(local_client) as ai:
+    chat = ai.conversation()
+    for request in (
+        "Use CSV for the export format.",
+        "Actually, use JSON instead of CSV.",
+    ):
+        chat.send(request)
+        print(next(item["value"] for item in ai.memory.entries()
+                   if item["key"] == "export_format"))
+```
+
+Output:
+
+```text
+CSV
+JSON
+```
+
+This shows Relay's recorded preference changing. It does not test whether a model
+follows that preference.
+
+</details>
+
+## What is available today
+
+| Capability | What you can configure |
 | --- | --- |
-| Instructions | Fields that require explicit review before each new user turn can proceed |
-| Action coverage | Exact tool inventory, checked arguments and any deliberate unchecked exceptions |
-| Evidence | Current source values, freshness limits and a host verification callback |
-| Effects | Destination idempotency, version checks and permission checks |
-| Completion | Required receipt fields plus an optional independent destination readback |
-| Long history | Bounded fresh-segment handoff, archived originals and explicit unfinished-task state |
+| **Current preferences** | Supported corrections and current-request exceptions; optional persistent memory. |
+| **Explicit instruction review** | Require a decision on selected fields before each new user turn proceeds. |
+| **Checked tool actions** | Declare the tool inventory, permissions, protected arguments and intentional exceptions. |
+| **Fresh evidence** | Read current source values and validate them with an application-owned callback. |
+| **Checked recovery** | Repair known values before execution; reconcile interrupted actions without automatically repeating them. |
+| **Verified outcomes** | Check receipts and optionally read the destination independently before marking work complete. |
+| **Long-workflow continuation** | Archive original native segments and continue with bounded task state; retrieve omitted details when needed. |
 
-[The protection profile](docs/PROTECTION_PROFILE.md) shows these checks together
-using the real file-writing [Verified Release Desk example](examples/verified_release_desk.py).
-[The workflow guide](docs/RESPONSES_WORKFLOW.md) explains integration, restart and
-reconciliation. These controls apply to the registered execution route; calls
-directly to your original functions bypass it.
+## How it works
 
-For high-impact preferences, opt into
-`MemoryPolicy(assurance_fields=("export_format",))`. The workflow returns
-`review_required` before inference or action. Your application presents the
-original request for review, then records an explicit choice:
+The complete guarded workflow adds checks around your model and registered tools:
+
+```mermaid
+flowchart TD
+    A[User request] --> B[Current instructions and optional review]
+    B --> C[Your model]
+    C --> D{Configured checks}
+    D -->|Pass| E[Registered tool]
+    D -->|Unclear or invalid| F[Repair, clarify or stop]
+    E --> G[Destination readback]
+    G --> H{Outcome verified?}
+    H -->|Yes| I[Complete]
+    H -->|No| J[Outcome not satisfied]
+    H -->|Unavailable| K[Pending reconciliation]
+```
+
+**Your application defines what correct means:** which instructions need review,
+which arguments must be preserved, which sources to trust, who can act and what
+evidence proves completion. The diagram shows the configured workflow, including
+optional destination verification; it is not the behavior of `auto_connect()` alone.
+
+Start with the [protection profile](docs/PROTECTION_PROFILE.md) and the runnable
+[Verified Release Desk example](examples/verified_release_desk.py). They combine
+instruction review, real file writes, source checks, readback and restart behavior.
+
+<details>
+<summary>When an instruction must be reviewed</summary>
+
+Configure `MemoryPolicy(assurance_fields=("export_format",))` in the guarded
+workflow. Each new user turn returns `review_required` before inference or action.
+Once your application presents the request and obtains an explicit decision:
 
 ```python
 plan = workflow.review_plan()
-# After the host/user explicitly chooses JSON for this request:
 workflow.resolve_review(plan, decisions={
     "export_format": {"value": "JSON", "scope": "turn"},
 })
 result = workflow.resume_review(plan["request_id"])
 ```
 
-Use `scope="durable"` for a standing preference. `resume_review` continues the
-same request without adding another user turn. Every new user turn requires
-review of the configured fields, including harmless messages and wording the
-parser already understands. Review cannot grant tool permission.
+This fragment assumes the [configured workflow](docs/PROTECTION_PROFILE.md).
+Use `scope="turn"` for this request or `scope="durable"` for a standing preference.
+Resuming continues the same request. Review does not grant tool permissions.
+Every new user turn requires review of the selected fields, including unchanged
+preferences; this is a deliberate cost of the safeguard.
 
-This gate addresses a missed-instruction risk by asking explicitly. It does not
-improve language understanding: before this change, default extraction found
-only **1 of 11 clear changes** in a fresh, synthetic diagnostic. The gate asks for
-review on all 18 diagnostic cases, including five unchanged controls. Those
-figures are a small development diagnostic, not market-wide accuracy.
-[Instruction assurance and its cost](docs/INSTRUCTION_ASSURANCE.md).
+</details>
 
-## What still needs your application
+## Integrations
 
-- **Truth and meaning:** configured fields, arithmetic and receipt conditions
-  can be checked; arbitrary reasoning and business correctness cannot. A source
-  or a host verifier can still be wrong.
-- **Recovery:** known-value repair works before an effect starts. Relay never
-  automatically reruns a started action. Interrupted or uncertain effects need
-  destination inspection and reconciliation.
-- **Context:** optional handoffs omit earlier native reasoning from the new
-  model input. Originals remain archived, but needed details must be retrieved.
-  The host explicitly updates or finishes the task.
-- **Privacy and scale:** persistent SQLite data is plaintext. New-file access
-  restrictions and deletion controls do not provide encryption or guaranteed
-  erasure. Storage and lock waits are bounded; distributed reliability is not
-  established.
+| Integration | Current scope |
+| --- | --- |
+| **Python callables** | Plain message dictionaries; supported synchronous and asynchronous functions. |
+| **Ollama** | Text and supported tool-message histories. |
+| **OpenAI** | Chat Completions by default; explicit adapters for supported Responses formats. |
+| **Anthropic** | Plain-text Messages by default; explicit adapters for supported native blocks. |
+| **LangChain / LangGraph** | Optional chat-model bridge alongside the framework's checkpoints. |
+| **Complete guarded workflow** | Synchronous `ResponsesWorkflow`, with one supported function call per response. |
 
-The complete workflow currently handles one synchronous supported function call
-per response. Streaming, parallel effects and arbitrary provider-native formats
-have separate limits. There is no organisational pilot or established general
-context-rot reduction percentage. See [validation](docs/VALIDATION.md) for actual
-checks, failures and the distinction between simulated SDK responses and local
-model experiments.
+Native OpenAI and Claude modes do not automatically extract preferences by
+default. Explicit trusted-fact placement is a separate option. Streaming,
+parallel actions and arbitrary provider-native formats are not universally
+supported. See [connector options](docs/AUTO_CONNECT.md) and
+[workflow boundaries](docs/RESPONSES_WORKFLOW.md) before choosing an integration.
 
+## What has been tested
+
+These are **author-reported development results**, with the methods and caveats
+recorded in [VALIDATION.md](docs/VALIDATION.md):
+
+| Check | Recorded result | What it establishes |
+| --- | --- | --- |
+| Source regression suite | **1,767 passed; 1 skipped** on Windows / Python 3.12.14 | Covered behavior in that recorded environment; the skipped check requires POSIX permissions. |
+| Installed wheel checks | **145 passed; 1 skipped** | Selected checks against the installed package. |
+| Actual local-model workflow | **8/8 correct exports**, with eight deterministic repairs and explicit host reviews | One workflow completed with assistance; these were not eight independently correct model proposals. |
+| Strong framework baseline | **Parity** with LangGraph memory plus an ordinary validator | Both completed eight requests correctly; both also failed the deliberately incorrect-source control. No superiority claim. |
+
+SDK compatibility checks use real SDK code with **simulated network responses**.
+There is no organisational pilot, hosted-model acceptance result or demonstrated
+general context-rot reduction percentage. Historical raw runs are omitted from
+this public distribution; the table is a summary, not an independently auditable
+evidence archive. The [evaluation guide](evaluations/RELIABILITY-v021.md) includes
+reproduction commands. The badge above links to current GitHub CI separately.
+
+## Limits and trust
+
+- **Language understanding is limited.** In a separate 18-case diagnostic, the
+  default parser recognised only **1 of 11 clear changes** and missed both
+  unclear cases. Optional assurance requires review on all 18 cases, including
+  five unchanged controls. It adds review coverage, not better understanding.
+- **Remembering is not proof of correctness.** A model can ignore context. Checks
+  cover declared fields and conditions; arbitrary reasoning and business truth
+  remain outside that boundary. A wrong source or verifier can produce a wrong result.
+- **Protection covers the registered route.** Developers must register tools
+  and checks. Calling an original function directly bypasses those checks.
+- **Recovery has boundaries.** Relay never automatically repeats an action
+  that has started. Readback cannot undo an incorrect effect; destinations still
+  need idempotency and appropriate write controls.
+- **Storage and history are bounded.** SQLite storage is local and plaintext.
+  Deletion does not guarantee physical erasure. Fresh history segments omit old
+  reasoning from the next model input; originals must be retrieved when needed.
+  Distributed and high-load reliability are not established.
+
+[Instruction assurance](docs/INSTRUCTION_ASSURANCE.md) ·
+[History and continuation](docs/WORKFLOW_CONTINUATION.md) ·
+[Storage privacy](docs/STORAGE_PRIVACY.md)
+
+## Roadmap
+
+The next milestone is a useful real-world pilot with measurable outcomes.
+
+- [ ] Run a pilot against the same workflow's existing memory and validator.
+- [ ] Improve correction recognition across unfamiliar wording and languages.
+- [ ] Validate hosted providers and broaden native formats where actual use requires them.
+- [ ] Measure shared-deployment contention, latency and operational recovery.
+- [ ] Publish a versioned package release with reproducible installation checks.
+
+## Development and contributions
+
+From the cloned repository, install the source and run the tests:
+
+```sh
+python -m pip install -e .
+python -m unittest discover -s tests -v
+```
+
+Optional SDK tests may skip unless their dependencies are installed. The
+[CI workflow](.github/workflows/alpha.yml) and
+[validation requirements](requirements-validation.txt) describe that environment.
+
+Useful contributions include a minimal example of a missed correction, a
+provider format that fails, or an outcome check that accepts the wrong result.
+[Open an issue](https://github.com/mahekara28/context-relay/issues) with the
+expected behavior, actual behavior and a small synthetic reproduction.
+Keep pull requests focused and add a regression test for a behavior change.
+
+<details>
+<summary>Repository guide</summary>
+
+```text
+src/context_relay/    Library and optional local UI
+tests/               Regression tests and synthetic fixtures
+examples/            Runnable connections and guarded workflows
+evaluations/         Evaluation runners and reported methods
+docs/                Setup, integration guides and release notes
+scripts/             SDK verification and release tooling
+dist/                Bundled v0.21.0a1 wheel
+```
+
+[Beginner setup](docs/GETTING_STARTED.md) ·
 [Current release](docs/RELEASE-v0.21.md) ·
-[Free local model setup](docs/ALPHA.md) ·
-[Long-workflow continuation](docs/WORKFLOW_CONTINUATION.md) ·
-[Storage privacy](docs/STORAGE_PRIVACY.md) ·
-[Publishing a clean copy](docs/PUBLISHING.md)
+[Public-alpha scope](docs/ALPHA.md)
 
-The optional inspection UI runs with `python run.py serve` at
-`http://127.0.0.1:8765`. It is a local demonstration, not required by the library.
+</details>
+
+**Release provenance:** the bundled wheel and [PUBLIC_MANIFEST.json](PUBLIC_MANIFEST.json)
+describe the original v0.21.0a1 release snapshot in
+[commit `8d93ec2`](https://github.com/mahekara28/context-relay/tree/8d93ec2d2148c16a79c4777e215cd810f7d7576a).
+Documentation on `main` evolves separately; those recorded hashes do not verify
+later README edits. See [distribution details](PUBLIC_DISTRIBUTION.md).
+
+## License
+
+[MIT](LICENSE).
