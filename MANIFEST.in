@@ -1,0 +1,28 @@
+include README.md LICENSE run.py start.cmd
+include PRODUCT.md
+recursive-include docs *.md
+recursive-include examples *.py
+recursive-include scripts *.py
+recursive-include tests *.py
+recursive-include tests/fixtures *.json
+prune evaluations
+include evaluations/*.py evaluations/*.md
+include evaluations/corrections-v0.11-corpus.json
+include evaluations/corrections-v0.12-development-corpus.json
+include evaluations/corrections-v0.14-holdout.json
+include evaluations/corrections-v0.15-fresh.json
+include evaluations/instructions-v0.18-independent.json
+include evaluations/framework-v020-fixtures.json
+include evaluations/content-integrity-v0.16-cases.json
+include evaluations/interpretation-v0.12-corpus.json
+recursive-include src/context_relay/web *.html *.css *.js
+include src/context_relay/py.typed
+global-exclude __pycache__ *.py[cod] *.db *.db-wal *.db-shm
+
+include requirements-validation*.txt
+recursive-include .github *.yml *.yaml
+global-exclude *.sqlite3 *.sqlite3-wal *.sqlite3-shm
+global-exclude *.db-journal *.sqlite3-journal *.jsonl *.log
+prune work
+prune .relay
+prune ci-results

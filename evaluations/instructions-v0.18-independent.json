@@ -1,0 +1,1183 @@
+{
+  "schema": 1,
+  "name": "Context Relay v0.18 independent instruction evaluation",
+  "authored_date": "2026-10-23",
+  "provenance": "Independent assistant-authored evaluation. This is internal evaluation, not external or human validation.",
+  "independence": "Author read only examples/evaluate_corrections_v014.py for the corpus schema. No implementation files or previous wording corpora were inspected. Cases were authored before implementation scoring.",
+  "scope": "Bounded English indirect instructions and Hindi/Hinglish, Spanish, and French wording. German and Italian cases are exploratory and excluded from supported-cohort acceptance metrics.",
+  "canonical_keys": [
+    "export_format",
+    "response_language",
+    "response_style"
+  ],
+  "seed_messages": [
+    "Export as CSV.",
+    "Reply in English.",
+    "I prefer brief answers."
+  ],
+  "labeling_policy": {
+    "clear": "A durable, user-owned preference update identifies its new value. Change only the expected keys and leave no pending correction.",
+    "uncertain": "A durable user-owned correction invalidates the named old setting but omits the replacement. Preserve active values, flag exactly the target keys as unparsed_correction with null value, and treat those old settings as disputed.",
+    "abstain": "Quoted, translated, hypothetical, reported, temporary, or explicitly negated changes do not update durable preferences and do not add pending corrections."
+  },
+  "reporting_policy": {
+    "supported": "Report 60 supported cases separately: 24 clear, 18 uncertain, 18 abstain.",
+    "exploratory_unsupported": "Report all four German/Italian cases separately: two clear and two uncertain. Their labels record semantic intent, not a promised support requirement.",
+    "preservation": "Preserve every case and every failure. Do not relabel or remove cases to improve implementation scores. Any later corrections require a new version and explicit audit note.",
+    "contamination": "The corpus loses blind-holdout status after its contents or item-level results are disclosed to the implementation team."
+  },
+  "cases": [
+    {
+      "id": "v018-independent-001",
+      "cohort": "supported",
+      "language": "en",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Going forward, JSON would suit my exports better than CSV.",
+      "expected": {
+        "export_format": "JSON"
+      },
+      "tags": [
+        "indirect_preference"
+      ]
+    },
+    {
+      "id": "v018-independent-002",
+      "cohort": "supported",
+      "language": "en",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "I'd rather have all future replies in Hindi.",
+      "expected": {
+        "response_language": "Hindi"
+      },
+      "tags": [
+        "indirect_preference"
+      ]
+    },
+    {
+      "id": "v018-independent-003",
+      "cohort": "supported",
+      "language": "en",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "My usual answers could use more detail; make detailed replies my default.",
+      "expected": {
+        "response_style": "detailed"
+      },
+      "tags": [
+        "indirect_preference",
+        "message_local_reference"
+      ]
+    },
+    {
+      "id": "v018-independent-004",
+      "cohort": "supported",
+      "language": "en",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "For exports, the old choice was CSV. Let's make it JSON permanently.",
+      "expected": {
+        "export_format": "JSON"
+      },
+      "tags": [
+        "message_local_reference",
+        "prior_value_mention"
+      ]
+    },
+    {
+      "id": "v018-independent-005",
+      "cohort": "supported",
+      "language": "en",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "French is the language I'd like you to use in future replies.",
+      "expected": {
+        "response_language": "French"
+      },
+      "tags": [
+        "indirect_preference"
+      ]
+    },
+    {
+      "id": "v018-independent-006",
+      "cohort": "supported",
+      "language": "en",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "For future conversations, detailed answers in Spanish are what I want.",
+      "expected": {
+        "response_language": "Spanish",
+        "response_style": "detailed"
+      },
+      "tags": [
+        "multiple_targets"
+      ]
+    },
+    {
+      "id": "v018-independent-007",
+      "cohort": "supported",
+      "language": "hi-Deva",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "अब से मेरे एक्सपोर्ट CSV की जगह JSON में होने चाहिए।",
+      "expected": {
+        "export_format": "JSON"
+      },
+      "tags": [
+        "replacement",
+        "native_script"
+      ]
+    },
+    {
+      "id": "v018-independent-008",
+      "cohort": "supported",
+      "language": "hi-Deva",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "अब से मुझे हिंदी में जवाब दिया करें।",
+      "expected": {
+        "response_language": "Hindi"
+      },
+      "tags": [
+        "durable_request",
+        "native_script"
+      ]
+    },
+    {
+      "id": "v018-independent-009",
+      "cohort": "supported",
+      "language": "hi-Deva",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "आगे से छोटे जवाब नहीं चाहिए; विस्तार से जवाब देना।",
+      "expected": {
+        "response_style": "detailed"
+      },
+      "tags": [
+        "negated_old_value",
+        "native_script"
+      ]
+    },
+    {
+      "id": "v018-independent-010",
+      "cohort": "supported",
+      "language": "hi-Latn",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Aage se exports CSV ke bajay JSON mein chahiye.",
+      "expected": {
+        "export_format": "JSON"
+      },
+      "tags": [
+        "replacement",
+        "hinglish"
+      ]
+    },
+    {
+      "id": "v018-independent-011",
+      "cohort": "supported",
+      "language": "hi-Latn",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Ab se mujhe French mein jawab dena.",
+      "expected": {
+        "response_language": "French"
+      },
+      "tags": [
+        "durable_request",
+        "hinglish"
+      ]
+    },
+    {
+      "id": "v018-independent-012",
+      "cohort": "supported",
+      "language": "hi-Latn",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Aage se Spanish mein detail se jawab dena.",
+      "expected": {
+        "response_language": "Spanish",
+        "response_style": "detailed"
+      },
+      "tags": [
+        "multiple_targets",
+        "hinglish"
+      ]
+    },
+    {
+      "id": "v018-independent-013",
+      "cohort": "supported",
+      "language": "es",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "A partir de ahora, prefiero JSON para las exportaciones.",
+      "expected": {
+        "export_format": "JSON"
+      },
+      "tags": [
+        "durable_preference"
+      ]
+    },
+    {
+      "id": "v018-independent-014",
+      "cohort": "supported",
+      "language": "es",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "De ahora en adelante, respóndeme en español.",
+      "expected": {
+        "response_language": "Spanish"
+      },
+      "tags": [
+        "durable_request"
+      ]
+    },
+    {
+      "id": "v018-independent-015",
+      "cohort": "supported",
+      "language": "es",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Para futuras respuestas, prefiero explicaciones detalladas.",
+      "expected": {
+        "response_style": "detailed"
+      },
+      "tags": [
+        "durable_preference"
+      ]
+    },
+    {
+      "id": "v018-independent-016",
+      "cohort": "supported",
+      "language": "es",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Sobre mis exportaciones: quiero que sean JSON de ahora en adelante.",
+      "expected": {
+        "export_format": "JSON"
+      },
+      "tags": [
+        "message_local_reference"
+      ]
+    },
+    {
+      "id": "v018-independent-017",
+      "cohort": "supported",
+      "language": "es",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Quiero que el francés sea el idioma de tus respuestas a partir de ahora.",
+      "expected": {
+        "response_language": "French"
+      },
+      "tags": [
+        "indirect_preference"
+      ]
+    },
+    {
+      "id": "v018-independent-018",
+      "cohort": "supported",
+      "language": "es",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "En adelante, dame respuestas detalladas en hindi.",
+      "expected": {
+        "response_language": "Hindi",
+        "response_style": "detailed"
+      },
+      "tags": [
+        "multiple_targets"
+      ]
+    },
+    {
+      "id": "v018-independent-019",
+      "cohort": "supported",
+      "language": "fr",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Désormais, je préfère JSON pour mes exports.",
+      "expected": {
+        "export_format": "JSON"
+      },
+      "tags": [
+        "durable_preference"
+      ]
+    },
+    {
+      "id": "v018-independent-020",
+      "cohort": "supported",
+      "language": "fr",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "À partir de maintenant, réponds-moi en français.",
+      "expected": {
+        "response_language": "French"
+      },
+      "tags": [
+        "durable_request"
+      ]
+    },
+    {
+      "id": "v018-independent-021",
+      "cohort": "supported",
+      "language": "fr",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Pour tes prochaines réponses, je préfère des explications détaillées.",
+      "expected": {
+        "response_style": "detailed"
+      },
+      "tags": [
+        "durable_preference"
+      ]
+    },
+    {
+      "id": "v018-independent-022",
+      "cohort": "supported",
+      "language": "fr",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Mes exports étaient en CSV ; je voudrais qu'ils soient en JSON à partir de maintenant.",
+      "expected": {
+        "export_format": "JSON"
+      },
+      "tags": [
+        "message_local_reference",
+        "prior_value_mention"
+      ]
+    },
+    {
+      "id": "v018-independent-023",
+      "cohort": "supported",
+      "language": "fr",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Pour toutes les réponses futures, utilise l'espagnol.",
+      "expected": {
+        "response_language": "Spanish"
+      },
+      "tags": [
+        "durable_request"
+      ]
+    },
+    {
+      "id": "v018-independent-024",
+      "cohort": "supported",
+      "language": "fr",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "À l'avenir, réponds-moi en hindi avec des explications détaillées.",
+      "expected": {
+        "response_language": "Hindi",
+        "response_style": "detailed"
+      },
+      "tags": [
+        "multiple_targets"
+      ]
+    },
+    {
+      "id": "v018-independent-025",
+      "cohort": "supported",
+      "language": "en",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "My export format needs to change; I haven't picked the replacement yet.",
+      "targets": [
+        "export_format"
+      ],
+      "tags": [
+        "omitted_replacement"
+      ]
+    },
+    {
+      "id": "v018-independent-026",
+      "cohort": "supported",
+      "language": "en",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "The language you normally reply in is no longer the one I want.",
+      "targets": [
+        "response_language"
+      ],
+      "tags": [
+        "indirect_correction",
+        "omitted_replacement"
+      ]
+    },
+    {
+      "id": "v018-independent-027",
+      "cohort": "supported",
+      "language": "en",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "I want to change how much detail you give, but I haven't decided on the new level.",
+      "targets": [
+        "response_style"
+      ],
+      "tags": [
+        "omitted_replacement"
+      ]
+    },
+    {
+      "id": "v018-independent-028",
+      "cohort": "supported",
+      "language": "en",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "About my export format: it is no longer right for me.",
+      "targets": [
+        "export_format"
+      ],
+      "tags": [
+        "message_local_reference",
+        "omitted_replacement"
+      ]
+    },
+    {
+      "id": "v018-independent-029",
+      "cohort": "supported",
+      "language": "en",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Both my export format and my reply language are wrong now; I'll specify replacements later.",
+      "targets": [
+        "export_format",
+        "response_language"
+      ],
+      "tags": [
+        "multiple_targets",
+        "omitted_replacement"
+      ]
+    },
+    {
+      "id": "v018-independent-030",
+      "cohort": "supported",
+      "language": "en",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "CSV no longer works for me, and brief answers don't either. I haven't settled on replacements.",
+      "targets": [
+        "export_format",
+        "response_style"
+      ],
+      "tags": [
+        "multiple_targets",
+        "old_value_reference",
+        "omitted_replacement"
+      ]
+    },
+    {
+      "id": "v018-independent-031",
+      "cohort": "supported",
+      "language": "hi-Deva",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "मेरे एक्सपोर्ट का फ़ॉर्मैट बदलना है, लेकिन नया फ़ॉर्मैट अभी तय नहीं किया है।",
+      "targets": [
+        "export_format"
+      ],
+      "tags": [
+        "omitted_replacement",
+        "native_script"
+      ]
+    },
+    {
+      "id": "v018-independent-032",
+      "cohort": "supported",
+      "language": "hi-Deva",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "अब जवाबों की भाषा बदलनी है; कौन-सी भाषा चाहिए, यह बाद में बताऊँगा।",
+      "targets": [
+        "response_language"
+      ],
+      "tags": [
+        "omitted_replacement",
+        "native_script"
+      ]
+    },
+    {
+      "id": "v018-independent-033",
+      "cohort": "supported",
+      "language": "hi-Latn",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Meri brief replies wali preference ab sahi nahi hai; nayi preference baad mein bataunga.",
+      "targets": [
+        "response_style"
+      ],
+      "tags": [
+        "omitted_replacement",
+        "hinglish"
+      ]
+    },
+    {
+      "id": "v018-independent-034",
+      "cohort": "supported",
+      "language": "hi-Latn",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Mera export format aur reply language dono ab galat hain; nayi settings baad mein bataunga.",
+      "targets": [
+        "export_format",
+        "response_language"
+      ],
+      "tags": [
+        "multiple_targets",
+        "omitted_replacement",
+        "hinglish"
+      ]
+    },
+    {
+      "id": "v018-independent-035",
+      "cohort": "supported",
+      "language": "es",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Mi formato de exportación ya no me sirve; aún no he elegido el nuevo.",
+      "targets": [
+        "export_format"
+      ],
+      "tags": [
+        "omitted_replacement"
+      ]
+    },
+    {
+      "id": "v018-independent-036",
+      "cohort": "supported",
+      "language": "es",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Quiero cambiar el idioma de tus respuestas, pero todavía no he decidido cuál.",
+      "targets": [
+        "response_language"
+      ],
+      "tags": [
+        "omitted_replacement"
+      ]
+    },
+    {
+      "id": "v018-independent-037",
+      "cohort": "supported",
+      "language": "es",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Ya no quiero respuestas breves, pero aún no sé cuánta explicación quiero.",
+      "targets": [
+        "response_style"
+      ],
+      "tags": [
+        "negated_old_value",
+        "omitted_replacement"
+      ]
+    },
+    {
+      "id": "v018-independent-038",
+      "cohort": "supported",
+      "language": "es",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Mi formato de exportación y el idioma de tus respuestas deben cambiar; te diré los nuevos valores después.",
+      "targets": [
+        "export_format",
+        "response_language"
+      ],
+      "tags": [
+        "multiple_targets",
+        "omitted_replacement"
+      ]
+    },
+    {
+      "id": "v018-independent-039",
+      "cohort": "supported",
+      "language": "fr",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Mon format d'export ne me convient plus ; je n'ai pas encore choisi le nouveau.",
+      "targets": [
+        "export_format"
+      ],
+      "tags": [
+        "omitted_replacement"
+      ]
+    },
+    {
+      "id": "v018-independent-040",
+      "cohort": "supported",
+      "language": "fr",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "La langue de tes réponses doit changer, mais je n'ai pas encore choisi laquelle.",
+      "targets": [
+        "response_language"
+      ],
+      "tags": [
+        "omitted_replacement"
+      ]
+    },
+    {
+      "id": "v018-independent-041",
+      "cohort": "supported",
+      "language": "fr",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Je ne veux plus de réponses brèves ; je préciserai plus tard le niveau de détail souhaité.",
+      "targets": [
+        "response_style"
+      ],
+      "tags": [
+        "negated_old_value",
+        "omitted_replacement"
+      ]
+    },
+    {
+      "id": "v018-independent-042",
+      "cohort": "supported",
+      "language": "fr",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Mon format d'export et la langue de tes réponses doivent changer ; je donnerai les nouvelles valeurs plus tard.",
+      "targets": [
+        "export_format",
+        "response_language"
+      ],
+      "tags": [
+        "multiple_targets",
+        "omitted_replacement"
+      ]
+    },
+    {
+      "id": "v018-independent-043",
+      "cohort": "supported",
+      "language": "en",
+      "kind": "abstain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Put this sentence in a code block: \"From now on, export as JSON.\"",
+      "tags": [
+        "quoted_content"
+      ]
+    },
+    {
+      "id": "v018-independent-044",
+      "cohort": "supported",
+      "language": "en",
+      "kind": "abstain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Translate \"Reply in Hindi from now on\" into French.",
+      "tags": [
+        "translation",
+        "quoted_content"
+      ]
+    },
+    {
+      "id": "v018-independent-045",
+      "cohort": "supported",
+      "language": "en",
+      "kind": "abstain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "If I ever asked you to switch to JSON, what would change?",
+      "tags": [
+        "hypothetical"
+      ]
+    },
+    {
+      "id": "v018-independent-046",
+      "cohort": "supported",
+      "language": "en",
+      "kind": "abstain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "My coworker says she wants detailed answers in Spanish.",
+      "tags": [
+        "reported_preference"
+      ]
+    },
+    {
+      "id": "v018-independent-047",
+      "cohort": "supported",
+      "language": "en",
+      "kind": "abstain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "For this response only, answer in Hindi with lots of detail.",
+      "tags": [
+        "temporary_override",
+        "multiple_targets"
+      ]
+    },
+    {
+      "id": "v018-independent-048",
+      "cohort": "supported",
+      "language": "en",
+      "kind": "abstain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Do not change my export format to JSON or my reply language to Hindi.",
+      "tags": [
+        "negated_change",
+        "multiple_targets"
+      ]
+    },
+    {
+      "id": "v018-independent-049",
+      "cohort": "supported",
+      "language": "hi-Deva",
+      "kind": "abstain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "इस वाक्य का अंग्रेज़ी में अनुवाद करो: \"अब से हिंदी में जवाब देना।\"",
+      "tags": [
+        "translation",
+        "quoted_content",
+        "native_script"
+      ]
+    },
+    {
+      "id": "v018-independent-050",
+      "cohort": "supported",
+      "language": "hi-Latn",
+      "kind": "abstain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Agar main kabhi JSON exports maangu, to tum kya karoge?",
+      "tags": [
+        "hypothetical",
+        "hinglish"
+      ]
+    },
+    {
+      "id": "v018-independent-051",
+      "cohort": "supported",
+      "language": "hi-Latn",
+      "kind": "abstain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Sirf is jawab ke liye detail mein samjhao; aage ke jawab brief hi rehne chahiye.",
+      "tags": [
+        "temporary_override",
+        "preserve_prior_preference",
+        "hinglish"
+      ]
+    },
+    {
+      "id": "v018-independent-052",
+      "cohort": "supported",
+      "language": "hi-Latn",
+      "kind": "abstain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Mera export format JSON mat karna, aur reply language Hindi mat karna.",
+      "tags": [
+        "negated_change",
+        "multiple_targets",
+        "hinglish"
+      ]
+    },
+    {
+      "id": "v018-independent-053",
+      "cohort": "supported",
+      "language": "es",
+      "kind": "abstain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Copia literalmente esta frase: «A partir de ahora, exporta como JSON».",
+      "tags": [
+        "quoted_content"
+      ]
+    },
+    {
+      "id": "v018-independent-054",
+      "cohort": "supported",
+      "language": "es",
+      "kind": "abstain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Mi compañero quiere que le respondas en francés con mucho detalle.",
+      "tags": [
+        "reported_preference"
+      ]
+    },
+    {
+      "id": "v018-independent-055",
+      "cohort": "supported",
+      "language": "es",
+      "kind": "abstain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Solo para esta respuesta, usa español; después vuelve al inglés.",
+      "tags": [
+        "temporary_override",
+        "preserve_prior_preference"
+      ]
+    },
+    {
+      "id": "v018-independent-056",
+      "cohort": "supported",
+      "language": "es",
+      "kind": "abstain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "No cambies mi formato de exportación a JSON ni mi idioma de respuesta a hindi.",
+      "tags": [
+        "negated_change",
+        "multiple_targets"
+      ]
+    },
+    {
+      "id": "v018-independent-057",
+      "cohort": "supported",
+      "language": "fr",
+      "kind": "abstain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Traduis cette phrase en anglais : « Désormais, réponds en français. »",
+      "tags": [
+        "translation",
+        "quoted_content"
+      ]
+    },
+    {
+      "id": "v018-independent-058",
+      "cohort": "supported",
+      "language": "fr",
+      "kind": "abstain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Si je te demandais un jour des réponses détaillées en hindi, pourrais-tu le faire ?",
+      "tags": [
+        "hypothetical",
+        "multiple_targets"
+      ]
+    },
+    {
+      "id": "v018-independent-059",
+      "cohort": "supported",
+      "language": "fr",
+      "kind": "abstain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Pour cette réponse seulement, utilise le français ; conserve l'anglais comme préférence habituelle.",
+      "tags": [
+        "temporary_override",
+        "preserve_prior_preference"
+      ]
+    },
+    {
+      "id": "v018-independent-060",
+      "cohort": "supported",
+      "language": "fr",
+      "kind": "abstain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Ne change pas mon format d'export en JSON ni la langue de mes réponses en hindi.",
+      "tags": [
+        "negated_change",
+        "multiple_targets"
+      ]
+    },
+    {
+      "id": "v018-independent-061",
+      "cohort": "exploratory_unsupported",
+      "language": "de",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Ab jetzt möchte ich meine Exporte im JSON-Format statt als CSV.",
+      "expected": {
+        "export_format": "JSON"
+      },
+      "tags": [
+        "unsupported_language",
+        "replacement"
+      ]
+    },
+    {
+      "id": "v018-independent-062",
+      "cohort": "exploratory_unsupported",
+      "language": "it",
+      "kind": "clear",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "D'ora in poi, rispondimi in francese con spiegazioni dettagliate.",
+      "expected": {
+        "response_language": "French",
+        "response_style": "detailed"
+      },
+      "tags": [
+        "unsupported_language",
+        "multiple_targets"
+      ]
+    },
+    {
+      "id": "v018-independent-063",
+      "cohort": "exploratory_unsupported",
+      "language": "de",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Meine bisherige Antwortsprache passt nicht mehr; die neue Sprache lege ich später fest.",
+      "targets": [
+        "response_language"
+      ],
+      "tags": [
+        "unsupported_language",
+        "omitted_replacement"
+      ]
+    },
+    {
+      "id": "v018-independent-064",
+      "cohort": "exploratory_unsupported",
+      "language": "it",
+      "kind": "uncertain",
+      "before": [
+        "Export as CSV.",
+        "Reply in English.",
+        "I prefer brief answers."
+      ],
+      "text": "Il mio formato di esportazione deve cambiare, ma non ho ancora scelto quello nuovo.",
+      "targets": [
+        "export_format"
+      ],
+      "tags": [
+        "unsupported_language",
+        "omitted_replacement"
+      ]
+    }
+  ]
+}
+

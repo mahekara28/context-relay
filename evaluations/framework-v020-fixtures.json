@@ -1,0 +1,843 @@
+{
+  "schema": 1,
+  "fixture_type": "matched_recorded_proposals_not_model_outputs",
+  "frozen_before_runner_implementation": true,
+  "oracle_independent_of_runtime_source": true,
+  "scope_events": "host-normalized labels shared by both arms; language extraction not evaluated",
+  "repair_budget": 1,
+  "truth": {
+    "release": "v0.20.0-rc1",
+    "artifacts": [
+      {
+        "filename": "core-api.whl",
+        "bytes": 1234,
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "filename": "schema-v1.json",
+        "bytes": 321,
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "durable-change",
+      "kind": "supported",
+      "initial_source": {
+        "approved_release": "v0.20.0-rc1",
+        "approved_artifacts": [
+          {
+            "filename": "core-api.whl",
+            "bytes": 1234,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          {
+            "filename": "schema-v1.json",
+            "bytes": 321,
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ],
+        "may_export": true
+      },
+      "initial_standing": "CSV",
+      "steps": [
+        {
+          "operation": "send",
+          "request_id": "durable-1",
+          "text": "Export as CSV.",
+          "instruction_event": {
+            "scope": "durable",
+            "value": "CSV"
+          },
+          "proposal": {
+            "tool": "export_manifest",
+            "arguments": {
+              "request_id": "durable-1",
+              "source_version": "005ea09ca030be444b60de70912be772afb10b96b42156e10b2f1101cc07e686",
+              "format": "CSV",
+              "release": "v0.20.0-rc1",
+              "artifacts": [
+                {
+                  "filename": "core-api.whl",
+                  "bytes": 1234,
+                  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                },
+                {
+                  "filename": "schema-v1.json",
+                  "bytes": 321,
+                  "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                }
+              ]
+            }
+          },
+          "expected": "completed"
+        },
+        {
+          "operation": "send",
+          "request_id": "durable-2",
+          "text": "Use JSON for future exports.",
+          "instruction_event": {
+            "scope": "durable",
+            "value": "JSON"
+          },
+          "proposal": {
+            "tool": "export_manifest",
+            "arguments": {
+              "request_id": "durable-2",
+              "source_version": "005ea09ca030be444b60de70912be772afb10b96b42156e10b2f1101cc07e686",
+              "format": "JSON",
+              "release": "v0.20.0-rc1",
+              "artifacts": [
+                {
+                  "filename": "core-api.whl",
+                  "bytes": 1234,
+                  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                },
+                {
+                  "filename": "schema-v1.json",
+                  "bytes": 321,
+                  "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                }
+              ]
+            }
+          },
+          "expected": "completed"
+        }
+      ],
+      "expected_documents": {
+        "durable-1": {
+          "format": "CSV",
+          "release": "v0.20.0-rc1",
+          "artifacts": [
+            {
+              "filename": "core-api.whl",
+              "bytes": 1234,
+              "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            {
+              "filename": "schema-v1.json",
+              "bytes": 321,
+              "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ]
+        },
+        "durable-2": {
+          "format": "JSON",
+          "release": "v0.20.0-rc1",
+          "artifacts": [
+            {
+              "filename": "core-api.whl",
+              "bytes": 1234,
+              "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            {
+              "filename": "schema-v1.json",
+              "bytes": 321,
+              "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "temporary-reverts",
+      "kind": "supported",
+      "initial_source": {
+        "approved_release": "v0.20.0-rc1",
+        "approved_artifacts": [
+          {
+            "filename": "core-api.whl",
+            "bytes": 1234,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          {
+            "filename": "schema-v1.json",
+            "bytes": 321,
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ],
+        "may_export": true
+      },
+      "initial_standing": "CSV",
+      "steps": [
+        {
+          "operation": "send",
+          "request_id": "scope-1",
+          "text": "Export as CSV.",
+          "instruction_event": {
+            "scope": "durable",
+            "value": "CSV"
+          },
+          "proposal": {
+            "tool": "export_manifest",
+            "arguments": {
+              "request_id": "scope-1",
+              "source_version": "005ea09ca030be444b60de70912be772afb10b96b42156e10b2f1101cc07e686",
+              "format": "CSV",
+              "release": "v0.20.0-rc1",
+              "artifacts": [
+                {
+                  "filename": "core-api.whl",
+                  "bytes": 1234,
+                  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                },
+                {
+                  "filename": "schema-v1.json",
+                  "bytes": 321,
+                  "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                }
+              ]
+            }
+          },
+          "expected": "completed"
+        },
+        {
+          "operation": "send",
+          "request_id": "scope-2",
+          "text": "For this export only, use JSON.",
+          "instruction_event": {
+            "scope": "turn",
+            "value": "JSON"
+          },
+          "proposal": {
+            "tool": "export_manifest",
+            "arguments": {
+              "request_id": "scope-2",
+              "source_version": "005ea09ca030be444b60de70912be772afb10b96b42156e10b2f1101cc07e686",
+              "format": "JSON",
+              "release": "v0.20.0-rc1",
+              "artifacts": [
+                {
+                  "filename": "core-api.whl",
+                  "bytes": 1234,
+                  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                },
+                {
+                  "filename": "schema-v1.json",
+                  "bytes": 321,
+                  "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                }
+              ]
+            }
+          },
+          "expected": "completed"
+        },
+        {
+          "operation": "send",
+          "request_id": "scope-3",
+          "text": "Export the next release manifest.",
+          "instruction_event": {
+            "scope": "none"
+          },
+          "proposal": {
+            "tool": "export_manifest",
+            "arguments": {
+              "request_id": "scope-3",
+              "source_version": "005ea09ca030be444b60de70912be772afb10b96b42156e10b2f1101cc07e686",
+              "format": "JSON",
+              "release": "v0.20.0-rc1",
+              "artifacts": [
+                {
+                  "filename": "core-api.whl",
+                  "bytes": 1234,
+                  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                },
+                {
+                  "filename": "schema-v1.json",
+                  "bytes": 321,
+                  "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                }
+              ]
+            }
+          },
+          "expected": "completed",
+          "expected_repairs": 1
+        }
+      ],
+      "expected_documents": {
+        "scope-1": {
+          "format": "CSV",
+          "release": "v0.20.0-rc1",
+          "artifacts": [
+            {
+              "filename": "core-api.whl",
+              "bytes": 1234,
+              "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            {
+              "filename": "schema-v1.json",
+              "bytes": 321,
+              "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ]
+        },
+        "scope-2": {
+          "format": "JSON",
+          "release": "v0.20.0-rc1",
+          "artifacts": [
+            {
+              "filename": "core-api.whl",
+              "bytes": 1234,
+              "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            {
+              "filename": "schema-v1.json",
+              "bytes": 321,
+              "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ]
+        },
+        "scope-3": {
+          "format": "CSV",
+          "release": "v0.20.0-rc1",
+          "artifacts": [
+            {
+              "filename": "core-api.whl",
+              "bytes": 1234,
+              "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            {
+              "filename": "schema-v1.json",
+              "bytes": 321,
+              "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "immutable-artifact-repair",
+      "kind": "supported",
+      "initial_source": {
+        "approved_release": "v0.20.0-rc1",
+        "approved_artifacts": [
+          {
+            "filename": "core-api.whl",
+            "bytes": 1234,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          {
+            "filename": "schema-v1.json",
+            "bytes": 321,
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ],
+        "may_export": true
+      },
+      "initial_standing": "CSV",
+      "steps": [
+        {
+          "operation": "send",
+          "request_id": "integrity-1",
+          "text": "Export the approved manifest as JSON.",
+          "instruction_event": {
+            "scope": "durable",
+            "value": "JSON"
+          },
+          "proposal": {
+            "tool": "export_manifest",
+            "arguments": {
+              "request_id": "integrity-1",
+              "source_version": "005ea09ca030be444b60de70912be772afb10b96b42156e10b2f1101cc07e686",
+              "format": "JSON",
+              "release": "v0.20.0-rc1",
+              "artifacts": [
+                {
+                  "filename": "translated-core.whl",
+                  "bytes": 999,
+                  "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+                },
+                {
+                  "filename": "schema-v1.json",
+                  "bytes": 321,
+                  "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                }
+              ]
+            }
+          },
+          "expected": "completed",
+          "expected_repairs": 1
+        }
+      ],
+      "expected_documents": {
+        "integrity-1": {
+          "format": "JSON",
+          "release": "v0.20.0-rc1",
+          "artifacts": [
+            {
+              "filename": "core-api.whl",
+              "bytes": 1234,
+              "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            {
+              "filename": "schema-v1.json",
+              "bytes": 321,
+              "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "stale-evidence",
+      "kind": "supported",
+      "initial_source": {
+        "approved_release": "v0.20.0-rc1",
+        "approved_artifacts": [
+          {
+            "filename": "core-api.whl",
+            "bytes": 1234,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          {
+            "filename": "schema-v1.json",
+            "bytes": 321,
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ],
+        "may_export": true
+      },
+      "initial_standing": "CSV",
+      "steps": [
+        {
+          "operation": "send",
+          "request_id": "stale-1",
+          "text": "Export as JSON.",
+          "instruction_event": {
+            "scope": "durable",
+            "value": "JSON"
+          },
+          "proposal": {
+            "tool": "export_manifest",
+            "arguments": {
+              "request_id": "stale-1",
+              "source_version": "005ea09ca030be444b60de70912be772afb10b96b42156e10b2f1101cc07e686",
+              "format": "JSON",
+              "release": "v0.20.0-rc1",
+              "artifacts": [
+                {
+                  "filename": "core-api.whl",
+                  "bytes": 1234,
+                  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                },
+                {
+                  "filename": "schema-v1.json",
+                  "bytes": 321,
+                  "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                }
+              ]
+            }
+          },
+          "expected": "blocked",
+          "after_proposal_source": {
+            "approved_release": "v0.20.0-rc2",
+            "approved_artifacts": [
+              {
+                "filename": "core-api.whl",
+                "bytes": 1235,
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              {
+                "filename": "schema-v1.json",
+                "bytes": 321,
+                "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              }
+            ],
+            "may_export": true
+          }
+        }
+      ],
+      "expected_documents": {}
+    },
+    {
+      "id": "permission-revoked",
+      "kind": "supported",
+      "initial_source": {
+        "approved_release": "v0.20.0-rc1",
+        "approved_artifacts": [
+          {
+            "filename": "core-api.whl",
+            "bytes": 1234,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          {
+            "filename": "schema-v1.json",
+            "bytes": 321,
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ],
+        "may_export": true
+      },
+      "initial_standing": "CSV",
+      "steps": [
+        {
+          "operation": "send",
+          "request_id": "revoke-1",
+          "text": "Export as JSON.",
+          "instruction_event": {
+            "scope": "durable",
+            "value": "JSON"
+          },
+          "proposal": {
+            "tool": "export_manifest",
+            "arguments": {
+              "request_id": "revoke-1",
+              "source_version": "005ea09ca030be444b60de70912be772afb10b96b42156e10b2f1101cc07e686",
+              "format": "JSON",
+              "release": "v0.20.0-rc1",
+              "artifacts": [
+                {
+                  "filename": "core-api.whl",
+                  "bytes": 1234,
+                  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                },
+                {
+                  "filename": "schema-v1.json",
+                  "bytes": 321,
+                  "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                }
+              ]
+            }
+          },
+          "expected": "blocked",
+          "after_proposal_source": {
+            "approved_release": "v0.20.0-rc1",
+            "approved_artifacts": [
+              {
+                "filename": "core-api.whl",
+                "bytes": 1234,
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              {
+                "filename": "schema-v1.json",
+                "bytes": 321,
+                "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              }
+            ],
+            "may_export": false
+          }
+        }
+      ],
+      "expected_documents": {}
+    },
+    {
+      "id": "ambiguity-then-clarification",
+      "kind": "supported",
+      "initial_source": {
+        "approved_release": "v0.20.0-rc1",
+        "approved_artifacts": [
+          {
+            "filename": "core-api.whl",
+            "bytes": 1234,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          {
+            "filename": "schema-v1.json",
+            "bytes": 321,
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ],
+        "may_export": true
+      },
+      "initial_standing": "CSV",
+      "steps": [
+        {
+          "operation": "send",
+          "request_id": "unclear-1",
+          "text": "Use the other export format.",
+          "instruction_event": {
+            "scope": "ambiguous"
+          },
+          "proposal": {
+            "tool": "export_manifest",
+            "arguments": {
+              "request_id": "unclear-1",
+              "source_version": "005ea09ca030be444b60de70912be772afb10b96b42156e10b2f1101cc07e686",
+              "format": "CSV",
+              "release": "v0.20.0-rc1",
+              "artifacts": [
+                {
+                  "filename": "core-api.whl",
+                  "bytes": 1234,
+                  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                },
+                {
+                  "filename": "schema-v1.json",
+                  "bytes": 321,
+                  "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                }
+              ]
+            }
+          },
+          "expected": "clarification"
+        },
+        {
+          "operation": "send",
+          "request_id": "unclear-2",
+          "text": "Use JSON from now on.",
+          "instruction_event": {
+            "scope": "durable",
+            "value": "JSON"
+          },
+          "proposal": {
+            "tool": "export_manifest",
+            "arguments": {
+              "request_id": "unclear-2",
+              "source_version": "005ea09ca030be444b60de70912be772afb10b96b42156e10b2f1101cc07e686",
+              "format": "JSON",
+              "release": "v0.20.0-rc1",
+              "artifacts": [
+                {
+                  "filename": "core-api.whl",
+                  "bytes": 1234,
+                  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                },
+                {
+                  "filename": "schema-v1.json",
+                  "bytes": 321,
+                  "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                }
+              ]
+            }
+          },
+          "expected": "completed"
+        }
+      ],
+      "expected_documents": {
+        "unclear-2": {
+          "format": "JSON",
+          "release": "v0.20.0-rc1",
+          "artifacts": [
+            {
+              "filename": "core-api.whl",
+              "bytes": 1234,
+              "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            {
+              "filename": "schema-v1.json",
+              "bytes": 321,
+              "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "unsupported-extra-argument",
+      "kind": "supported",
+      "initial_source": {
+        "approved_release": "v0.20.0-rc1",
+        "approved_artifacts": [
+          {
+            "filename": "core-api.whl",
+            "bytes": 1234,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          {
+            "filename": "schema-v1.json",
+            "bytes": 321,
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ],
+        "may_export": true
+      },
+      "initial_standing": "CSV",
+      "steps": [
+        {
+          "operation": "send",
+          "request_id": "extra-1",
+          "text": "Export as JSON.",
+          "instruction_event": {
+            "scope": "durable",
+            "value": "JSON"
+          },
+          "proposal": {
+            "tool": "export_manifest",
+            "arguments": {
+              "request_id": "extra-1",
+              "source_version": "005ea09ca030be444b60de70912be772afb10b96b42156e10b2f1101cc07e686",
+              "format": "JSON",
+              "release": "v0.20.0-rc1",
+              "artifacts": [
+                {
+                  "filename": "core-api.whl",
+                  "bytes": 1234,
+                  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                },
+                {
+                  "filename": "schema-v1.json",
+                  "bytes": 321,
+                  "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                }
+              ],
+              "recipient": "not-approved@example.test"
+            }
+          },
+          "expected": "blocked"
+        }
+      ],
+      "expected_documents": {}
+    },
+    {
+      "id": "postwrite-replay-reconcile",
+      "kind": "supported",
+      "initial_source": {
+        "approved_release": "v0.20.0-rc1",
+        "approved_artifacts": [
+          {
+            "filename": "core-api.whl",
+            "bytes": 1234,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          {
+            "filename": "schema-v1.json",
+            "bytes": 321,
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ],
+        "may_export": true
+      },
+      "initial_standing": "CSV",
+      "steps": [
+        {
+          "operation": "send",
+          "request_id": "postwrite-1",
+          "text": "Export as JSON.",
+          "instruction_event": {
+            "scope": "durable",
+            "value": "JSON"
+          },
+          "proposal": {
+            "tool": "export_manifest",
+            "arguments": {
+              "request_id": "postwrite-1",
+              "source_version": "005ea09ca030be444b60de70912be772afb10b96b42156e10b2f1101cc07e686",
+              "format": "JSON",
+              "release": "v0.20.0-rc1",
+              "artifacts": [
+                {
+                  "filename": "core-api.whl",
+                  "bytes": 1234,
+                  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                },
+                {
+                  "filename": "schema-v1.json",
+                  "bytes": 321,
+                  "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                }
+              ]
+            }
+          },
+          "expected": "pending",
+          "fail_after_write": true
+        },
+        {
+          "operation": "replay",
+          "request_id": "postwrite-1",
+          "expected": "pending"
+        },
+        {
+          "operation": "reconcile",
+          "request_id": "postwrite-1",
+          "expected": "completed"
+        },
+        {
+          "operation": "replay",
+          "request_id": "postwrite-1",
+          "expected": "completed"
+        }
+      ],
+      "expected_documents": {
+        "postwrite-1": {
+          "format": "JSON",
+          "release": "v0.20.0-rc1",
+          "artifacts": [
+            {
+              "filename": "core-api.whl",
+              "bytes": 1234,
+              "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            {
+              "filename": "schema-v1.json",
+              "bytes": 321,
+              "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wrong-trusted-source-control",
+      "kind": "known_limitation",
+      "initial_source": {
+        "approved_release": "v0.20.0-rc1",
+        "approved_artifacts": [
+          {
+            "filename": "core-api.whl",
+            "bytes": 999,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          {
+            "filename": "schema-v1.json",
+            "bytes": 321,
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ],
+        "may_export": true
+      },
+      "initial_standing": "CSV",
+      "steps": [
+        {
+          "operation": "send",
+          "request_id": "wrong-source-1",
+          "text": "Export as JSON.",
+          "instruction_event": {
+            "scope": "durable",
+            "value": "JSON"
+          },
+          "proposal": {
+            "tool": "export_manifest",
+            "arguments": {
+              "request_id": "wrong-source-1",
+              "source_version": "1c37e9875c7e8b8f1ffdb8d5f63a59e7bf2aec54287242fd225a831f92d64c4e",
+              "format": "JSON",
+              "release": "v0.20.0-rc1",
+              "artifacts": [
+                {
+                  "filename": "core-api.whl",
+                  "bytes": 999,
+                  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                },
+                {
+                  "filename": "schema-v1.json",
+                  "bytes": 321,
+                  "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                }
+              ]
+            }
+          },
+          "expected": "completed"
+        }
+      ],
+      "expected_documents": {
+        "wrong-source-1": {
+          "format": "JSON",
+          "release": "v0.20.0-rc1",
+          "artifacts": [
+            {
+              "filename": "core-api.whl",
+              "bytes": 1234,
+              "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            {
+              "filename": "schema-v1.json",
+              "bytes": 321,
+              "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,838 @@
+{
+  "description": "Expectations frozen before v0.11 parser changes. Small manually authored development corpus, not held-out or model accuracy evidence. Review cases measure proposing a bounded review, not automatic correction.",
+  "cases": [
+    {
+      "id": "want_brief",
+      "category": "named",
+      "before": [
+        "Keep responses detailed."
+      ],
+      "text": "I want brief answers.",
+      "expected_entries": {
+        "response_style": "brief"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "need_short",
+      "category": "named",
+      "before": [
+        "Keep responses detailed."
+      ],
+      "text": "I need responses to be short.",
+      "expected_entries": {
+        "response_style": "short"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "prefer_replies",
+      "category": "named",
+      "before": [
+        "Keep responses detailed."
+      ],
+      "text": "I prefer concise replies.",
+      "expected_entries": {
+        "response_style": "concise"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "your_responses",
+      "category": "named",
+      "before": [
+        "Keep responses detailed."
+      ],
+      "text": "Keep your responses brief.",
+      "expected_entries": {
+        "response_style": "brief"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "make_answers",
+      "category": "named",
+      "before": [
+        "Keep responses detailed."
+      ],
+      "text": "Make the answers short.",
+      "expected_entries": {
+        "response_style": "short"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "want_detailed",
+      "category": "named",
+      "before": [
+        "Keep responses brief."
+      ],
+      "text": "I want the replies to be detailed.",
+      "expected_entries": {
+        "response_style": "detailed"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "need_style",
+      "category": "named",
+      "before": [
+        "Keep responses detailed."
+      ],
+      "text": "I need a concise response.",
+      "expected_entries": {
+        "response_style": "concise"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "language_answers",
+      "category": "named",
+      "before": [
+        "Reply in English."
+      ],
+      "text": "I want answers in Hindi.",
+      "expected_entries": {
+        "response_language": "Hindi"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "language_replies",
+      "category": "named",
+      "before": [
+        "Reply in English."
+      ],
+      "text": "I need the replies in German.",
+      "expected_entries": {
+        "response_language": "German"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "language_switch",
+      "category": "named",
+      "before": [
+        "Reply in English."
+      ],
+      "text": "Switch the response language to French.",
+      "expected_entries": {
+        "response_language": "French"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "language_from",
+      "category": "named",
+      "before": [
+        "Reply in English."
+      ],
+      "text": "Change the response language from English to Bengali.",
+      "expected_entries": {
+        "response_language": "Bengali"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "language_replies_direct",
+      "category": "named",
+      "before": [
+        "Reply in English."
+      ],
+      "text": "Reply in Spanish.",
+      "expected_entries": {
+        "response_language": "Spanish"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "format_output",
+      "category": "named",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "I want the output in JSON.",
+      "expected_entries": {
+        "export_format": "JSON"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "format_need",
+      "category": "named",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "I need the export as TSV.",
+      "expected_entries": {
+        "export_format": "TSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "format_export_results",
+      "category": "named",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Export the results as XML.",
+      "expected_entries": {
+        "export_format": "XML"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "format_export_data",
+      "category": "named",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Export the data as YAML.",
+      "expected_entries": {
+        "export_format": "YAML"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "format_switch",
+      "category": "named",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Switch the export format to JSONL.",
+      "expected_entries": {
+        "export_format": "JSONL"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "format_from",
+      "category": "named",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Change the export format from CSV to JSON.",
+      "expected_entries": {
+        "export_format": "JSON"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "format_switch_plural",
+      "category": "named",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Switch exports from CSV to XLSX.",
+      "expected_entries": {
+        "export_format": "XLSX"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "style_from",
+      "category": "named",
+      "before": [
+        "Keep responses detailed."
+      ],
+      "text": "Change the response style from detailed to brief.",
+      "expected_entries": {
+        "response_style": "brief"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "courtesy",
+      "category": "named",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Thanks! Okay, actually, I want the output in JSON, please.",
+      "expected_entries": {
+        "export_format": "JSON"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "case_preserved",
+      "category": "named",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "I NEED THE EXPORT AS json.",
+      "expected_entries": {
+        "export_format": "json"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "output_custom_existing",
+      "category": "named",
+      "before": [
+        "Set the output format to CSV."
+      ],
+      "text": "I want the output in JSON.",
+      "expected_entries": {
+        "output_format": "JSON"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "output_alias_ambiguous",
+      "category": "review",
+      "before": [
+        "Export as CSV. Set the output format to XML."
+      ],
+      "text": "I want the output in JSON.",
+      "expected_entries": {
+        "export_format": "CSV",
+        "output_format": "XML"
+      },
+      "expected_pending": [
+        {
+          "key": null,
+          "value": "JSON",
+          "reason": "ambiguous_target",
+          "targets": [
+            "export_format",
+            "output_format"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "style_recent_pronoun",
+      "category": "review",
+      "before": [
+        "Keep responses detailed."
+      ],
+      "text": "Make it brief.",
+      "expected_entries": {
+        "response_style": "detailed"
+      },
+      "expected_pending": [
+        {
+          "key": "response_style",
+          "value": "brief",
+          "reason": "contextual_needs_review",
+          "targets": [
+            "response_style"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "style_recent_plural",
+      "category": "review",
+      "before": [
+        "Keep responses detailed."
+      ],
+      "text": "Keep them concise.",
+      "expected_entries": {
+        "response_style": "detailed"
+      },
+      "expected_pending": [
+        {
+          "key": "response_style",
+          "value": "concise",
+          "reason": "contextual_needs_review",
+          "targets": [
+            "response_style"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "old_format_mismatch",
+      "category": "review",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Change the export format from XML to JSON.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": [
+        {
+          "key": "export_format",
+          "value": "JSON",
+          "reason": "old_value_mismatch",
+          "targets": [
+            "export_format"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "old_language_mismatch",
+      "category": "review",
+      "before": [
+        "Reply in English."
+      ],
+      "text": "Change the response language from Hindi to German.",
+      "expected_entries": {
+        "response_language": "English"
+      },
+      "expected_pending": [
+        {
+          "key": "response_language",
+          "value": "German",
+          "reason": "old_value_mismatch",
+          "targets": [
+            "response_language"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "review_mode_named",
+      "category": "review",
+      "before": [],
+      "text": "I want brief answers.",
+      "expected_entries": {},
+      "expected_pending": [
+        {
+          "key": "response_style",
+          "value": "brief",
+          "reason": "review_mode",
+          "targets": [
+            "response_style"
+          ]
+        }
+      ],
+      "mode": "review"
+    },
+    {
+      "id": "question",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Do I want the output in JSON?",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "polite_question",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Could you keep your replies short?",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "hypothetical",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "If we switch, I want the output in JSON.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "maybe",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Maybe I need the export as TSV.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "negation",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "I do not want the output in JSON.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "quoted",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "\"I want the output in JSON.\"",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "code",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "`I want the output in JSON.`",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "blockquote",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "> I want the output in JSON.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "reported",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "The customer said I want the output in JSON.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "framed",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "For the demo:\nI want the output in JSON.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "claimed",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "The customer claims the following.\nI want the output in JSON.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "translate",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Translate this:\nI want the output in JSON.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "sample",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Here is a sample:\nMake your responses short.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "mixed",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "I want the output in JSON. Does that look correct?",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "compound",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "I want the output in JSON or CSV.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "reason",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "I want the output in JSON because it is easier.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "scoped",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "I want the output in JSON for this example.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "unknown_tail",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "I want the output in JSON. Thanks for checking.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "code_language",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "I want answers in Python.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "nonlanguage",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "I want answers in confidence.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "format_unsupported",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "I want the output in whatever works.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "meaningful_but_unsupported",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Make the export machine readable.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "negation_correction",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Do not export CSV anymore; export as JSON.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "fragment",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "JSON instead.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "secret",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "I want the password in JSON.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "indirect_question",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "I wonder whether I want the output in JSON.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "temporary",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "For this reply, I want brief answers.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "assistant_request",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "I want the output in JSON.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": [],
+      "role": "assistant"
+    },
+    {
+      "id": "pronoun_no_antecedent",
+      "category": "excluded_or_unsupported",
+      "before": [],
+      "text": "Make it brief.",
+      "expected_entries": {},
+      "expected_pending": []
+    },
+    {
+      "id": "pronoun_wrong_domain",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Make it brief.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "pronoun_multiple",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Keep responses detailed. Export as CSV."
+      ],
+      "text": "Make it brief.",
+      "expected_entries": {
+        "response_style": "detailed",
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "pronoun_intervening",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Keep responses detailed.",
+        "Summarise the attached document."
+      ],
+      "text": "Make it brief.",
+      "expected_entries": {
+        "response_style": "detailed"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "pronoun_other_field",
+      "category": "excluded_or_unsupported",
+      "before": [
+        "Keep responses detailed.",
+        "The briefing length is detailed."
+      ],
+      "text": "Make it brief.",
+      "expected_entries": {
+        "response_style": "detailed",
+        "briefing_length": "detailed"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "old_custom_field_unchanged",
+      "category": "regression",
+      "before": [],
+      "text": "Set the output format to JSON.",
+      "expected_entries": {
+        "output_format": "JSON"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "old_framing_guard",
+      "category": "regression",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Is the following correct?\nThe export format is JSON.",
+      "expected_entries": {
+        "export_format": "CSV"
+      },
+      "expected_pending": []
+    },
+    {
+      "id": "old_generic_correction",
+      "category": "regression",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Use JSON instead of CSV.",
+      "expected_entries": {
+        "export_format": "JSON"
+      },
+      "expected_pending": []
+    }
+  ]
+}
+

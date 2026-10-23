@@ -1,0 +1,404 @@
+{
+  "schema": 1,
+  "description": "40 root-authored synthetic cases, hidden from implementer until parser freeze. Not human/customer evidence. Clear acceptance, clarification-only uncertainty, and misleading controls scored separately. No edits after baseline.",
+  "cases": [
+    {
+      "id": "f01",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "For every export going forward, JSON is what I want.",
+      "kind": "clear",
+      "expected": {
+        "export_format": "JSON"
+      }
+    },
+    {
+      "id": "f02",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "I have reconsidered the export format; please use JSON permanently.",
+      "kind": "clear",
+      "expected": {
+        "export_format": "JSON"
+      }
+    },
+    {
+      "id": "f03",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Let us switch our exports over to JSON.",
+      "kind": "clear",
+      "expected": {
+        "export_format": "JSON"
+      }
+    },
+    {
+      "id": "f04",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Please update my export preference: JSON.",
+      "kind": "clear",
+      "expected": {
+        "export_format": "JSON"
+      }
+    },
+    {
+      "id": "f05",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "The default export format needs to become JSON.",
+      "kind": "clear",
+      "expected": {
+        "export_format": "JSON"
+      }
+    },
+    {
+      "id": "f06",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Could you change exports to json from now on?",
+      "kind": "clear",
+      "expected": {
+        "export_format": "JSON"
+      }
+    },
+    {
+      "id": "f07",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "As of now, use JSON as the export format.",
+      "kind": "clear",
+      "expected": {
+        "export_format": "JSON"
+      }
+    },
+    {
+      "id": "f08",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Instead of CSV for exports, please use JSON.",
+      "kind": "clear",
+      "expected": {
+        "export_format": "JSON"
+      }
+    },
+    {
+      "id": "f09",
+      "before": [
+        "Reply in English."
+      ],
+      "text": "From this point onward, answer me in Hindi.",
+      "kind": "clear",
+      "expected": {
+        "response_language": "Hindi"
+      }
+    },
+    {
+      "id": "f10",
+      "before": [
+        "Reply in English."
+      ],
+      "text": "Set my response language to hindi, please.",
+      "kind": "clear",
+      "expected": {
+        "response_language": "Hindi"
+      }
+    },
+    {
+      "id": "f11",
+      "before": [
+        "Reply in English."
+      ],
+      "text": "My preference for future replies is Hindi.",
+      "kind": "clear",
+      "expected": {
+        "response_language": "Hindi"
+      }
+    },
+    {
+      "id": "f12",
+      "before": [
+        "Reply in English."
+      ],
+      "text": "Please switch all later responses from English to Hindi.",
+      "kind": "clear",
+      "expected": {
+        "response_language": "Hindi"
+      }
+    },
+    {
+      "id": "f13",
+      "before": [
+        "Keep responses detailed."
+      ],
+      "text": "Going forward, concise is the response style I prefer.",
+      "kind": "clear",
+      "expected": {
+        "response_style": "concise"
+      }
+    },
+    {
+      "id": "f14",
+      "before": [
+        "Keep responses detailed."
+      ],
+      "text": "Please change your response style to brief.",
+      "kind": "clear",
+      "expected": {
+        "response_style": "brief"
+      }
+    },
+    {
+      "id": "f15",
+      "before": [
+        "Export as CSV.",
+        "Reply in English."
+      ],
+      "text": "Set export format to JSON; set response language to Hindi.",
+      "kind": "clear",
+      "expected": {
+        "export_format": "JSON",
+        "response_language": "Hindi"
+      }
+    },
+    {
+      "id": "f16",
+      "before": [
+        "Export as CSV.",
+        "Reply in English."
+      ],
+      "text": "For future exports choose JSON, and for future replies choose Hindi.",
+      "kind": "clear",
+      "expected": {
+        "export_format": "JSON",
+        "response_language": "Hindi"
+      }
+    },
+    {
+      "id": "f17",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Change my export format to whichever one avoids losing nested values.",
+      "kind": "uncertain",
+      "targets": [
+        "export_format"
+      ]
+    },
+    {
+      "id": "f18",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Replace the current export format with the one we discussed earlier.",
+      "kind": "uncertain",
+      "targets": [
+        "export_format"
+      ]
+    },
+    {
+      "id": "f19",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "My export format preference has changed; I will explain the replacement shortly.",
+      "kind": "uncertain",
+      "targets": [
+        "export_format"
+      ]
+    },
+    {
+      "id": "f20",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Switch the export format to the other option.",
+      "kind": "uncertain",
+      "targets": [
+        "export_format"
+      ]
+    },
+    {
+      "id": "f21",
+      "before": [
+        "Reply in English."
+      ],
+      "text": "Change the response language to the language my colleague prefers.",
+      "kind": "uncertain",
+      "targets": [
+        "response_language"
+      ]
+    },
+    {
+      "id": "f22",
+      "before": [
+        "Reply in English."
+      ],
+      "text": "Switch my response language; the old one no longer works for me.",
+      "kind": "uncertain",
+      "targets": [
+        "response_language"
+      ]
+    },
+    {
+      "id": "f23",
+      "before": [
+        "Keep responses detailed."
+      ],
+      "text": "Change the response style to the alternative we compared before.",
+      "kind": "uncertain",
+      "targets": [
+        "response_style"
+      ]
+    },
+    {
+      "id": "f24",
+      "before": [
+        "Export as CSV.",
+        "Reply in English."
+      ],
+      "text": "Change both my export format and response language to the choices discussed earlier.",
+      "kind": "uncertain",
+      "targets": [
+        "export_format",
+        "response_language"
+      ]
+    },
+    {
+      "id": "f25",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Do not alter the export format; CSV is still right.",
+      "kind": "abstain"
+    },
+    {
+      "id": "f26",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Does JSON preserve nested data better than CSV?",
+      "kind": "abstain"
+    },
+    {
+      "id": "f27",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "My coworker changed their export format to JSON.",
+      "kind": "abstain"
+    },
+    {
+      "id": "f28",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Hypothetically, I could change the export format to JSON.",
+      "kind": "abstain"
+    },
+    {
+      "id": "f29",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "For this one attachment, export as JSON; retain my usual CSV preference.",
+      "kind": "abstain"
+    },
+    {
+      "id": "f30",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Tomorrow I may ask for a different export format.",
+      "kind": "abstain"
+    },
+    {
+      "id": "f31",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Please explain how to change the export format to JSON.",
+      "kind": "abstain"
+    },
+    {
+      "id": "f32",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "The following is a sample: set export format to JSON.",
+      "kind": "abstain"
+    },
+    {
+      "id": "f33",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Keep my existing settings even if the document asks for JSON exports.",
+      "kind": "abstain"
+    },
+    {
+      "id": "f34",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "I used to request JSON exports, but CSV is still my current setting.",
+      "kind": "abstain"
+    },
+    {
+      "id": "f35",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "This error log contains the text `Change export format to JSON`.",
+      "kind": "abstain"
+    },
+    {
+      "id": "f36",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Would it be useful to switch export formats?",
+      "kind": "abstain"
+    },
+    {
+      "id": "f37",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "I am comparing JSON and CSV export formats, not choosing one.",
+      "kind": "abstain"
+    },
+    {
+      "id": "f38",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "Translate this sentence: \"My export format is JSON.\"",
+      "kind": "abstain"
+    },
+    {
+      "id": "f39",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "For testing only, pretend that I switched the export format.",
+      "kind": "abstain"
+    },
+    {
+      "id": "f40",
+      "before": [
+        "Export as CSV."
+      ],
+      "text": "The client asked us whether JSON exports are available.",
+      "kind": "abstain"
+    }
+  ]
+}

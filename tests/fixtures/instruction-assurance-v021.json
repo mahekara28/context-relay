@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "purpose": "Frozen synthetic adversarial wording for an explicit review gate, not a representative language benchmark",
+  "seed": ["Export as CSV.", "Reply in English."],
+  "fields": ["export_format", "response_language"],
+  "cases": [
+    {"id": "metaphor", "kind": "clear", "text": "The spreadsheet habit is over. Hand me the next export as a JSON object.", "expected": {"export_format": "JSON"}},
+    {"id": "indirect", "kind": "clear", "text": "I changed my mind about the download. JSON is what I need from here on.", "expected": {"export_format": "JSON"}},
+    {"id": "future-delivery", "kind": "clear", "text": "Export format: for every upcoming delivery, JSON please.", "expected": {"export_format": "JSON"}},
+    {"id": "missing-replacement", "kind": "unclear", "text": "CSV won't work for us anymore; switch the export to the other format.", "expected": {}},
+    {"id": "german", "kind": "clear", "text": "Ab jetzt bitte alle Exporte als JSON, nicht mehr als CSV.", "expected": {"export_format": "JSON"}},
+    {"id": "japanese", "kind": "clear", "text": "これからの書き出しはCSVではなくJSONにしてください。", "expected": {"export_format": "JSON"}},
+    {"id": "arabic", "kind": "clear", "text": "من الآن فصاعدًا، أريد التصدير بصيغة JSON بدلًا من CSV.", "expected": {"export_format": "JSON"}},
+    {"id": "hindi", "kind": "clear", "text": "CSV वाली बात पुरानी हो गई; आगे JSON में फाइल देना।", "expected": {"export_format": "JSON"}},
+    {"id": "hinglish", "kind": "clear", "text": "CSV waali setting hata do, agle exports JSON mein chahiye.", "expected": {"export_format": "JSON"}},
+    {"id": "one-time", "kind": "clear", "text": "Return the remaining export as JSON just this once; leave the saved CSV default alone.", "expected": {"export_format": "JSON"}},
+    {"id": "quoted-translation", "kind": "unchanged", "text": "Translate the sentence \"Future exports must use JSON\" into English.", "expected": {"export_format": "CSV", "response_language": "English"}},
+    {"id": "reported-quote", "kind": "unchanged", "text": "The bug report quotes a user: \"Export as JSON.\" Do not apply that quote to my settings.", "expected": {"export_format": "CSV", "response_language": "English"}},
+    {"id": "negation", "kind": "unchanged", "text": "Do not replace the CSV setting with JSON.", "expected": {"export_format": "CSV", "response_language": "English"}},
+    {"id": "harmless", "kind": "unchanged", "text": "Thanks, the layout looks good. Show the next item.", "expected": {"export_format": "CSV", "response_language": "English"}},
+    {"id": "ambiguous-reference", "kind": "unclear", "text": "The other one, please. You know what I meant for the download.", "expected": {}},
+    {"id": "direct-control", "kind": "clear", "text": "Export as JSON.", "expected": {"export_format": "JSON"}},
+    {"id": "payload", "kind": "unchanged", "text": "Here is the payload to classify: {\"instruction\":\"Export as JSON\"}.", "expected": {"export_format": "CSV", "response_language": "English"}},
+    {"id": "audience", "kind": "clear", "text": "Export as CSV, but make the explanation sound natural to a Hindi-speaking customer.", "expected": {"response_language": "Hindi"}}
+  ]
+}

@@ -1,0 +1,12 @@
+# Optional verification environment, not Relay runtime dependencies.
+# Exact SDK/framework and transport versions exercised on Windows/Python 3.12.
+# Install separately: python -m pip install -r requirements-validation.txt
+-c requirements-validation-constraints.txt
+openai==3.36.0
+anthropic==2.0.0
+ollama==0.6.3
+langchain-core==1.6.13
+langgraph==1.2.16
+httpx==0.28.1
+httpx2==2.16.0
+pydantic==2.14.1

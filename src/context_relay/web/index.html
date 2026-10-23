@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#24252b">
+  <title>Context Relay · Workbench</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to workbench</a>
+  <aside class="sidebar" aria-label="Sessions">
+    <a class="brand" href="/" aria-label="Context Relay home">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M6 11h12l-4-4M26 21H14l4 4M22 7l4 4-4 4M10 25l-4-4 4-4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span>Context<span class="brand-second">Relay</span></span>
+    </a>
+    <div class="workspace-label"><span class="workspace-avatar">L</span><span>Local workspace<small>On your machine</small></span><span class="online-dot" aria-label="Local" title="Local workspace"></span></div>
+    <div class="nav-heading"><span>SESSIONS</span><button class="icon-button sidebar-add" id="new-session" aria-label="Create a session" title="Create a session">+</button></div>
+    <nav id="session-list" class="session-list" aria-label="Choose session"><div class="sidebar-placeholder">Loading sessions…</div></nav>
+    <button id="new-session-bottom" class="new-session-button"><span aria-hidden="true">+</span> New session</button>
+    <div class="sidebar-bottom">
+      <div class="local-indicator"><span class="online-dot"></span> Local · No API key</div>
+      <p>Your sessions stay here.<br>No telemetry. No paid services.</p>
+      <div class="sidebar-version"><span>OPEN SOURCE</span><span id="version-label">v0.11.0</span></div>
+    </div>
+  </aside>
+
+  <div class="app-shell">
+    <header class="topbar"><div class="breadcrumb"><span>Workspace</span><span aria-hidden="true">/</span><strong id="breadcrumb-name">Getting ready</strong></div><div class="topbar-status"><span class="status-dot"></span> Local development <span class="kbd">v0.3</span></div></header>
+    <main id="main-content" tabindex="-1">
+      <div id="global-error" class="banner error-banner" role="alert" hidden><span id="global-error-text"></span><button id="retry-load" class="text-button">Try again</button></div>
+      <div class="page-heading"><div><div class="eyebrow">THE AGENT STATE WORKBENCH</div><h1>Make the next step the right one.</h1><p>Keep decisions current. Check actions against the evidence.</p></div><button id="export-session" class="button button-secondary" disabled><svg aria-hidden="true" viewBox="0 0 20 20" fill="none"><path d="M10 3v9m0 0 3-3m-3 3L7 9M4 13v3h12v-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Export session</button></div>
+
+      <div class="environment-note"><span class="note-icon" aria-hidden="true">i</span><span><strong>Deterministic workbench.</strong> No model is connected. Actions run as local simulations.</span><span class="environment-badge">ZERO API COST</span></div>
+
+      <div class="tab-bar" role="tablist" aria-label="Workbench sections">
+        <button class="tab active" id="tab-workbench" role="tab" aria-selected="true" aria-controls="panel-workbench" data-tab="workbench">Workbench</button>
+        <button class="tab" id="tab-context" role="tab" aria-selected="false" aria-controls="panel-context" tabindex="-1" data-tab="context">Context audit</button>
+        <button class="tab" id="tab-history" role="tab" aria-selected="false" aria-controls="panel-history" tabindex="-1" data-tab="history">Check history <span id="history-count" class="count-pill">0</span></button>
+        <button class="tab" id="tab-integration" role="tab" aria-selected="false" aria-controls="panel-integration" tabindex="-1" data-tab="integration">Integration</button>
+      </div>
+
+      <section id="panel-workbench" role="tabpanel" aria-labelledby="tab-workbench">
+        <div id="session-loading" class="loading-block"><span class="spinner" aria-hidden="true"></span>Opening your workbench…</div>
+        <div id="workbench-content" hidden>
+          <div class="demo-card" id="demo-card">
+            <div class="demo-intro"><span class="small-label">TRY THE WORKFLOW</span><h2 id="demo-title">A decision changed. Did the agent catch up?</h2><p id="demo-description"></p></div>
+            <div class="demo-steps"><button id="demo-stale" class="demo-step"><span class="step-number">01</span><span><strong>Check old plan</strong><small>Catch a conflicting action</small></span><span class="step-arrow" aria-hidden="true">↗</span></button><button id="demo-restore" class="demo-step"><span class="step-number">02</span><span><strong>Restore context</strong><small>Recover current evidence</small></span><span class="step-arrow" aria-hidden="true">↗</span></button><button id="demo-safe" class="demo-step"><span class="step-number">03</span><span><strong>Try corrected plan</strong><small>Run a local simulation</small></span><span class="step-arrow" aria-hidden="true">↗</span></button></div>
+            <p id="demo-feedback" class="demo-feedback" aria-live="polite" hidden></p>
+          </div>
+
+          <div class="workbench-grid">
+            <section class="card state-card" aria-labelledby="state-title">
+              <div class="card-heading"><div><div class="small-label">SOURCE OF TRUTH</div><h2 id="state-title">Current state <span id="revision-badge" class="neutral-badge">rev —</span></h2></div><button id="add-fact" class="button button-small button-secondary">+ Add fact</button></div>
+              <p class="card-description">Explicit facts, with a source for every decision.</p>
+              <div id="facts-list" class="facts-list"></div>
+              <div class="card-footer"><span class="tiny-icon" aria-hidden="true">↳</span><span>Changing a fact advances the session revision.</span></div>
+              <details class="policies-details"><summary><span>Tool policies</span><span id="policy-count" class="neutral-badge">0</span></summary><div id="policies-list"></div><button id="add-policy" class="text-button">+ Add explicit policy</button></details>
+            </section>
+
+            <section class="card action-card" aria-labelledby="action-title">
+              <div class="card-heading"><div><div class="small-label">BEFORE THE TOOL RUNS</div><h2 id="action-title">Check an action</h2></div><button id="toggle-action-json" class="text-button code-toggle" aria-pressed="false">{ } JSON</button></div>
+              <p class="card-description">Test a proposal against the current state and policies.</p>
+              <form id="action-form" novalidate>
+                <div id="action-fields"><label class="field-label" for="action-tool">Tool</label><select id="action-tool" class="input"></select><div id="action-arguments" class="arguments-grid"></div><div class="revision-row"><div><label class="field-label" for="action-revision">Context revision</label><p class="field-help">The revision the agent used to plan.</p></div><input id="action-revision" class="input revision-input" type="number" min="0" step="1" required><button type="button" id="use-current-revision" class="text-button">Use latest</button></div></div>
+                <div id="action-json-wrap" hidden><label class="field-label" for="action-json">Proposed action · JSON</label><textarea id="action-json" class="code-editor action-editor" spellcheck="false" aria-describedby="action-json-help"></textarea><p class="field-help" id="action-json-help">Include tool, arguments, and context_revision.</p></div>
+                <div id="action-form-error" class="form-error" role="alert" hidden></div>
+                <div class="action-buttons"><button type="submit" id="check-action" class="button button-primary"><svg aria-hidden="true" viewBox="0 0 20 20" fill="none"><path d="M10 2.5 16 5v4.5c0 4-6 7.5-6 7.5s-6-3.5-6-7.5V5l6-2.5Z" stroke="currentColor" stroke-width="1.4"/><path d="m7 9.5 2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Check action</button><button type="button" id="simulate-action" class="button button-secondary">Simulate</button></div>
+              </form>
+              <div id="verdict" class="verdict-empty"><span class="verdict-empty-mark" aria-hidden="true">↗</span><div><strong>Ready when you are.</strong><p>Check an action to see its decision and supporting evidence.</p></div></div>
+            </section>
+          </div>
+
+          <section class="card timeline-card" aria-labelledby="timeline-title"><div class="card-heading"><div><div class="small-label">NOTHING LOST IN THE SUMMARY</div><h2 id="timeline-title">Original evidence</h2></div><span id="event-count" class="neutral-badge">0 events</span></div><p class="card-description">The original changes and recorded results, in order.</p><ol id="event-timeline" class="event-timeline"></ol></section>
+        </div>
+      </section>
+
+      <section id="panel-context" role="tabpanel" aria-labelledby="tab-context" hidden>
+        <div class="section-intro"><h2>Inspect what the agent remembers.</h2><p>Paste a structured context snapshot. Relay compares its revision, facts, and source references with this session.</p></div>
+        <div class="audit-grid"><section class="card"><div class="card-heading"><h3>Candidate context</h3><div class="compact-actions"><button id="load-stale-context" class="text-button">Load old snapshot</button><button id="copy-context" class="icon-text-button">Copy</button></div></div><label class="sr-only" for="context-editor">Context snapshot as JSON</label><textarea id="context-editor" class="code-editor context-editor" spellcheck="false"></textarea><div class="editor-footer"><span id="context-size">Structured JSON</span><span>Editable · JSON</span></div><div id="context-error" class="form-error" role="alert" hidden></div><div class="panel-actions"><button id="audit-context" class="button button-primary">Audit context</button><button id="restore-context" class="button button-secondary">Restore latest</button></div></section><section class="card audit-result-card"><div class="card-heading"><h3>Audit result</h3><span class="neutral-badge">EVIDENCE CHECK</span></div><div id="audit-result" class="empty-state"><span class="empty-symbol" aria-hidden="true">≋</span><h3>What changed along the way?</h3><p>Run an audit to find stale revisions, missing facts, and mismatched sources.</p></div><div class="scope-note">This checks explicit structured state. It does not judge arbitrary prose or infer unstated rules.</div></section></div>
+      </section>
+
+      <section id="panel-history" role="tabpanel" aria-labelledby="tab-history" hidden><div class="section-intro"><h2>Every check, with its evidence.</h2><p>Review decisions made in this session. Newest checks appear first.</p></div><div id="check-history" class="history-list"></div></section>
+
+      <section id="panel-integration" role="tabpanel" aria-labelledby="tab-integration" hidden><div class="section-intro"><h2>A small library. A useful checkpoint.</h2><p>Place Relay between an agent’s proposed action and the code that executes it.</p></div><div class="integration-flow"><span>Agent proposes</span><span aria-hidden="true">→</span><strong>Relay checks</strong><span aria-hidden="true">→</span><span>Your tool executes</span></div><div class="integration-grid"><section class="card code-card"><div class="card-heading"><h3>Python quickstart</h3><button id="copy-quickstart" class="button button-small button-secondary">Copy code</button></div><pre><code id="quickstart-code">Loading example…</code></pre></section><section class="card"><div class="card-heading"><h3>Know the boundary.</h3></div><div class="integration-section"><span class="small-label">WHAT IT DOES</span><ul id="capabilities-list" class="plain-list"></ul></div><div class="integration-section"><span class="small-label">WHAT IT DOESN’T PROMISE</span><ul id="limitations-list" class="plain-list"></ul></div><div class="scope-note">No model or API key is needed for this workbench. A model you connect separately may have its own cost.</div></section></div></section>
+      <footer class="page-footer"><span>Context Relay <span aria-hidden="true">·</span> Built for explicit state, grounded in original evidence.</span><span>LOCAL-FIRST / v0.3</span></footer>
+    </main>
+  </div>
+
+  <dialog id="session-dialog" class="modal"><form id="session-form"><div class="modal-header"><div><div class="small-label">A FRESH WORKSPACE</div><h2>Create a session</h2></div><button type="button" class="icon-button close-dialog" aria-label="Close dialog">×</button></div><label for="session-name" class="field-label">Session name</label><input id="session-name" class="input" maxlength="100" placeholder="e.g. Customer support handoff" required><label for="session-scenario" class="field-label">Starting point</label><select id="session-scenario" class="input"><option value="refund">Customer support · refund → replacement</option><option value="deployment">Deployment · a change in approval</option><option value="custom">Blank session · your own facts</option></select><p class="field-help">Demo sessions include explicit facts, policies, and example actions. Blank sessions start without policies.</p><div id="session-form-error" class="form-error" role="alert" hidden></div><div class="modal-actions"><button type="button" class="button button-secondary close-dialog">Cancel</button><button type="submit" class="button button-primary">Create session</button></div></form></dialog>
+
+  <dialog id="fact-dialog" class="modal"><form id="fact-form"><div class="modal-header"><div><div class="small-label">KEEP THE RECORD CURRENT</div><h2 id="fact-dialog-title">Add a fact</h2></div><button type="button" class="icon-button close-dialog" aria-label="Close dialog">×</button></div><label for="fact-key" class="field-label">Fact key</label><input id="fact-key" class="input mono" placeholder="customer.intent" required><label for="fact-value" class="field-label">Value · JSON</label><textarea id="fact-value" class="input mono fact-value-input" placeholder='"replacement"' spellcheck="false" required></textarea><p class="field-help">Use a JSON string, number, boolean, array, or object. Text needs quotation marks.</p><label for="fact-text" class="field-label">Original evidence or explanation</label><textarea id="fact-text" class="input fact-text-input" placeholder="What changed, and why?" required></textarea><div id="fact-form-error" class="form-error" role="alert" hidden></div><div class="modal-actions"><button type="button" class="button button-secondary close-dialog">Cancel</button><button type="submit" class="button button-primary">Save fact</button></div></form></dialog>
+  <dialog id="policy-dialog" class="modal policy-modal"><form id="policy-form"><div class="modal-header"><div><div class="small-label">EXPLICIT DEVELOPER RULES</div><h2>Add a tool policy</h2></div><button type="button" class="icon-button close-dialog" aria-label="Close dialog">×</button></div><p class="field-help">A policy defines which state a tool requires and which arguments must match facts. Unknown tools and extra arguments are blocked. Adding a policy advances the revision.</p><label for="policy-editor" class="field-label">Policy · JSON</label><textarea id="policy-editor" class="code-editor policy-editor" spellcheck="false" required></textarea><div id="policy-form-error" class="form-error" role="alert" hidden></div><div class="modal-actions"><button type="button" class="button button-secondary close-dialog">Cancel</button><button type="submit" class="button button-primary">Add policy</button></div></form></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

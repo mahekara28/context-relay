@@ -1,0 +1,15 @@
+{
+  "description": "Implementer-authored synthetic semantic fallback development cases, frozen before six local model calls. Not a held-out or organisational evaluation.",
+  "cases": [
+    {"id": "export_paraphrase", "before": ["Export as CSV."], "text": "I need future exports delivered as JSON.", "expected": {"export_format": "JSON"}, "expected_calls": 1},
+    {"id": "style_paraphrase", "before": ["Keep responses detailed."], "text": "I want the response style changed to brief.", "expected": {"response_style": "brief"}, "expected_calls": 1},
+    {"id": "language_paraphrase", "before": ["Respond in English."], "text": "Please switch the language of future replies over to Hindi.", "expected": {"response_language": "Hindi"}, "expected_calls": 1},
+    {"id": "custom_setting", "before": ["Set the delivery window to morning."], "text": "I want weekly deliveries moved into the afternoon.", "expected": {"delivery_window": "afternoon"}, "expected_calls": 1},
+    {"id": "ambiguous_pronoun", "before": ["Export as CSV. Set the log format to XML."], "text": "Use JSON for it.", "expected": {}, "expected_calls": 1},
+    {"id": "unspecified_member", "before": ["Export as CSV. Set the log format to CSV."], "text": "Make one of those JSON.", "expected": {}, "expected_calls": 1},
+    {"id": "quoted_control", "before": ["Export as CSV."], "text": "\"I need future exports delivered as JSON.\"", "expected": {}, "expected_calls": 0},
+    {"id": "conditional_control", "before": ["Export as CSV."], "text": "If the customer asks, switch future exports to JSON.", "expected": {}, "expected_calls": 0},
+    {"id": "reported_control", "before": ["Export as CSV."], "text": "The customer said to switch future exports to JSON.", "expected": {}, "expected_calls": 0},
+    {"id": "example_control", "before": ["Export as CSV."], "text": "Use JSON for exports as an example.", "expected": {}, "expected_calls": 0}
+  ]
+}

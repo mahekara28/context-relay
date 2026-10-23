@@ -1,0 +1,74 @@
+name: Alpha checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alpha-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    name: Core / ${{ matrix.os }} / Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: "3.10"
+          - os: ubuntu-latest
+            python: "3.12"
+          - os: windows-latest
+            python: "3.12"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Build and install the local wheel
+        run: |
+          python -m pip install setuptools==84.2.1
+          python -m pip wheel --no-deps --no-build-isolation --wheel-dir dist .
+          python -m pip install --no-deps dist/context_relay_local-0.21.0a1-py3-none-any.whl
+      - name: Confirm dependency-free installed import and quickstart
+        run: |
+          python -I -c "import context_relay as r; from importlib.metadata import requires; assert r.__version__ == '0.21.0a1'; assert not requires('context-relay-local')"
+          python -I -m context_relay quickstart
+      - name: Run source regression suite (optional SDK tests may skip)
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -v
+
+  optional-sdks:
+    name: Optional SDKs / Python 3.12 / simulated transports
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      LANGSMITH_TRACING: "false"
+      LANGCHAIN_TRACING_V2: "false"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install the pinned optional verification environment
+        run: |
+          python -m pip install setuptools==84.2.1
+          python -m pip install -r requirements-validation.txt
+          python -m pip install --no-deps --no-build-isolation .
+          python -m pip check
+      - name: Run actual SDK and framework checks without model calls
+        run: |
+          python scripts/verify_sdks.py --report ci-results/sdk.json
+          python -m unittest discover -s tests -p 'test_workflow_sdk_v020.py' -v
