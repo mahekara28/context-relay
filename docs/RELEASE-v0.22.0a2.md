@@ -63,6 +63,11 @@ Local Windows checks on the final source:
 | Independent history delivery comparison | 192 semantic comparisons matched |
 | Clean installed wheel, outside the checkout | Offline quickstart and all 17 new regression tests passed |
 
+The subsequent hosted Windows check for commit `34bc759` exposed an intermittent
+oversized-request connection abort in the local workbench server. The Linux and
+optional SDK push checks passed. See the [0.22.0a3 fix and validation](RELEASE-v0.22.0a3.md)
+for that additional failure; the local results above retain their original scope.
+
 SDK tests use simulated transports; no hosted model calls were made. The full
 suite checks source behavior, not general language accuracy. The existing
 18-case language diagnostic is unchanged: 1/11 clear changes recognised, 0/2

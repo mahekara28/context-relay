@@ -2,6 +2,11 @@
 
 # Validation and next evaluation
 
+## Version 0.22.0a3: early HTTP rejection
+
+See the [patch validation](RELEASE-v0.22.0a3.md) for the Windows connection-abort
+failure found by hosted CI and the bounded connection shutdown fix.
+
 ## Version 0.22.0a2: instruction and recovery fixes
 
 See the [patch validation and upgrade notes](RELEASE-v0.22.0a2.md) for mixed-message
