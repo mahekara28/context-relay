@@ -164,29 +164,32 @@ Add these controls when your workflow needs them:
 
 ## How it works
 
-The complete guarded workflow has three stages: prepare current instructions,
-check the proposed action, then verify its outcome. Your application defines the
-rules, permissions, trusted sources and evidence needed to call the work complete.
+Follow the same CSV-to-JSON change through a configured workflow. Your model
+proposes the action; Relay's configured checks and your application's verifier
+decide whether it can run and whether the expected result was produced.
+
+![A configured Relay workflow: when the CSV-to-JSON correction is recognised, Relay adds JSON to later model requests. The agent proposes an export; the registered tool runs after its checks pass. Your application reads back the file and checks the expected result. Tool checks and result verification require additional setup.](docs/context-relay-flow.svg)
+
+Basic connection adds supported preference memory. The full path shown here also
+needs registered tools, rules and an application-owned result check. Your
+application defines permissions, trusted sources and what counts as complete.
 
 <details>
-<summary>See the complete execution flow</summary>
+<summary>Read the walkthrough, including what happens when a check fails</summary>
 
-```mermaid
-flowchart TD
-    A[User request] --> B[Current instructions and optional review]
-    B --> C[Your model]
-    C --> D{Configured checks}
-    D -->|Pass| E[Registered tool]
-    D -->|Unclear or invalid| F[Repair, clarify or stop]
-    E --> G[Destination readback]
-    G --> H{Outcome verified?}
-    H -->|Yes| I[Complete]
-    H -->|No| J[Outcome not satisfied]
-    H -->|Unavailable| K[Pending reconciliation]
-```
+1. **Remember:** when Relay recognises the correction, the current preference
+   becomes JSON and is included in later model requests. Critical preferences
+   can require explicit review on every new user turn.
+2. **Check:** your model proposes an export. Before the registered tool runs,
+   configured checks compare the proposal with the current rules and permissions.
+   A failed proposal can use an optional known-value repair, followed by another
+   check. Without a valid replacement, the workflow asks for clarification or stops.
+3. **Verify:** after the tool runs, your application's verifier reads the
+   destination and checks the expected result. A mismatch stays unfinished;
+   unavailable evidence leaves the outcome pending reconciliation.
 
-The diagram includes optional instruction review and destination verification.
-These require configuration beyond `auto_connect()`.
+Repair happens before execution. Relay never automatically repeats an action
+that has started, and a successful readback proves only the configured conditions.
 
 </details>
 
