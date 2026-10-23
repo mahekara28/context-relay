@@ -4,6 +4,7 @@ __pycache__/
 .venv/
 .relay/
 build/
+wheelhouse/
 dist/
 .pytest_cache/
 *.db

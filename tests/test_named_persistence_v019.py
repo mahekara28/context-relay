@@ -34,6 +34,28 @@ class NamedPersistenceTests(unittest.TestCase):
         self.assertNotEqual(path, named_storage_path("../private/name", storage=directory, namespace="other"))
         self.assertNotEqual(named_storage_path("é", storage=directory), named_storage_path("e\u0301", storage=directory))
 
+    @unittest.skipUnless(os.name == "nt", "Windows canonical-path creation race")
+    def test_windows_concurrent_parent_creation_does_not_reject_named_path(self):
+        import ntpath
+
+        directory = self.directory / "created-by-peer"
+        resolve = ntpath._getfinalpathname
+
+        def create_parent_after_missing_leaf(path):
+            try:
+                return resolve(path)
+            except OSError as error:
+                # On Python 3.10 the change from missing parent (3) to missing
+                # file (2) leaves a \\?\ prefix on the resolved database path.
+                if (str(path).endswith(".sqlite3") and error.winerror == 3
+                        and not directory.exists()):
+                    directory.mkdir()
+                raise
+
+        with patch("ntpath._getfinalpathname", create_parent_after_missing_leaf):
+            path = named_storage_path("shared", storage=directory)
+        self.assertEqual(path.parent, directory.resolve())
+
     def test_invalid_labels_and_storage_do_not_create_files(self):
         for name in ("", " ", "x" * 201, "\ud800", "nul\x00name", True, 1):
             with self.subTest(name=repr(name)):

@@ -2,6 +2,13 @@
 
 # Validation and next evaluation
 
+## Version 0.22.0a1: compatibility and evaluated improvements
+
+See the [0.22 release validation](RELEASE-v0.22.md#validation) for the new local
+results, reproduction commands and hosted CI link. The sections below retain
+their historical scope; statements about CI not having run describe those
+earlier snapshots.
+
 ## Version 0.21.0a1: explicit instruction review and checked continuation
 
 The frozen source run (local-only reference; omitted from public distribution) ran
