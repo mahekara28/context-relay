@@ -1,5 +1,18 @@
 # Automatic user memory
 
+## Version 0.22.0a2: mixed messages and history import
+
+Bounded acknowledgments such as `Thanks, this will help.` no longer cancel a
+complete preference update in the same message. An unhandled possible qualifier
+can instead dispute a recognised existing target, preventing repair from using an
+obsolete value. Quoted, reported and conditional material remains excluded.
+Scope changes are processed in user-message order whether history arrives as one
+batch or incrementally. Recognition still uses finite grammar.
+
+Previously consumed history is not reinterpreted on upgrade. Restate an affected
+instruction or explicitly review it; replay must not restore forgotten or dismissed
+memory. Read the [patch upgrade notes](RELEASE-v0.22.0a2.md#upgrade).
+
 ## Version 0.18: correction recognition and clarification
 
 The free local parser now handles more indirect English instructions and bounded

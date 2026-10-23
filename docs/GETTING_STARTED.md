@@ -7,11 +7,13 @@ Your app and model stay in place.
 
 ## 1. Install and check
 
-Use your project's Python 3.10+ environment. Extract the v0.21.0a1 public ZIP,
-open a terminal in its `relay-v0.21.0a1-public` folder, then run:
+Use your project's Python 3.10+ environment. In a terminal, clone the repository
+and install the current bundled wheel:
 
 ```sh
-python -m pip install --no-index --no-deps dist/context_relay_local-0.21.0a1-py3-none-any.whl
+git clone https://github.com/mahekara28/context-relay.git
+cd context-relay
+python -m pip install --no-index --no-deps dist/context_relay_local-0.22.0a2-py3-none-any.whl
 python -m context_relay quickstart
 ```
 

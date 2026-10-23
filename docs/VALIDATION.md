@@ -2,6 +2,12 @@
 
 # Validation and next evaluation
 
+## Version 0.22.0a2: instruction and recovery fixes
+
+See the [patch validation and upgrade notes](RELEASE-v0.22.0a2.md) for mixed-message
+memory, chronological scope handling and retained executed arguments during
+reconciliation. Earlier results below keep their original release scope.
+
 ## Version 0.22.0a1: compatibility and evaluated improvements
 
 See the [0.22 release validation](RELEASE-v0.22.md#validation) for the new local

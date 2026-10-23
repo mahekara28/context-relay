@@ -45,6 +45,10 @@ class EverydayCorrectionTests(unittest.TestCase):
             if case["id"] in {"conflicting_options", "unknown_export"}:
                 case = {**case, "expected_pending": [{"key": "export_format", "value": None,
                     "reason": "unparsed_correction", "targets": ["export_format"]}]}
+            # v0.22 recognizes this complete acknowledgment, without changing
+            # the historical fixture or accepting arbitrary leading prose.
+            if case["id"] == "unsupported_prefix":
+                case = {**case, "expected_entries": case["expected_entries"] | {"response_style": "brief"}}
             with self.subTest(case=case["id"]):
                 memory = AutomaticMemory(self.store, self.store.create_session(case["id"])['id'])
                 history = []

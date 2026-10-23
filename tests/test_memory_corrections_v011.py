@@ -48,6 +48,13 @@ class CorrectionWordingTests(unittest.TestCase):
             if case["id"] in {"compound", "reason", "format_unsupported", "meaningful_but_unsupported"}:
                 case = {**case, "expected_pending": [{"key": "export_format", "value": None,
                     "reason": "unparsed_correction", "targets": ["export_format"]}]}
+            # v0.22 accepts bounded acknowledgments and disputes an unresolved
+            # question after a clear request. Historical corpus stays unchanged.
+            if case["id"] == "unknown_tail":
+                case = {**case, "expected_entries": {"export_format": "JSON"}}
+            if case["id"] in {"mixed", "negation_correction"}:
+                case = {**case, "expected_pending": [{"key": "export_format", "value": None,
+                    "reason": "unparsed_correction", "targets": ["export_format"]}]}
             with self.subTest(case=case["id"]):
                 memory = AutomaticMemory(self.store, self.store.create_session(case["id"])['id'],
                                          policy=MemoryPolicy(mode=case.get("mode", "auto")))
