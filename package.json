@@ -1,0 +1,45 @@
+{
+  "name": "@mahekara28/context-relay",
+  "version": "0.1.0-alpha.1",
+  "description": "Review and carry working context between coding agent sessions.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Mahek Ara",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mahekara28/context-relay.git"
+  },
+  "bin": {
+    "relay": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "docs/NPM_QUICKSTART.md"
+  ],
+  "engines": {
+    "node": ">=22.16.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/npm/build.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test packages/relay/test/*.test.mjs",
+    "test:package": "node scripts/npm/package-smoke.mjs",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.0",
+    "prettier": "3.6.2",
+    "typescript": "5.9.3"
+  }
+}

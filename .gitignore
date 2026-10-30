@@ -43,3 +43,9 @@ evaluations/**
 !evaluations/interpretation-v0.12-corpus.json
 !evaluations/continuation/
 !evaluations/continuation/**
+
+# Node product build and local browser test output.
+node_modules/
+*.tgz
+playwright-report/
+test-results/
