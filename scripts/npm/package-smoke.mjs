@@ -37,7 +37,7 @@ try {
   assert(packed.files.some((file) => file.path === "dist/cli.js"));
   assert(
     !packed.files.some((file) =>
-      /(?:workspace\.db|access-token|\.env$|test\/)/.test(file.path),
+      /(?:workspace\.db|access-token|\.env$|test\/|\.whl$|\.py$)/.test(file.path),
     ),
   );
   runNpm([
