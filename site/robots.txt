@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /context-relay/
+Sitemap: https://mahekara28.github.io/context-relay/sitemap.xml

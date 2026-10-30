@@ -49,3 +49,6 @@ node_modules/
 *.tgz
 playwright-report/
 test-results/
+
+# Generated GitHub Pages artifact.
+_site/
