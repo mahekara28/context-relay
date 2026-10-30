@@ -3,6 +3,7 @@ import {
   closeSync,
   existsSync,
   openSync,
+  lstatSync,
   readFileSync,
   unlinkSync,
 } from "node:fs";
@@ -77,6 +78,23 @@ export async function connect(directory: string): Promise<RelayClient> {
 }
 /** Only remove a dead process's lock. Never signal or kill an existing process. */
 export function recoverDeadLock(directory: string): boolean {
+  if (!existsSync(directory)) return false;
+  const recovery = join(directory, "recovery.lock");
+  let fd: number;
+  try {
+    fd = openSync(recovery, "wx", 0o600);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "EEXIST") return false;
+    throw error;
+  }
+  try {
+    return recoverLocked(directory);
+  } finally {
+    closeSync(fd);
+    unlinkSync(recovery);
+  }
+}
+function recoverLocked(directory: string): boolean {
   const path = join(directory, "service.lock");
   if (!existsSync(path)) return false;
   let lock: { pid?: number };
@@ -112,7 +130,10 @@ export async function ensureService(directory: string): Promise<RelayClient> {
   }
   privateDirectory(directory);
   recoverDeadLock(directory);
-  const log = openSync(join(directory, "service.log"), "a", 0o600);
+  const logPath = join(directory, "service.log");
+  if (existsSync(logPath) && lstatSync(logPath).isSymbolicLink())
+    throw new RelayError("unsafe_path", "Service log cannot be a symlink.");
+  const log = openSync(logPath, "a", 0o600);
   const child = spawn(
     process.execPath,
     [
