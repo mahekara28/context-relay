@@ -19,6 +19,25 @@ export function visibleText(content: unknown): string {
         return string(p.text);
       if (type === "tool_result")
         return "[tool result] " + visibleText(p.content);
+      if (type === "toolResponse") {
+        const result = object(p.toolResult);
+        const value = result.value;
+        return (
+          "[tool result] " +
+          (result.status === "error"
+            ? string(result.error)
+            : visibleText(Array.isArray(value) ? value : object(value).content))
+        );
+      }
+      if (type === "toolRequest") {
+        const call = object(object(p.toolCall).value);
+        return (
+          "[tool request] " +
+          string(call.name) +
+          " " +
+          JSON.stringify(call.arguments ?? {})
+        );
+      }
       if (type === "tool_use" || type === "toolCall")
         return (
           "[tool request] " +
@@ -53,8 +72,23 @@ export function claudeEvents(records: unknown[]): RelayEvent[] {
     const message = object(record.message);
     const id = string(record.uuid) || `line-${index}`;
     if (type === "user" || type === "assistant") {
-      const result = event(id, type, visibleText(message.content));
+      const content = message.content;
+      const body = Array.isArray(content)
+        ? content.filter((part) => object(part).type !== "tool_result")
+        : content;
+      const result = event(id, type, visibleText(body));
       if (result) events.push(result);
+      array(content).forEach((part, n) => {
+        const tool = object(part);
+        if (tool.type !== "tool_result") return;
+        const result = event(
+          id + ":tool:" + (string(tool.tool_use_id) || n),
+          "tool",
+          visibleText([tool]),
+          "tool_result",
+        );
+        if (result) events.push(result);
+      });
     } else if (type === "system" && record.subtype === "compact_boundary") {
       const result = event(
         id,
@@ -138,24 +172,36 @@ export function openCodeEvents(messages: unknown[]): RelayEvent[] {
 }
 export function gooseEvents(exported: unknown): RelayEvent[] {
   const value = object(exported);
-  const messages = Array.isArray(value.messages)
-    ? value.messages
-    : object(value.session).messages;
+  const messages = Array.isArray(value.conversation)
+    ? value.conversation
+    : Array.isArray(value.messages)
+      ? value.messages
+      : object(value.session).messages;
   if (!Array.isArray(messages))
     throw new RelayError(
       "unsupported_format",
-      "Goose JSON export must contain a messages array.",
+      "Goose JSON export must contain a conversation or messages array.",
     );
   const events: RelayEvent[] = [];
   messages.forEach((raw, index) => {
     const message = object(raw);
+    if (object(message.metadata).userVisible === false) return;
     const role = string(message.role);
     if (!["user", "assistant", "tool", "system"].includes(role)) return;
     const result = event(
       string(message.id) || `message-${index}`,
-      role as RelayEvent["role"],
+      (array(message.content).every(
+        (part) => object(part).type === "toolResponse",
+      ) && array(message.content).length
+        ? "tool"
+        : role) as RelayEvent["role"],
       visibleText(message.content),
-      role === "tool" ? "tool_result" : "message",
+      role === "tool" ||
+        array(message.content).some(
+          (part) => object(part).type === "toolResponse",
+        )
+        ? "tool_result"
+        : "message",
     );
     if (result) events.push(result);
   });

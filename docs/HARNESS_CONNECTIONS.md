@@ -47,3 +47,7 @@ Relay does not claim to restore hidden model state, automatically merge Git chan
 ## Interactive continuation in release 0.3
 
 `relay launch --id HANDOFF_ID` opens a fresh Claude Code or Codex interactive session in the registered project with the continuation prompt as one argument. The handoff must be offered and current, and the destination must have a managed MCP connection. It does not use approval-bypass flags or accept the handoff itself. Native model calls may begin in that harness when the user invokes launch; these launches have not been used as live task evaluations in this release. Windows requires a native `.exe` path. OpenCode and Goose retain the explicit prompt/export workflow. See [Claude CLI](https://code.claude.com/docs/en/cli-reference) and [Codex CLI reference](https://developers.openai.com/codex/cli/reference).
+
+Goose native JSON exports serialize `Session.conversation` as a message array; Relay honors `metadata.userVisible` and preserves tool-response roles. The parser also accepts older normalized `messages` exports. The export's working directory is rechecked before import. Source contract: [Goose session export implementation](https://github.com/aaif-goose/goose/blob/main/crates/goose-cli/src/commands/session.rs) and [message types](https://github.com/aaif-goose/goose/blob/main/crates/goose-provider-types/src/conversation/message.rs).
+
+OpenCode projects using `opencode.jsonc` must use capture-only and configure MCP manually; Relay refuses to create a competing JSON config that might shadow existing settings.

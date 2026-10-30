@@ -371,17 +371,23 @@ export async function capture(
         "OpenCode messages API response changed.",
       );
     events = openCodeEvents(messages);
-  } else
-    events = gooseEvents(
-      await goose(connection, project, [
-        "session",
-        "export",
-        "--session-id",
-        session.externalId,
-        "--format",
-        "json",
-      ]),
-    );
+  } else {
+    const exported = await goose(connection, project, [
+      "session",
+      "export",
+      "--session-id",
+      session.externalId,
+      "--format",
+      "json",
+    ]);
+    const metadata = object(exported);
+    if (!sameRoot(metadata.working_dir ?? metadata.workingDir, project.root))
+      throw new RelayError(
+        "project_mismatch",
+        "Goose export belongs to another project or has no working directory.",
+      );
+    events = gooseEvents(exported);
+  }
   return {
     projectId: project.id,
     harness: connection.harness,

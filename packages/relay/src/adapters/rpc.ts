@@ -63,6 +63,8 @@ export class JsonLineRpc {
         };
         try {
           value = JSON.parse(line);
+          if (!value || typeof value !== "object" || Array.isArray(value))
+            throw new Error("Invalid JSON-RPC envelope");
         } catch {
           this.fail(
             new RelayError("harness_protocol", "Harness emitted invalid JSON."),

@@ -4,7 +4,7 @@ Release candidate: **0.3.0-beta.1**. These results describe implementation check
 
 | Gate | Evidence |
 | --- | --- |
-| Core/transport/provider tests | 18 Node tests, including transactional rollback, provenance, merge decisions, UTF-8 budget, digest tampering, stale sources/files, project/recipient isolation, auth/origin/host rejection, real MCP stdio client and malformed model responses |
+| Core/transport/provider tests | 19 Node tests, including transactional rollback, provenance, merge decisions, UTF-8 budget, digest tampering, stale sources/files, project/recipient isolation, auth/origin/host rejection, real MCP stdio client and malformed model responses |
 | Adapter checks | Synthetic Claude JSONL and subagent identity; real local HTTP server for OpenCode; JSON-RPC subprocess; Goose format and unavailable-executable cases; reversible JSON/TOML configuration; interrupted job recovery |
 | Installed Codex check | Real local binary initialized and returned an empty project-filtered thread list using an isolated CODEX_HOME. No user's normal profile read and no model request sent. This does not exercise real historical turns. |
 | Browser | Four Chromium workflows against real SQLite/HTTP: review/save/export, merge with conflict choice, mobile/dark navigation, unauthenticated entry; source text is escaped |

@@ -98,7 +98,7 @@ No automatic summarization loop, hidden provider fallback or model-written autho
 
 ## What is verified
 
-- **18 Node tests:** transactional imports, provenance, explicit merge conflicts, packet budgets, stale source/file rejection, recipient checks, adapters, provider validation and launch planning.
+- **19 Node tests:** transactional imports, provenance, explicit merge conflicts, packet budgets, stale source/file rejection, recipient checks, adapters, provider validation and launch planning.
 - **Real transports:** an MCP stdio client, a JSON-RPC subprocess, a loopback HTTP capture source and an isolated installed Codex app-server initialization/listing check.
 - **4 Chromium workflows:** source review → handoff → export, conflict resolution, mobile/dark navigation and unauthenticated entry.
 - **Installed package gates:** packed-tarball installation, CLI/service lifecycle, bundled UI assets, authentication and restart persistence on Linux, macOS and Windows CI.
