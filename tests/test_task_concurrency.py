@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from context_relay import ConflictError, RelayStore
+from context_relay import ConflictError, RelayStore, StoreBusy
 from context_relay.organization import Principal
 from context_relay.task_service import TaskService
 
@@ -56,6 +56,37 @@ class TaskConcurrencyTests(unittest.TestCase):
                     ).fetchone()[0], 2)
             finally:
                 store.close()
+
+    def test_busy_write_is_bounded_and_does_not_consume_request_id(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = str(Path(temporary) / "tasks.db")
+            owner = Principal("team", "owner")
+            first = RelayStore(path)
+            second = RelayStore(path, busy_timeout_ms=20)
+            try:
+                task = TaskService(first, authorize=lambda principal, action: True).create(
+                    owner, goal="Finish", completion_criteria=["Done"],
+                    workspace={"repository": "example", "root": temporary})
+                first._connection.execute("BEGIN IMMEDIATE")
+                try:
+                    with self.assertRaises(StoreBusy) as caught:
+                        TaskService(second, authorize=lambda principal, action: True).update(
+                            owner, task["id"], expected_revision=0, request_id="once",
+                            changes={"open_work": ["Review"]})
+                    self.assertTrue(caught.exception.before_transaction)
+                finally:
+                    first._connection.execute("ROLLBACK")
+                changed = TaskService(second, authorize=lambda principal, action: True).update(
+                    owner, task["id"], expected_revision=0, request_id="once",
+                    changes={"open_work": ["Review"]})
+                self.assertEqual(changed["revision"], 1)
+                with first._transaction():
+                    self.assertEqual(first._connection.execute(
+                        "SELECT COUNT(*) FROM task_mutations WHERE task_id=?", (task["id"],)
+                    ).fetchone()[0], 1)
+            finally:
+                second.close()
+                first.close()
 
 
 if __name__ == "__main__":
