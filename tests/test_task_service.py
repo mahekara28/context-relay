@@ -191,6 +191,20 @@ class TaskServiceTests(unittest.TestCase):
         self.assertEqual(self.service.reopen(self.alice, task["id"], expected_revision=3,
                                              request_id="reopen", reason="New work")["status"], "active")
 
+    def test_event_and_evidence_pages_are_bounded(self):
+        task = self.create()
+        for index in range(3):
+            self.service.attach_evidence(self.alice, task["id"], expected_revision=index,
+                                         request_id=f"e-{index}", claim=f"Claim {index}",
+                                         source={"kind": "file", "ref": f"file-{index}"})
+        first = self.service.list_events(self.alice, task["id"], limit=2)
+        second = self.service.list_events(self.alice, task["id"],
+                                          after_revision=first[-1]["revision"], limit=2)
+        self.assertEqual([item["revision"] for item in first + second], [0, 1, 2, 3])
+        self.assertEqual(len(self.service.list_evidence(self.alice, task["id"], offset=1, limit=1)), 1)
+        with self.assertRaises(ValueError):
+            self.service.list_events(self.alice, task["id"], limit=1000)
+
 
 if __name__ == "__main__":
     unittest.main()

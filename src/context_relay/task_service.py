@@ -136,6 +136,34 @@ class TaskService:
         self._check(principal, "task.read")
         return validate_task_snapshot(task)
 
+    def list_events(self, principal: Principal, task_id: str, *, after_revision: int = -1,
+                    limit: int = 100) -> list[dict]:
+        """Enumerate at most one bounded page of task changes."""
+        self._check(principal, "task.read")
+        if type(after_revision) is not int or after_revision < -1:
+            raise ValueError("after_revision must be -1 or a nonnegative integer.")
+        if type(limit) is not int or not 1 <= limit <= 100:
+            raise ValueError("limit must be from 1 through 100.")
+        with self.store._transaction():
+            self._row(task_id, principal)
+            rows = self.store._connection.execute(
+                "SELECT revision, operation, principal, source_class, payload, created_at "
+                "FROM task_events WHERE task_id=? AND revision>? ORDER BY revision LIMIT ?",
+                (task_id, after_revision, limit),
+            ).fetchall()
+            result = [{"revision": row["revision"], "operation": row["operation"],
+                       "principal": row["principal"], "source_class": row["source_class"],
+                       "payload": json.loads(row["payload"]), "created_at": row["created_at"]}
+                      for row in rows]
+        self._check(principal, "task.read")
+        return result
+
+    def list_evidence(self, principal: Principal, task_id: str, *, offset: int = 0,
+                      limit: int = 50) -> list[dict]:
+        if type(offset) is not int or offset < 0 or type(limit) is not int or not 1 <= limit <= 100:
+            raise ValueError("offset and limit must be bounded nonnegative integers.")
+        return self.show(principal, task_id)["evidence"][offset:offset + limit]
+
     def update(self, principal: Principal, task_id: str, *, expected_revision: int,
                request_id: str, changes: dict) -> dict:
         """Apply one bounded patch exactly once at a caller-observed revision."""
