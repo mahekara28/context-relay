@@ -236,6 +236,42 @@ class TaskService:
             return {"id": verification_id, "task_id": task_id,
                     "task_revision": current["revision"], "passed": bool(report["passed"])}
 
+    def task_diagnostics(self, principal: Principal, task_id: str, *, root: str | None = None) -> dict:
+        """Report context, verification, and registered-effect coverage without claim text."""
+        from .artifact_resolution import resolve_artifacts
+        from .task_verification import assess_verification_freshness
+        task = self.show(principal, task_id)
+        with self.store._transaction():
+            connection = self.store._connection
+            latest = connection.execute(
+                "SELECT payload FROM task_verifications WHERE task_id=? "
+                "ORDER BY created_at DESC, rowid DESC LIMIT 1", (task_id,),
+            ).fetchone()
+            effect_rows = connection.execute(
+                "SELECT status, COUNT(*) AS total FROM task_effects WHERE task_id=? GROUP BY status",
+                (task_id,),
+            ).fetchall()
+            pending_handoffs = connection.execute(
+                "SELECT COUNT(*) FROM handoffs WHERE task_id=? AND status='offered'", (task_id,)
+            ).fetchone()[0]
+            pending_conflicts = connection.execute(
+                "SELECT COUNT(*) FROM task_conflicts WHERE task_id=? AND status='pending'", (task_id,)
+            ).fetchone()[0]
+        target_root = root or task["workspace"]["root"]
+        artifacts = resolve_artifacts({"artifacts": task["artifacts"]}, root=target_root)
+        verification = {"stored": latest is not None, "passed": False, "fresh": False}
+        if latest is not None:
+            report = json.loads(latest["payload"])
+            assessment = assess_verification_freshness(task, report, root=target_root)
+            verification = {"stored": True, "passed": bool(report["passed"]),
+                            "fresh": assessment["fresh"], "reasons": assessment["reasons"]}
+        effects = {row["status"]: row["total"] for row in effect_rows}
+        return {"task_id": task_id, "revision": task["revision"], "status": task["status"],
+                "active_instructions": sum(item["status"] == "active" for item in task["instructions"]),
+                "artifacts": artifacts, "verification": verification,
+                "registered_effects": effects, "effect_coverage_scope": "registered_effects_only",
+                "pending_handoffs": pending_handoffs, "pending_conflicts": pending_conflicts}
+
     def update(self, principal: Principal, task_id: str, *, expected_revision: int,
                request_id: str, changes: dict) -> dict:
         """Apply one bounded patch exactly once at a caller-observed revision."""

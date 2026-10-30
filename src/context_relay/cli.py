@@ -39,6 +39,9 @@ def main(argv: list[str] | None = None) -> int:
     show_task = task_sub.add_parser("show", help="Show a task snapshot")
     show_task.add_argument("task_id")
     task_sub.add_parser("doctor", help="Show content-free task-store health and pending counts")
+    diagnose_task = task_sub.add_parser("diagnose", help="Inspect one task's context, verification and effects")
+    diagnose_task.add_argument("task_id")
+    diagnose_task.add_argument("--root", default=None)
     handoff = sub.add_parser("handoff", help="Offer, accept, and inspect task handoffs")
     handoff.add_argument("--db", default=".relay/tasks.db")
     handoff.add_argument("--subject", default=getpass.getuser(),
@@ -133,6 +136,8 @@ def main(argv: list[str] | None = None) -> int:
                                         open_work=args.open_work)
             elif args.task_command == "show":
                 result = service.show(principal, args.task_id)
+            elif args.task_command == "diagnose":
+                result = service.task_diagnostics(principal, args.task_id, root=args.root)
             else:
                 result = service.diagnostics(principal)
             print(json.dumps(result, indent=2, ensure_ascii=False))
