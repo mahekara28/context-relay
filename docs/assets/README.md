@@ -4,6 +4,8 @@
 
 The main README uses the warm neutral / coral artwork in [`workspace/`](workspace/ARTWORK.md), with light/dark and mobile layouts. Its banners show the public npm beta and a runnable npx command. Regenerate them with `python3 scripts/npm/render-brand.py`. The [workspace demo](workspace/README.md) is captured from the actual npm UI with synthetic data.
 
+The main README pins SVG URLs to the artwork commit so GitHub image caches cannot serve a previous banner under the same URL. After regenerating SVGs, commit them and update the README’s SVG references to that commit.
+
 ## Earlier Python artwork and demo
 
 The files below belong to the earlier Python task-context presentation. They are retained as historical assets; the main README uses the npm artwork described above.
