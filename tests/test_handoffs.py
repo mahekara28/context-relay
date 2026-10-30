@@ -75,6 +75,19 @@ class HandoffTests(unittest.TestCase):
         self.assertEqual([item["text"] for item in received["packet"]["instructions"]], ["Produce JSON"])
         self.assertEqual(received["packet"]["instructions"][0]["source"]["ref"], "message-2")
 
+    def test_refresh_creates_new_packet_and_cancel_blocks_old_offer(self):
+        first = self.handoffs.offer(self.sender, self.task["id"], recipient="recipient")
+        self.tasks.update(self.sender, self.task["id"], expected_revision=0,
+                          request_id="changed", changes={"open_work": ["Review"]})
+        second = self.handoffs.refresh(self.sender, first["id"])
+        self.assertNotEqual(first["id"], second["id"])
+        self.assertEqual(first["packet"]["revision"], 0)
+        self.assertEqual(second["packet"]["revision"], 1)
+        self.handoffs.cancel(self.sender, first["id"])
+        with self.assertRaises(ValueError):
+            self.handoffs.accept(self.recipient, first["id"])
+        self.assertEqual(self.handoffs.accept(self.recipient, second["id"])["status"], "accepted")
+
 
 if __name__ == "__main__":
     unittest.main()

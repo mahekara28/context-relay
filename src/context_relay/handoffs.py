@@ -97,3 +97,29 @@ class HandoffService:
             updated = self._row(principal, handoff_id)
         self.tasks._check(principal, "handoff.accept")
         return self._record(updated)
+
+    def cancel(self, principal: Principal, handoff_id: str) -> dict:
+        """Cancel an unaccepted offer; its packet and digest remain inspectable."""
+        self.tasks._check(principal, "handoff.cancel")
+        if self.tasks.source_class != "host":
+            raise AccessDenied("Only a host may cancel an offer.")
+        with self.store._transaction(write=True):
+            self.store._assert_mutable()
+            row = self._row(principal, handoff_id)
+            if row["status"] == "accepted":
+                raise ValueError("An accepted handoff cannot be cancelled.")
+            if row["status"] == "offered":
+                self.store._connection.execute(
+                    "UPDATE handoffs SET status='cancelled' WHERE id=?", (handoff_id,)
+                )
+            updated = self._row(principal, handoff_id)
+        return self._record(updated)
+
+    def refresh(self, principal: Principal, handoff_id: str, *, max_chars: int = 16000) -> dict:
+        """Create a new offer from current task state; never edit an old packet."""
+        self.tasks._check(principal, "handoff.offer")
+        previous = self.inspect(principal, handoff_id)
+        if previous["status"] != "offered":
+            raise ValueError("Only an open offer can be refreshed.")
+        return self.offer(principal, previous["task_id"],
+                          recipient=previous["recipient"], max_chars=max_chars)
