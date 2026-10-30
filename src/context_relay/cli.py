@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
 import logging
 import sys
@@ -27,7 +28,40 @@ def main(argv: list[str] | None = None) -> int:
     init.add_argument("--memory", choices=("off", "auto", "review"), default="off",
                       help="Enable source-backed user recall without defining fields")
     init.add_argument("--protocol", choices=("plain", "ollama", "openai_chat"), default="plain")
+    task = sub.add_parser("task", help="Create and inspect portable task context")
+    task.add_argument("--db", default=".relay/tasks.db")
+    task_sub = task.add_subparsers(dest="task_command", required=True)
+    create_task = task_sub.add_parser("create", help="Create a task bound to a Git worktree")
+    create_task.add_argument("--goal", required=True)
+    create_task.add_argument("--criterion", action="append", required=True)
+    create_task.add_argument("--root", default=".")
+    create_task.add_argument("--open-work", action="append", default=[])
+    show_task = task_sub.add_parser("show", help="Show a task snapshot")
+    show_task.add_argument("task_id")
     args = parser.parse_args(argv)
+    if args.command == "task":
+        from .organization import Principal
+        from .task_service import TaskService, inspect_git_workspace
+        path = Path(args.db).resolve()
+        private_directory(path.parent)
+        store = RelayStore(path)
+        try:
+            service = TaskService(store, authorize=lambda principal, action: True)
+            principal = Principal("local", getpass.getuser())
+            if args.task_command == "create":
+                result = service.create(principal, goal=args.goal,
+                                        completion_criteria=args.criterion,
+                                        workspace=inspect_git_workspace(args.root),
+                                        open_work=args.open_work)
+            else:
+                result = service.show(principal, args.task_id)
+            print(json.dumps(result, indent=2, ensure_ascii=False))
+            return 0
+        except (OSError, ValueError, LookupError) as error:
+            print(f"Task error: {error}", file=sys.stderr)
+            return 1
+        finally:
+            store.close()
     if args.command == "quickstart":
         observed = connection_demo()
         passed = observed == ["CSV", "JSON"]
