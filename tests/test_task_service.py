@@ -137,6 +137,15 @@ class TaskServiceTests(unittest.TestCase):
             self.service.capture_artifact(self.alice, task["id"], expected_revision=1,
                                           request_id="escape", path="../outside")
 
+    def test_revision_diff_retains_instruction_source(self):
+        task = self.create()
+        self.service.add_instruction(self.alice, task["id"], expected_revision=0,
+                                     request_id="instruction", text="Use JSON",
+                                     source={"kind": "user", "ref": "message-2"})
+        difference = self.service.diff(self.alice, task["id"], from_revision=0)
+        self.assertEqual(difference["collections"]["instructions"]["added"][0]["source"]["ref"], "message-2")
+        self.assertEqual(difference["to_revision"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()

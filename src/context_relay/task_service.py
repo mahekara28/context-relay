@@ -124,6 +124,8 @@ class TaskService:
                 (uuid.uuid4().hex, task["id"], 0, "create", principal.subject,
                  self.source_class, encode({"goal": goal}), now),
             )
+            self.store._connection.execute("INSERT INTO task_revisions VALUES (?, ?, ?)",
+                                           (task["id"], 0, encode(task)))
         return task
 
     def show(self, principal: Principal, task_id: str) -> dict:
@@ -195,7 +197,46 @@ class TaskService:
                 "INSERT INTO task_mutations VALUES (?, ?, ?, ?)",
                 (task_id, request_id, fingerprint, encode(task)),
             )
+            self.store._connection.execute("INSERT INTO task_revisions VALUES (?, ?, ?)",
+                                           (task_id, task["revision"], encode(task)))
         return task
+
+    def diff(self, principal: Principal, task_id: str, *, from_revision: int,
+             to_revision: int | None = None) -> dict:
+        """Show changes between stored snapshots, retaining source references."""
+        self._check(principal, "task.read")
+        validate_revision(from_revision)
+        if to_revision is not None:
+            validate_revision(to_revision)
+        with self.store._transaction():
+            row = self._row(task_id, principal)
+            if to_revision is None:
+                to_revision = row["revision"]
+            snapshots = {}
+            for revision in (from_revision, to_revision):
+                found = self.store._connection.execute(
+                    "SELECT payload FROM task_revisions WHERE task_id=? AND revision=?",
+                    (task_id, revision),
+                ).fetchone()
+                if found is None:
+                    raise ValueError(f"Task revision {revision} is unavailable.")
+                snapshots[revision] = json.loads(found["payload"])
+        self._check(principal, "task.read")
+        before, after = snapshots[from_revision], snapshots[to_revision]
+        fields = {}
+        for name in ("status", "goal", "completion_criteria", "workspace", "open_work"):
+            if before[name] != after[name]:
+                fields[name] = {"before": before[name], "after": after[name]}
+        collections = {}
+        for name, key in (("instructions", "id"), ("evidence", "id"), ("artifacts", "path")):
+            old = {item[key]: item for item in before[name]}
+            new = {item[key]: item for item in after[name]}
+            collections[name] = {"added": [item for item in after[name] if item[key] not in old],
+                                 "changed": [item for item in after[name]
+                                             if item[key] in old and old[item[key]] != item],
+                                 "removed": [item for item in before[name] if item[key] not in new]}
+        return {"task_id": task_id, "from_revision": from_revision,
+                "to_revision": to_revision, "fields": fields, "collections": collections}
 
     def add_instruction(self, principal: Principal, task_id: str, *, expected_revision: int,
                         request_id: str, text: str, source: dict, scope: str = "task",

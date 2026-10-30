@@ -141,6 +141,12 @@ class RelayStore:
                     result_payload TEXT NOT NULL,
                     PRIMARY KEY(task_id, request_id)
                 );
+                CREATE TABLE IF NOT EXISTS task_revisions (
+                    task_id TEXT NOT NULL REFERENCES tasks(id), revision INTEGER NOT NULL,
+                    payload TEXT NOT NULL, PRIMARY KEY(task_id, revision)
+                );
+                INSERT OR IGNORE INTO task_revisions (task_id, revision, payload)
+                    SELECT id, revision, payload FROM tasks;
                 PRAGMA user_version = 2;
             """)
         except BaseException as error:
