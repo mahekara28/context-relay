@@ -43,5 +43,30 @@ def verify_task_criteria(snapshot: dict, *, root: str,
         binding = bind_command_receipt(task, receipt, root=root)
         checks.append({"criterion": criterion, "receipt": receipt, "binding": binding})
     return {"task_id": task["id"], "task_revision": task["revision"],
+            "source_digest": verification_source_digest(task),
             "passed": all(item["binding"]["outcome"] == "verified" for item in checks),
             "checks": checks}
+
+
+def verification_source_digest(snapshot: dict) -> str:
+    task = validate_task_snapshot(snapshot)
+    sources = {"goal": task["goal"], "completion_criteria": task["completion_criteria"],
+               "workspace": task["workspace"], "artifacts": task["artifacts"],
+               "instructions": [item for item in task["instructions"] if item["status"] == "active"]}
+    return "sha256:" + hashlib.sha256(encode(sources).encode("utf-8")).hexdigest()
+
+
+def assess_verification_freshness(snapshot: dict, report: dict, *, root: str) -> dict:
+    """A passed report is stale when criteria, instructions, or artifact bytes change."""
+    task = validate_task_snapshot(snapshot)
+    reasons = []
+    if type(report) is not dict or report.get("task_id") != task["id"]:
+        raise ValueError("Verification report belongs to a different task.")
+    if not report.get("passed"):
+        reasons.append("verification_failed")
+    if report.get("source_digest") != verification_source_digest(task):
+        reasons.append("task_sources_changed")
+    checks = resolve_artifacts({"artifacts": task["artifacts"]}, root=root)
+    if any(item["status"] != "ok" for item in checks):
+        reasons.append("artifact_bytes_changed")
+    return {"fresh": not reasons, "reasons": reasons, "artifact_checks": checks}
