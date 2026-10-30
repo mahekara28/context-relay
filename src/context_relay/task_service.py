@@ -23,6 +23,27 @@ class TaskRequestConflict(ValueError):
     """An idempotency key was reused for different request content."""
 
 
+MAX_ARTIFACT_BYTES = 16 * 1024 * 1024
+
+
+def _artifact_manifest(root: str, relative_path: str) -> dict:
+    nonempty_string(relative_path, "artifact path", limit=4096)
+    base = Path(root).resolve(strict=True)
+    candidate = (base / relative_path).resolve()
+    if not candidate.is_relative_to(base) or not candidate.is_file():
+        raise ValueError("artifact must be a regular file inside the task workspace.")
+    name = candidate.relative_to(base).as_posix()
+    digest = hashlib.sha256()
+    size = 0
+    with candidate.open("rb") as stream:
+        while block := stream.read(65536):
+            size += len(block)
+            if size > MAX_ARTIFACT_BYTES:
+                raise ValueError("artifact exceeds the 16 MiB capture limit.")
+            digest.update(block)
+    return {"path": name, "digest": "sha256:" + digest.hexdigest(), "size": size}
+
+
 def inspect_git_workspace(root: str | Path) -> dict:
     """Capture a local worktree identity without contacting a remote server."""
     path = Path(root).resolve(strict=True)
@@ -235,4 +256,24 @@ class TaskService:
 
         return self._mutate(principal, task_id, expected_revision=expected_revision,
                             request_id=request_id, operation="evidence", payload=payload,
+                            transform=transform)
+
+    def capture_artifact(self, principal: Principal, task_id: str, *, expected_revision: int,
+                         request_id: str, path: str) -> dict:
+        """Record file bytes by digest; the receiver must verify them independently."""
+        if self.source_class != "host":
+            raise AccessDenied("Only the host may capture artifact bytes.")
+        task = self.show(principal, task_id)
+        manifest = _artifact_manifest(task["workspace"]["root"], path)
+
+        def transform(current: dict) -> None:
+            if current["workspace"] != task["workspace"]:
+                raise ValueError("Task workspace changed during artifact capture.")
+            current["artifacts"] = [item for item in current["artifacts"]
+                                    if item["path"] != manifest["path"]]
+            current["artifacts"].append(manifest)
+            current["artifacts"].sort(key=lambda item: item["path"])
+
+        return self._mutate(principal, task_id, expected_revision=expected_revision,
+                            request_id=request_id, operation="artifact", payload=manifest,
                             transform=transform)

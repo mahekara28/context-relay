@@ -124,6 +124,19 @@ class TaskServiceTests(unittest.TestCase):
                                                    request_id="report", claim="I think tests passed",
                                                    source={"kind": "agent_report", "ref": "assistant-1"}), result)
 
+    def test_artifact_capture_is_content_addressed_and_workspace_scoped(self):
+        root = Path(self.temporary.name)
+        (root / "report.json").write_text('{"ok":true}')
+        task = self.service.create(self.alice, goal="Finish report", completion_criteria=["Oracle passes"],
+                                   workspace={"repository": "example", "root": str(root)})
+        result = self.service.capture_artifact(self.alice, task["id"], expected_revision=0,
+                                               request_id="capture", path="report.json")
+        self.assertEqual(result["artifacts"][0]["size"], 11)
+        self.assertTrue(result["artifacts"][0]["digest"].startswith("sha256:"))
+        with self.assertRaises(ValueError):
+            self.service.capture_artifact(self.alice, task["id"], expected_revision=1,
+                                          request_id="escape", path="../outside")
+
 
 if __name__ == "__main__":
     unittest.main()
