@@ -1,11 +1,12 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from context_relay import ConflictError, RelayStore
 from context_relay.organization import Principal
 from context_relay.task_actions import check_file_action
-from context_relay.task_effects import TaskEffectService
+from context_relay.task_effects import TaskEffectService, _apply_file_effect
 from context_relay.task_service import TaskService
 
 
@@ -59,6 +60,31 @@ class TaskActionTests(unittest.TestCase):
                                     destination_key="write-1", operation="write_file",
                                     path="result.json", content=b"different",
                                     allowed_operations={"write_file"})
+            finally:
+                store.close()
+
+    def test_file_effect_executes_outside_database_write_transaction(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            store = RelayStore(Path(temporary) / "tasks.db")
+            try:
+                principal = Principal("team", "host")
+                tasks = TaskService(store, authorize=lambda identity, action: True)
+                task = tasks.create(principal, goal="Finish", completion_criteria=["Done"],
+                                    workspace={"repository": "example", "root": temporary})
+                effects = TaskEffectService(tasks)
+                prepared = effects.prepare(principal, task["id"], expected_revision=0,
+                                           destination_key="write", operation="write_file",
+                                           path="result.json", content=b"{}",
+                                           allowed_operations={"write_file"})
+
+                def callback(root, effect, content):
+                    self.assertFalse(store._connection.in_transaction)
+                    _apply_file_effect(root, effect, content)
+
+                with patch("context_relay.task_effects._apply_file_effect", side_effect=callback):
+                    result = effects.execute(principal, prepared["id"], content=b"{}")
+                self.assertEqual(result["status"], "applied")
+                self.assertEqual((Path(temporary) / "result.json").read_bytes(), b"{}")
             finally:
                 store.close()
 
