@@ -116,6 +116,28 @@ export async function serveMcp(
     },
   );
   server.registerTool(
+    "relay_inbox",
+    {
+      description:
+        "List handoffs addressed to this harness and project. Optionally filter by the native session ID.",
+      inputSchema: { destinationExternalId: z.string().optional() },
+      annotations: { readOnlyHint: true },
+    },
+    async ({ destinationExternalId }) => {
+      const handoffs = await client.request<Handoff[]>("/api/handoffs");
+      return result(
+        handoffs.filter(
+          (h) =>
+            h.recipient === principal &&
+            h.packet.project.id === projectId &&
+            h.status === "offered" &&
+            (!destinationExternalId ||
+              h.packet.destination?.externalId === destinationExternalId),
+        ),
+      );
+    },
+  );
+  server.registerTool(
     "relay_handoff_inspect",
     {
       description:
@@ -141,15 +163,18 @@ export async function serveMcp(
     "relay_handoff_accept",
     {
       description:
-        "Acknowledge an offered handoff after reading it. The service checks recipient, integrity and freshness. This is not task completion.",
-      inputSchema: { handoffId: z.string() },
+        "Acknowledge an offered handoff after reading it. The service checks recipient, integrity and freshness. For a targeted handoff, supply your native destinationExternalId; this is caller-declared routing, not session authentication or task completion.",
+      inputSchema: {
+        handoffId: z.string(),
+        destinationExternalId: z.string().optional(),
+      },
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
         idempotentHint: true,
       },
     },
-    async ({ handoffId }) => {
+    async ({ handoffId, destinationExternalId }) => {
       const handoff = await client.request<Handoff>(
         "/api/handoffs/" + encodeURIComponent(handoffId),
       );
@@ -157,7 +182,10 @@ export async function serveMcp(
       return result(
         await client.request(
           `/api/handoffs/${encodeURIComponent(handoffId)}/accept`,
-          { recipient: principal },
+          {
+            recipient: principal,
+            ...(destinationExternalId ? { destinationExternalId } : {}),
+          },
         ),
       );
     },

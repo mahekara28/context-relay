@@ -112,7 +112,9 @@ test("a real stdio MCP client retrieves and accepts only its project and recipie
   const mcp = new Client({ name: "relay-test", version: "1.0.0" });
   await mcp.connect(transport);
   t.after(() => mcp.close());
-  assert.equal((await mcp.listTools()).tools.length, 6);
+  assert(
+    (await mcp.listTools()).tools.some((tool) => tool.name === "relay_inbox"),
+  );
   const packet = await mcp.callTool({
     name: "relay_packet",
     arguments: { checkpointId: checkpoint.id },
@@ -128,6 +130,36 @@ test("a real stdio MCP client retrieves and accepts only its project and recipie
     uri: `relay://checkpoint/${checkpoint.id}`,
   });
   assert.match(resource.contents[0].text, /Use JSON/);
+  const target = await client.request("/api/sessions/import", {
+    projectId: project.id,
+    harness: "codex",
+    externalId: "target-native",
+    title: "Destination",
+    events: [],
+  });
+  const targeted = await client.request("/api/handoffs", {
+    checkpointId: checkpoint.id,
+    recipient: "codex",
+    destinationSessionId: target.session.id,
+  });
+  const inbox = await mcp.callTool({
+    name: "relay_inbox",
+    arguments: { destinationExternalId: "target-native" },
+  });
+  assert.equal(JSON.parse(inbox.content[0].text)[0].id, targeted.id);
+  const wrongTarget = await mcp.callTool({
+    name: "relay_handoff_accept",
+    arguments: { handoffId: targeted.id, destinationExternalId: "wrong" },
+  });
+  assert.equal(wrongTarget.isError, true);
+  const targetAccepted = await mcp.callTool({
+    name: "relay_handoff_accept",
+    arguments: {
+      handoffId: targeted.id,
+      destinationExternalId: "target-native",
+    },
+  });
+  assert.equal(JSON.parse(targetAccepted.content[0].text).status, "accepted");
   const otherRoot = join(directory, "other");
   mkdirSync(otherRoot);
   const other = await client.request("/api/projects", { root: otherRoot });

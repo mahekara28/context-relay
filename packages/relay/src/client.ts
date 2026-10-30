@@ -10,7 +10,7 @@ import {
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { RelayError } from "./model.js";
-import { secret, type Connection } from "./server.js";
+import { secret, VERSION, type Connection } from "./server.js";
 import { privateDirectory } from "./util.js";
 
 export class RelayClient {
@@ -123,10 +123,19 @@ function recoverLocked(directory: string): boolean {
   return true;
 }
 export async function ensureService(directory: string): Promise<RelayClient> {
+  let existing: RelayClient | undefined;
   try {
-    return await connect(directory);
+    existing = await connect(directory);
   } catch {
     /* Start only this profile's service. */
+  }
+  if (existing) {
+    if (existing.connection.version !== VERSION)
+      throw new RelayError(
+        "service_version",
+        `This profile is running Relay ${existing.connection.version}. Run relay stop with the same --data-dir, then relay ui to use ${VERSION}.`,
+      );
+    return existing;
   }
   privateDirectory(directory);
   recoverDeadLock(directory);

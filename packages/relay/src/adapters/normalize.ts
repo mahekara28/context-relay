@@ -57,11 +57,18 @@ function event(
   kind: RelayEvent["kind"] = "message",
 ): RelayEvent | null {
   if (!text.trim()) return null;
-  if (text.length > 100000)
-    throw new RelayError(
-      "event_too_large",
-      "A source event exceeds 100,000 characters. Export a smaller selection.",
-    );
+  if (text.length > 100000) {
+    const omittedCharacters = text.length - 96000;
+    return {
+      id,
+      role,
+      kind,
+      omittedCharacters,
+      text:
+        text.slice(0, 96000) +
+        `\n\n[Context Relay excerpt: ${omittedCharacters} characters omitted from this oversized event. Inspect the native session for the complete content.]`,
+    };
+  }
   return { id, role, text, kind };
 }
 export function claudeEvents(records: unknown[]): RelayEvent[] {

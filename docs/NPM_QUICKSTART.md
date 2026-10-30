@@ -1,5 +1,7 @@
 # Node CLI and local context service
 
+> This checkout includes the unpublished `0.4.0-dev.0` thread map. For local development setup and automatic discovery behavior, see [Thread map](THREAD_MAP.md). The registry instructions below describe the published beta.
+
 The npm runtime is available as the public `@mahekara28/context-relay` beta. It requires
 **Node 22.16 or newer** and npm, with no Python prerequisite. Node may print an
 experimental SQLite warning on older supported releases. The existing Python

@@ -23,6 +23,7 @@ export const EventInput = z
       .enum(["message", "tool_result", "compaction", "note"])
       .default("message"),
     timestamp: z.string().max(100).optional(),
+    omittedCharacters: z.number().int().positive().optional(),
   })
   .strict();
 export type RelayEvent = z.infer<typeof EventInput>;
@@ -104,6 +105,12 @@ export interface Checkpoint extends Omit<CheckpointDraft, "files"> {
   digest: string;
 }
 export interface Packet {
+  destination?: {
+    sessionId: string;
+    externalId: string;
+    harness: HarnessName;
+    title: string;
+  };
   version: "relay.packet/v1";
   checkpointId: string;
   checkpointDigest: string;
@@ -119,6 +126,7 @@ export interface Packet {
     ref: z.infer<typeof Ref>;
     text: string;
     role: RelayEvent["role"];
+    omittedCharacters?: number;
   }[];
   omitted: { evidence: number };
   trust: string;

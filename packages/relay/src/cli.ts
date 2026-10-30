@@ -17,7 +17,7 @@ import {
 } from "./model.js";
 
 const help = `Context Relay ${VERSION}
-Review and carry working context between coding sessions.
+Discover local coding sessions and relay context through a live thread map.
 
 Usage: relay <command> [options]
   ui [--no-open]                Open the private local workspace
@@ -37,7 +37,7 @@ Usage: relay <command> [options]
   checkpoint show --id ID       Inspect a checkpoint
   checkpoint packet --id ID     Compile a bounded continuation packet
   handoff offer --id ID --recipient codex
-  handoff show|export|accept|cancel --id ID [--recipient codex]
+  handoff show|export|accept|cancel --id ID [--recipient codex] [--destination-id NATIVE_ID]
   launch --id HANDOFF           Start a fresh interactive Claude/Codex session
   mcp --project ID --harness codex
   demo                          Create an explicitly synthetic local example
@@ -62,6 +62,7 @@ async function main(): Promise<void> {
       id: { type: "string" },
       file: { type: "string" },
       recipient: { type: "string" },
+      "destination-id": { type: "string" },
       harness: { type: "string" },
       "max-bytes": { type: "string" },
       port: { type: "string" },
@@ -376,7 +377,12 @@ async function main(): Promise<void> {
       print(
         await client.request(
           "/api/handoffs/" + encodeURIComponent(handoffId) + "/accept",
-          { recipient: need("recipient") },
+          {
+            recipient: need("recipient"),
+            ...(values["destination-id"]
+              ? { destinationExternalId: values["destination-id"] }
+              : {}),
+          },
         ),
       );
       return;

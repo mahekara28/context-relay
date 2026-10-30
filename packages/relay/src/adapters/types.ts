@@ -27,7 +27,7 @@ export const CAPABILITIES = [
     harness: "claude",
     name: "Claude Code",
     discovery: "Project-matched JSONL transcripts",
-    capture: "Explicit sync; stable transcript events",
+    capture: "Background or explicit capture; stable transcript events",
     mcp: "Project .mcp.json",
     delivery: "Reviewed packet file / MCP retrieval",
     launch: true,

@@ -23,12 +23,13 @@ import {
 } from "./proposals.js";
 import { continuationPrompt, markdownPacket } from "./delivery.js";
 import { AdapterManager } from "./adapters/manager.js";
+import { Workspace, type WorkspaceOptions } from "./workspace.js";
 import { CAPABILITIES } from "./adapters/types.js";
 import { RelayError } from "./model.js";
 import { RelayStore } from "./store.js";
 import { id, privateDirectory } from "./util.js";
 
-export const VERSION = "0.3.0-beta.1";
+export const VERSION = "0.4.0-dev.0";
 export interface Connection {
   url: string;
   pid: number;
@@ -134,6 +135,7 @@ export interface Service {
 export async function startService(
   directory: string,
   port = 0,
+  workspaceOptions: WorkspaceOptions = {},
 ): Promise<Service> {
   privateDirectory(directory);
   const instance = id();
@@ -170,6 +172,7 @@ export async function startService(
     finish = resolve;
   });
   const adapters = new AdapterManager(store);
+  const workspace = new Workspace(store, adapters, workspaceOptions);
   let url = "";
   let closing = false;
   const close = async () => {
@@ -177,6 +180,7 @@ export async function startService(
     closing = true;
     server.closeAllConnections();
     await new Promise<void>((resolve) => server.close(() => resolve()));
+    await workspace.close();
     await adapters.close();
     store.close();
     cleanupFiles();
@@ -203,11 +207,17 @@ export async function startService(
       if (
         method === "GET" &&
         (path === "/" ||
-          /^\/(?:app\.js|style\.css|assets\/(?:claude|codex|opencode|goose|relay)\.svg)$/.test(
+          path === "/advanced" ||
+          /^\/(?:app\.js|style\.css|map\.js|map\.css|assets\/(?:claude|codex|opencode|goose|relay)\.svg)$/.test(
             path,
           ))
       ) {
-        const file = path === "/" ? "index.html" : path.slice(1);
+        const file =
+          path === "/"
+            ? "map.html"
+            : path === "/advanced"
+              ? "index.html"
+              : path.slice(1);
         const type = file.endsWith(".js")
           ? "text/javascript"
           : file.endsWith(".css")
@@ -248,6 +258,27 @@ export async function startService(
           instance,
           pid: process.pid,
         });
+        return;
+      }
+      if (path === "/api/graph" && method === "GET") {
+        json(response, 200, workspace.graph());
+        return;
+      }
+      if (path === "/api/workspace" && method === "POST") {
+        json(response, 200, workspace.configure(await readBody(request)));
+        return;
+      }
+      if (path === "/api/workspace/scan" && method === "POST") {
+        workspace.scan();
+        json(response, 202, workspace.status());
+        return;
+      }
+      if (path === "/api/graph/position" && method === "POST") {
+        json(response, 200, workspace.position(await readBody(request)));
+        return;
+      }
+      if (path === "/api/relays" && method === "POST") {
+        json(response, 201, workspace.relay(await readBody(request)));
         return;
       }
       if (path === "/api/capabilities" && method === "GET") {
@@ -431,10 +462,17 @@ export async function startService(
         }
         if (method === "POST" && match[2] === "accept") {
           const body = z
-            .object({ recipient: z.string().min(1).max(50) })
+            .object({
+              recipient: z.string().min(1).max(50),
+              destinationExternalId: z.string().min(1).max(500).optional(),
+            })
             .strict()
             .parse(await readBody(request));
-          json(response, 200, store.accept(match[1]!, body.recipient));
+          json(
+            response,
+            200,
+            store.accept(match[1]!, body.recipient, body.destinationExternalId),
+          );
           return;
         }
         if (method === "POST" && match[2] === "cancel") {
@@ -463,6 +501,8 @@ export async function startService(
       server.listen(port, "127.0.0.1", resolve);
     });
   } catch (error) {
+    await workspace.close();
+    await adapters.close();
     store.close();
     cleanupFiles();
     throw error;

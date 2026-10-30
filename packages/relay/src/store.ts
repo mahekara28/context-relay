@@ -46,7 +46,7 @@ export class RelayStore {
     const version = Number(
       this.db.prepare("PRAGMA user_version").get()!["user_version"],
     );
-    if (version > 2) {
+    if (version > 3) {
       this.db.close();
       throw new RelayError(
         "newer_database",
@@ -61,20 +61,28 @@ export class RelayStore {
       CREATE TABLE IF NOT EXISTS handoffs(id TEXT PRIMARY KEY, checkpoint_id TEXT NOT NULL REFERENCES checkpoints(id), body TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS connections(id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id), harness TEXT NOT NULL, body TEXT NOT NULL, UNIQUE(project_id,harness));
       CREATE TABLE IF NOT EXISTS capture_jobs(id TEXT PRIMARY KEY, body TEXT NOT NULL);
-      PRAGMA user_version=2;`);
+      CREATE TABLE IF NOT EXISTS workspace_state(key TEXT PRIMARY KEY, body TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS observations(session_id TEXT PRIMARY KEY REFERENCES sessions(id), body TEXT NOT NULL);
+      PRAGMA user_version=3;`);
   }
   close(): void {
     this.db.close();
   }
+  private transactionDepth = 0;
   transaction<T>(operation: () => T): T {
-    this.db.exec("BEGIN IMMEDIATE");
+    const depth = this.transactionDepth;
+    this.db.exec(depth ? `SAVEPOINT relay_${depth}` : "BEGIN IMMEDIATE");
+    this.transactionDepth++;
     try {
       const result = operation();
-      this.db.exec("COMMIT");
+      this.db.exec(depth ? `RELEASE relay_${depth}` : "COMMIT");
       return result;
     } catch (error) {
-      this.db.exec("ROLLBACK");
+      this.db.exec(depth ? `ROLLBACK TO relay_${depth}` : "ROLLBACK");
+      if (depth) this.db.exec(`RELEASE relay_${depth}`);
       throw error;
+    } finally {
+      this.transactionDepth--;
     }
   }
   projects(): Project[] {
@@ -205,6 +213,7 @@ export class RelayStore {
         session.characters += event.text.length;
         added++;
       }
+      session.title = redact(data.title);
       if (added) {
         session.revision++;
         session.updatedAt = now();
@@ -393,7 +402,14 @@ export class RelayStore {
       );
     for (const ref of checkpoint.evidence) {
       const event = this.event(ref.sessionId, ref.eventId);
-      packet.evidence.push({ ref, text: event.text, role: event.role });
+      packet.evidence.push({
+        ref,
+        text: event.text,
+        role: event.role,
+        ...(event.omittedCharacters
+          ? { omittedCharacters: event.omittedCharacters }
+          : {}),
+      });
       if (size() > maxBytes) {
         packet.evidence.pop();
         packet.omitted.evidence++;
@@ -433,6 +449,7 @@ export class RelayStore {
       .object({
         checkpointId: z.string().min(1),
         recipient: Harness,
+        destinationSessionId: z.string().min(1).optional(),
         maxBytes: z.number().int().min(512).max(1_000_000).default(24000),
       })
       .strict()
@@ -443,6 +460,35 @@ export class RelayStore {
       if (!fresh.current)
         throw new RelayError("stale_source", fresh.reasons.join(" "), 409);
       const packet = this.packet(checkpoint.id, data.maxBytes);
+      if (data.destinationSessionId) {
+        const target = this.session(data.destinationSessionId);
+        if (
+          target.projectId !== checkpoint.projectId ||
+          target.harness !== data.recipient
+        )
+          throw new RelayError(
+            "wrong_destination",
+            "Choose a target in the same project and harness.",
+            409,
+          );
+        if (checkpoint.sources.some((s) => s.sessionId === target.id))
+          throw new RelayError(
+            "self_relay",
+            "A thread cannot relay context to itself.",
+            409,
+          );
+        packet.destination = {
+          sessionId: target.id,
+          externalId: target.externalId,
+          harness: target.harness,
+          title: target.title,
+        };
+        if (Buffer.byteLength(canonical(packet)) > data.maxBytes)
+          throw new RelayError(
+            "budget_exceeded",
+            "Context exceeds the packet byte budget.",
+          );
+      }
       const handoff: Handoff = {
         id: id(),
         checkpointId: checkpoint.id,
@@ -459,13 +505,26 @@ export class RelayStore {
       return handoff;
     });
   }
-  accept(handoffId: string, recipient: string): Handoff {
+  accept(
+    handoffId: string,
+    recipient: string,
+    destinationExternalId?: string,
+  ): Handoff {
     return this.transaction(() => {
       const handoff = this.handoff(handoffId);
       if (recipient !== handoff.recipient)
         throw new RelayError(
           "wrong_recipient",
           "This handoff is addressed to another harness.",
+          403,
+        );
+      if (
+        handoff.packet.destination &&
+        destinationExternalId !== handoff.packet.destination.externalId
+      )
+        throw new RelayError(
+          "wrong_destination",
+          "Acknowledge the native destination session ID from the handoff.",
           403,
         );
       if (handoff.status === "cancelled")

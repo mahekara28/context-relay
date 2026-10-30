@@ -1,7 +1,7 @@
 import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "packages/relay/test",
-  testMatch: "workspace.spec.mjs",
+  testMatch: ["workspace.spec.mjs", "map.spec.mjs"],
   workers: 1,
   fullyParallel: false,
   timeout: 30000,

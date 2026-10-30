@@ -63,7 +63,7 @@ test.afterAll(async () => {
   rmSync(directory, { recursive: true, force: true });
 });
 async function enter(page) {
-  await page.goto(app.connection.url + "/#token=" + app.token);
+  await page.goto(app.connection.url + "/advanced#token=" + app.token);
   await expect(
     page.getByRole("heading", { name: "Pick up where you left off." }),
   ).toBeVisible();
@@ -159,7 +159,7 @@ test("mobile and dark views stay within the viewport and remain navigable", asyn
 test("unauthenticated workspace shows the local login and no project data", async ({
   page,
 }) => {
-  await page.goto(app.connection.url);
+  await page.goto(app.connection.url + "/advanced");
   await expect(
     page.getByRole("heading", { name: "Your context stays with you." }),
   ).toBeVisible();

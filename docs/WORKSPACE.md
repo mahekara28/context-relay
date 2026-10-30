@@ -8,7 +8,13 @@
 
 Use a dedicated `--data-dir` or `CONTEXT_RELAY_HOME` for separate experiments. Keep the same profile option when launching CLI commands from the UI. Back up the entire data directory **after stopping the service**; SQLite may have WAL/SHM sidecars while running. A newer schema is rejected by an older binary. There is no downgrade migration.
 
-## Review and continuation
+## Thread map (development build)
+
+The default route opens the live local thread map. On first authenticated opening, Relay enables background discovery from known harness sources, creates capture-only project connections, and imports changed completed messages. Sources provides harness toggles and a persistent pause control. The browser polls the graph while visible; discovery continues in the service after the browser closes. MCP configuration is an explicit action during handoff setup.
+
+See [Thread map](THREAD_MAP.md) for drag connections, multiple sources, destination routing, bounded capture, and the development build's schema compatibility. The workflow below remains in `/advanced`.
+
+## Advanced review and continuation
 
 1. Add an existing project directory and connect a harness.
 2. Discover matching native sessions and choose which to capture.
@@ -58,4 +64,4 @@ Limits: 40 events, 48,000 UTF-8 input bytes, 3,000 requested output tokens, 30-s
 | Nebius not configured | Set both environment variables before starting the service; manual review remains available. |
 | Browser cannot copy | Relay shows the prompt in a selectable text area. |
 
-The local workspace is intended for one OS user. API tokens and 0700/0600 permissions protect local state where supported, but the database is not encrypted. The package has no cloud sync, multi-user tenancy, scheduled capture or automatic native thread rewriting.
+The local workspace is intended for one OS user. API tokens and 0700/0600 permissions protect local state where supported, but the database is not encrypted. The package has no cloud sync, multi-user tenancy or automatic native thread rewriting. The development map supports local periodic capture while the service runs.

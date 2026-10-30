@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import {
   existsSync,
+  createReadStream,
   lstatSync,
   readFileSync,
   readdirSync,
@@ -31,7 +32,7 @@ function sameRoot(value: unknown, root: string): boolean {
     return false;
   }
 }
-function lines(path: string): unknown[] {
+export function lines(path: string): unknown[] {
   if (
     lstatSync(path).isSymbolicLink() ||
     statSync(path).size > 16 * 1024 * 1024
@@ -55,14 +56,14 @@ function lines(path: string): unknown[] {
     }
   });
 }
-function sourceFiles(directory: string): string[] {
+export function sourceFiles(directory: string): string[] {
   if (!existsSync(directory)) return [];
   if (lstatSync(directory).isSymbolicLink())
     throw new RelayError("unsafe_source", "Source root cannot be a symlink.");
   const paths: string[] = [];
   let visited = 0;
   const walk = (path: string, depth: number) => {
-    if (depth > 2) return;
+    if (depth > 3) return;
     for (const entry of readdirSync(path, { withFileTypes: true })) {
       if (++visited > 10000)
         throw new RelayError(
@@ -79,7 +80,7 @@ function sourceFiles(directory: string): string[] {
   walk(directory, 0);
   return paths;
 }
-async function codex<T>(
+export async function codex<T>(
   connection: HarnessConnection,
   project: Project,
   operation: (rpc: JsonLineRpc) => Promise<T>,
@@ -121,7 +122,7 @@ function localEndpoint(source?: string): URL {
     );
   return url;
 }
-async function openCodeGet(
+export async function openCodeGet(
   connection: HarnessConnection,
   project: Project,
   path: string,
@@ -174,7 +175,7 @@ async function openCodeGet(
     throw new RelayError("harness_protocol", "OpenCode returned invalid JSON.");
   }
 }
-async function goose(
+export async function goose(
   connection: HarnessConnection,
   project: Project,
   args: string[],
@@ -306,48 +307,41 @@ export async function capture(
   connection: HarnessConnection,
   project: Project,
   session: DiscoveredSession,
+  options: { afterEventId?: string } = {},
 ): Promise<SessionImport> {
   let events: SessionImport["events"];
   if (connection.harness === "claude") {
-    const records = lines(session.locator);
-    if (!records.map(object).some((r) => sameRoot(r.cwd, project.root)))
-      throw new RelayError(
-        "project_mismatch",
-        "Transcript no longer matches the selected project.",
-      );
-    events = claudeEvents(records);
-  } else if (connection.harness === "codex")
-    events = await codex(connection, project, async (rpc) => {
-      const result = await rpc.request<{ thread: { cwd?: string } }>(
-        "thread/read",
-        { threadId: session.externalId },
-      );
-      if (!sameRoot(result.thread.cwd, project.root))
-        throw new RelayError(
-          "project_mismatch",
-          "Codex thread belongs to another project.",
+    events = await captureClaudeHistory(session.locator, project.root);
+  } else if (connection.harness === "codex") {
+    const read = (itemLimit: number) =>
+      codex(connection, project, async (rpc) => {
+        const result = await rpc.request<{ thread: { cwd?: string } }>(
+          "thread/read",
+          { threadId: session.externalId },
         );
-      const turns: unknown[] = [];
-      let cursor: string | null = null;
-      for (let page = 0; page < 100; page++) {
-        const part: { data: unknown[]; nextCursor?: string | null } =
-          await rpc.request("thread/turns/list", {
-            threadId: session.externalId,
-            limit: 100,
-            cursor,
-            sortDirection: "asc",
-            itemsView: "full",
-          });
-        turns.push(...part.data);
-        cursor = part.nextCursor ?? null;
-        if (!cursor) return codexEvents(turns);
-      }
-      throw new RelayError(
-        "source_limit",
-        "Thread exceeds 10,000 turns. Capture a smaller source export.",
-      );
-    });
-  else if (connection.harness === "opencode") {
+        if (!sameRoot(result.thread.cwd, project.root))
+          throw new RelayError(
+            "project_mismatch",
+            "Codex thread belongs to another project.",
+          );
+        return captureCodexHistory(
+          rpc,
+          session.externalId,
+          itemLimit,
+          options.afterEventId,
+        );
+      });
+    try {
+      events = await read(20);
+    } catch (error) {
+      if (
+        !(error instanceof RelayError) ||
+        error.code !== "harness_response_too_large"
+      )
+        throw error;
+      events = await read(1);
+    }
+  } else if (connection.harness === "opencode") {
     const info = object(
       await openCodeGet(
         connection,
@@ -395,4 +389,167 @@ export async function capture(
     title: session.title,
     events,
   };
+}
+
+/** Read metadata first, then bounded item pages so long threads never require a full-history response. */
+export async function captureCodexHistory(
+  rpc: Pick<JsonLineRpc, "request">,
+  threadId: string,
+  itemLimit = 20,
+  afterEventId?: string,
+): Promise<SessionImport["events"]> {
+  const completed = new Set<string>();
+  let cursor: string | null = null;
+  for (let page = 0; page < 100; page++) {
+    const part: { data: unknown[]; nextCursor?: string | null } =
+      await rpc.request("thread/turns/list", {
+        threadId,
+        limit: 100,
+        cursor,
+        sortDirection: "asc",
+        itemsView: "notLoaded",
+      });
+    for (const raw of part.data) {
+      const turn = object(raw);
+      if (
+        string(turn.id) &&
+        turn.status !== "inProgress" &&
+        turn.status !== "in_progress"
+      )
+        completed.add(string(turn.id));
+    }
+    cursor = part.nextCursor ?? null;
+    if (!cursor) break;
+    if (page === 99)
+      throw new RelayError("source_limit", "Thread exceeds 10,000 turns.");
+  }
+  const events: SessionImport["events"] = [];
+  cursor = null;
+  try {
+    for (let page = 0; page < Math.ceil(40000 / itemLimit); page++) {
+      const part: { data: unknown[]; nextCursor?: string | null } =
+        await rpc.request("thread/items/list", {
+          threadId,
+          limit: itemLimit,
+          cursor,
+          sortDirection: afterEventId ? "desc" : "asc",
+        });
+      for (const raw of part.data) {
+        const entry = object(raw),
+          turnId = string(entry.turnId);
+        if (completed.has(turnId)) {
+          const next = codexEvents([
+            { id: turnId, status: "completed", items: [entry.item] },
+          ]);
+          events.push(...next);
+          // Include the anchor so the store still detects changes to that event.
+          if (afterEventId && next.some((event) => event.id === afterEventId))
+            return events.reverse();
+        }
+      }
+      if (events.length > 20000)
+        throw new RelayError(
+          "source_limit",
+          "Thread exceeds 20,000 visible events.",
+        );
+      cursor = part.nextCursor ?? null;
+      if (!cursor) return afterEventId ? events.reverse() : events;
+    }
+    throw new RelayError(
+      "source_limit",
+      "Thread exceeds 40,000 persisted items.",
+    );
+  } catch (error) {
+    if (
+      !(error instanceof RelayError) ||
+      !["harness_rpc_-32601", "harness_rpc_-32600"].includes(error.code)
+    )
+      throw error;
+    // Older rollout stores may not support item pagination. Read one full turn per response.
+    const legacy: unknown[] = [];
+    cursor = null;
+    for (let page = 0; page < 10000; page++) {
+      const part: { data: unknown[]; nextCursor?: string | null } =
+        await rpc.request("thread/turns/list", {
+          threadId,
+          limit: 1,
+          cursor,
+          sortDirection: "asc",
+          itemsView: "full",
+        });
+      legacy.push(...part.data);
+      cursor = part.nextCursor ?? null;
+      if (!cursor) return codexEvents(legacy);
+    }
+    throw new RelayError("source_limit", "Thread exceeds 10,000 turns.");
+  }
+}
+
+/** Stream complete JSONL records, keeping large native histories out of a single allocation. */
+export async function captureClaudeHistory(
+  path: string,
+  root: string,
+): Promise<SessionImport["events"]> {
+  const info = lstatSync(path);
+  if (!info.isFile() || info.isSymbolicLink() || info.size > 256 * 1024 * 1024)
+    throw new RelayError(
+      "source_limit",
+      "Claude transcript must be a regular file at most 256 MiB.",
+    );
+  const events: SessionImport["events"] = [];
+  let buffer = "",
+    index = 0,
+    matched = false,
+    bytes = 0;
+  for await (const chunk of createReadStream(path, {
+    encoding: "utf8",
+    highWaterMark: 64 * 1024,
+  })) {
+    buffer += chunk;
+    let newline: number;
+    while ((newline = buffer.indexOf("\n")) >= 0) {
+      const line = buffer.slice(0, newline);
+      buffer = buffer.slice(newline + 1);
+      if (!line.trim()) continue;
+      if (Buffer.byteLength(line) > 16 * 1024 * 1024)
+        throw new RelayError(
+          "source_limit",
+          "A single Claude record exceeds 16 MiB.",
+        );
+      let raw: unknown;
+      try {
+        raw = JSON.parse(line);
+      } catch {
+        throw new RelayError(
+          "malformed_transcript",
+          "Transcript contains an invalid complete JSONL record.",
+        );
+      }
+      const record = object(raw);
+      if (sameRoot(record.cwd, root)) matched = true;
+      const next = claudeEvents([
+        { ...record, uuid: string(record.uuid) || `line-${index}` },
+      ]);
+      index++;
+      for (const event of next) bytes += Buffer.byteLength(event.text);
+      events.push(...next);
+      if (events.length > 20000 || bytes > 64 * 1024 * 1024)
+        throw new RelayError(
+          "source_limit",
+          "Claude capture exceeds 20,000 events or 64 MiB of visible context.",
+        );
+    }
+    if (Buffer.byteLength(buffer) > 16 * 1024 * 1024)
+      throw new RelayError(
+        "source_limit",
+        "A single Claude record exceeds 16 MiB.",
+      );
+  }
+  // A writer may have left an unfinished last record. It is read on the next scan.
+  if (!matched)
+    throw new RelayError(
+      "project_mismatch",
+      "Transcript no longer matches the selected project.",
+    );
+  return events;
 }

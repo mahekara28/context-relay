@@ -1,4 +1,4 @@
-# Harness connections — npm release 0.2
+# Harness connections
 
 Relay has two independent integration paths: **capture** reads native session history; **MCP** lets a destination agent inspect and accept a reviewed handoff. Installing an MCP server does not expose a harness's chat history.
 
@@ -25,7 +25,7 @@ Use `--capture-only` to leave MCP settings untouched. Use `--source /path/to/cla
 
 Capture runs as a background job. The CLI waits for its final result and returns a nonzero exit code on a failed job or any session error. The API exposes progress, errors and cooperative cancellation at session boundaries. Restarted jobs are marked interrupted; recapture is idempotent. Histories are capped at 200 sessions per job, 16 MiB per source response and 20,000 normalized events per import. Changed events with previously captured IDs are rejected atomically rather than silently rewriting history.
 
-Capturing is explicit: Relay does not scan your home directory until you connect and request discovery or capture. Project root matching prevents unrelated sessions from being imported. Review source material before exporting it; built-in credential redaction is best effort, not a secret scanner.
+The advanced/CLI capture workflow is explicit. In the development thread map, first authenticated opening enables background discovery from known harness stores; it derives project roots from native metadata and creates capture-only connections. This never writes MCP settings automatically. Sources can pause discovery or disable individual harnesses. See [Thread map](THREAD_MAP.md). Project root matching prevents unrelated sessions from being imported. Review source material before exporting it; built-in credential redaction is best effort, not a secret scanner.
 
 ## Disconnect
 

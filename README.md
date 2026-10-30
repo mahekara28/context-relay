@@ -18,6 +18,22 @@
   <a href="https://mahekara28.github.io/context-relay/">Website &amp; interactive tour</a> · <a href="https://www.npmjs.com/package/@mahekara28/context-relay">npm package</a> · <a href="https://github.com/mahekara28/context-relay/releases/tag/npm-v0.3.0-beta.1">Release notes</a> · <a href="#why-context-relay">Why Relay</a> · <a href="#try-it-locally">Install</a> · <a href="#the-workflow">Workflow</a> · <a href="#where-mcp-fits">Architecture</a> · <a href="#what-is-verified">Verification</a>
 </p>
 
+## Development preview: local thread map
+
+This checkout is `0.4.0-dev.0`. The new default UI automatically discovers local harness sessions, displays them as movable thread cards, and lets you drag connections to review and relay context. It includes background capture, source filters, targeted MCP handoffs, freshness checks, and editable pending connections. **This revamp is not yet published to npm; the public beta below remains `0.3.0-beta.1`.**
+
+```sh
+npm ci
+npm run build
+node dist/cli.js ui --data-dir /absolute/path/to/relay-map-profile
+```
+
+![Local thread map with a reviewed connection](docs/assets/workspace/thread-map.png)
+
+*Development UI with synthetic fixture sessions and a test acknowledgement.*
+
+[Thread map interaction, architecture, limits, and local setup](docs/THREAD_MAP.md). Opening the map enables local background discovery; pause it in Sources or stop the local service with `relay stop`. Handoffs require review and acknowledgement from the receiving agent.
+
 ## Why Context Relay?
 
 You've spent hours in a coding thread. Requirements changed. A tool failed. The agent tried three approaches. The context keeps growing, and starting a fresh thread means explaining everything again.
@@ -60,7 +76,7 @@ The package includes the compiled CLI, local service, MCP server, SQLite store a
 
 Use `--data-dir /path/to/workspace` on any command for a separate profile. The default is `~/.context-relay`. [Installation and CLI reference](https://github.com/mahekara28/context-relay/blob/main/docs/NPM_QUICKSTART.md)
 
-## The workflow
+## Published beta workflow
 
 | Step | What happens |
 | --- | --- |
@@ -108,9 +124,9 @@ No automatic summarization loop, hidden provider fallback or model-written autho
 
 ## What is verified
 
-- **19 Node tests:** transactional imports, provenance, explicit merge conflicts, packet budgets, stale source/file rejection, recipient checks, adapters, provider validation and launch planning.
+- **Node tests:** transactional imports, provenance, explicit merge conflicts, packet budgets, stale source/file rejection, recipient checks, adapters, provider validation and launch planning.
 - **Real transports:** an MCP stdio client, a JSON-RPC subprocess, a loopback HTTP capture source and an isolated installed Codex app-server initialization/listing check.
-- **4 Chromium workflows:** source review, handoff and export, conflict resolution, mobile/dark navigation and unauthenticated entry.
+- **Chromium workflows:** source review, handoff and export, conflict resolution, mobile/dark navigation and unauthenticated entry.
 - **Public npm release:** publisher and tarball integrity verified, with fresh anonymous global and npx installs, demo/UI, context packet and handoff checks. [Release artifact and verification report](https://github.com/mahekara28/context-relay/releases/tag/npm-v0.3.0-beta.1).
 - **Installed package gates:** anonymous global and npm exec/npx tarball installation, CLI/service lifecycle, bundled UI assets, authentication and restart persistence on Linux, macOS and Windows CI.
 
@@ -120,7 +136,7 @@ The model quality benchmark remains pending: no live Nebius completion or cross-
 
 Relay binds to `127.0.0.1`, authenticates API requests and rejects foreign origins and host headers. The browser token is passed in a URL fragment, removed immediately and retained in the current tab's session storage. Drafts stay in memory until saved. Files are referenced by path and digest; they are not transferred.
 
-Capture and discovery are explicit. Recognized credentials are redacted before persistence, but this is best effort: inspect sensitive material before sharing it. Nebius receives only evidence you explicitly select and approve. [Workspace operations](https://github.com/mahekara28/context-relay/blob/main/docs/WORKSPACE.md)
+In the published beta, capture and discovery are explicit. In the development map, authenticated first opening enables background discovery from known harness sources; source selection and pause controls are available in Sources. Recognized credentials are redacted before persistence, but this is best effort: inspect sensitive material before sharing it. Nebius receives only evidence you explicitly select and approve. [Workspace operations](https://github.com/mahekara28/context-relay/blob/main/docs/WORKSPACE.md)
 
 ## Develop and contribute
 

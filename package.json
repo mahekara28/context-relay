@@ -1,6 +1,6 @@
 {
   "name": "@mahekara28/context-relay",
-  "version": "0.3.0-beta.1",
+  "version": "0.4.0-dev.0",
   "description": "Review and carry working context between coding agent sessions.",
   "type": "module",
   "license": "MIT",
@@ -48,7 +48,8 @@
     "docs/NPM_QUICKSTART.md",
     "docs/HARNESS_CONNECTIONS.md",
     "docs/WORKSPACE.md",
-    "docs/releases/NPM_PUBLISHING.md"
+    "docs/releases/NPM_PUBLISHING.md",
+    "docs/THREAD_MAP.md"
   ],
   "engines": {
     "node": ">=22.16.0"
