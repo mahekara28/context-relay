@@ -1,8 +1,8 @@
 <picture>
-  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/hero-dark-mobile.svg" />
-  <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/hero-mobile.svg" />
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/hero-dark.svg" />
-  <img src="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/hero.svg" alt="Context Relay — keep the work, change the thread. Public npm beta. Try npx @mahekara28/context-relay@beta ui. Node 22.16+." width="100%" />
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/0266a810ac69952aeba54702f5fe9469b7172f4d/docs/assets/workspace/hero-dark-mobile.svg" />
+  <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/0266a810ac69952aeba54702f5fe9469b7172f4d/docs/assets/workspace/hero-mobile.svg" />
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/0266a810ac69952aeba54702f5fe9469b7172f4d/docs/assets/workspace/hero-dark.svg" />
+  <img src="https://raw.githubusercontent.com/mahekara28/context-relay/0266a810ac69952aeba54702f5fe9469b7172f4d/docs/assets/workspace/hero.svg" alt="Context Relay — keep the work, change the thread. Public npm beta. Try npx @mahekara28/context-relay@beta ui. Node 22.16+." width="100%" />
 </picture>
 
 <p align="center">
@@ -83,10 +83,10 @@ For a configured Claude Code or Codex destination, `relay launch --id HANDOFF_ID
 ## Where MCP fits
 
 <picture>
-  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/architecture-dark-mobile.svg" />
-  <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/architecture-mobile.svg" />
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/architecture-dark.svg" />
-  <img src="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/architecture.svg" alt="The npm package runs locally. Native capture and MCP context access connect to one service. SQLite stores reviewed state; optional Nebius drafts need approval and review." width="100%" />
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/0266a810ac69952aeba54702f5fe9469b7172f4d/docs/assets/workspace/architecture-dark-mobile.svg" />
+  <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/0266a810ac69952aeba54702f5fe9469b7172f4d/docs/assets/workspace/architecture-mobile.svg" />
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/0266a810ac69952aeba54702f5fe9469b7172f4d/docs/assets/workspace/architecture-dark.svg" />
+  <img src="https://raw.githubusercontent.com/mahekara28/context-relay/0266a810ac69952aeba54702f5fe9469b7172f4d/docs/assets/workspace/architecture.svg" alt="The npm package runs locally. Native capture and MCP context access connect to one service. SQLite stores reviewed state; optional Nebius drafts need approval and review." width="100%" />
 </picture>
 
 **Capture and MCP solve different parts of the workflow.** Native adapters read history. MCP gives agents a standard way to inspect Relay's context and accept an addressed handoff. Installing MCP alone does not make a harness's conversation history available.
