@@ -28,7 +28,7 @@ For Python changes, run the gates documented in [the Python reference](README.py
 
 ## Release PRs
 
-Follow the [release series](docs/releases/NPM_RELEASE_PLAN.md). A reviewable release includes a packed npm artifact and passing final-head CI. Publishing a package is a distinct maintainer action. The workflow uploads a tarball artifact for review; it does not publish to npm.
+Follow the [release series](docs/releases/NPM_RELEASE_PLAN.md). A reviewable release includes a packed npm artifact and passing final-head CI. Publishing a package is a distinct maintainer action. The workflow uploads a tarball artifact for review; it does not publish to npm. Follow the [npm publication procedure](docs/releases/NPM_PUBLISHING.md) to publish as the verified maintainer and check anonymous registry installs before updating the website.
 
 ## Third-party assets
 
