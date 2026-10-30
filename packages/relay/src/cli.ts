@@ -23,6 +23,11 @@ Usage: relay <command> [options]
   status | stop | doctor        Inspect, stop or diagnose this workspace
   project add --root PATH       Register a local project
   project list                  List registered projects
+  connect --project ID --harness claude [--source PATH] [--capture-only]
+  connections [--project ID]    List project connections
+  discover --id CONNECTION      List matching native sessions
+  sync --id CONNECTION          Capture sessions; wait for job results
+  disconnect --id CONNECTION    Remove only the managed MCP entry
   sessions [--project ID]        List captured sessions
   import --file session.json    Import normalized source events
   checkpoint create --file FILE Create a reviewed, sourced checkpoint
@@ -43,6 +48,9 @@ async function main(): Promise<void> {
     allowPositionals: true,
     options: {
       "data-dir": { type: "string" },
+      source: { type: "string" },
+      executable: { type: "string" },
+      "capture-only": { type: "boolean" },
       root: { type: "string" },
       name: { type: "string" },
       project: { type: "string" },
@@ -128,6 +136,11 @@ async function main(): Promise<void> {
     return;
   }
   const supported = [
+    "connect",
+    "connections",
+    "discover",
+    "sync",
+    "disconnect",
     "init",
     "project",
     "sessions",
@@ -143,6 +156,51 @@ async function main(): Promise<void> {
       `Unknown command: ${command}. Run relay --help.`,
     );
   const client = await ensureService(directory);
+  if (command === "connect") {
+    print(
+      await client.request("/api/connections", {
+        projectId: need("project"),
+        harness: need("harness"),
+        configureMcp: !values["capture-only"],
+        ...(values.source ? { source: values.source } : {}),
+        ...(values.executable ? { executable: values.executable } : {}),
+      }),
+    );
+    return;
+  }
+  if (command === "connections") {
+    print(
+      await client.request(
+        "/api/connections" +
+          (values.project
+            ? "?projectId=" + encodeURIComponent(values.project)
+            : ""),
+      ),
+    );
+    return;
+  }
+  if (command === "discover" || command === "disconnect") {
+    print(
+      await client.request(
+        "/api/connections/" + encodeURIComponent(need("id")) + "/" + command,
+        command === "disconnect" ? {} : undefined,
+      ),
+    );
+    return;
+  }
+  if (command === "sync") {
+    let job = await client.request<import("./adapters/manager.js").CaptureJob>(
+      "/api/connections/" + encodeURIComponent(need("id")) + "/sync",
+      {},
+    );
+    while (job.state === "running") {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      job = await client.request("/api/jobs/" + job.id);
+    }
+    print(job);
+    if (job.state !== "completed" || job.errors.length) process.exitCode = 1;
+    return;
+  }
   if (command === "init") {
     print({
       ...client.connection,
