@@ -46,7 +46,7 @@ export class RelayStore {
     const version = Number(
       this.db.prepare("PRAGMA user_version").get()!["user_version"],
     );
-    if (version > 1) {
+    if (version > 2) {
       this.db.close();
       throw new RelayError(
         "newer_database",
@@ -59,7 +59,9 @@ export class RelayStore {
       CREATE TABLE IF NOT EXISTS events(session_id TEXT NOT NULL REFERENCES sessions(id), event_id TEXT NOT NULL, ordinal INTEGER NOT NULL, body TEXT NOT NULL, PRIMARY KEY(session_id,event_id), UNIQUE(session_id,ordinal));
       CREATE TABLE IF NOT EXISTS checkpoints(id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id), body TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS handoffs(id TEXT PRIMARY KEY, checkpoint_id TEXT NOT NULL REFERENCES checkpoints(id), body TEXT NOT NULL);
-      PRAGMA user_version=1;`);
+      CREATE TABLE IF NOT EXISTS connections(id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id), harness TEXT NOT NULL, body TEXT NOT NULL, UNIQUE(project_id,harness));
+      CREATE TABLE IF NOT EXISTS capture_jobs(id TEXT PRIMARY KEY, body TEXT NOT NULL);
+      PRAGMA user_version=2;`);
   }
   close(): void {
     this.db.close();

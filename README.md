@@ -1,246 +1,127 @@
 <picture>
-  <source media="(prefers-color-scheme: dark) and (max-width: 600px)" srcset="docs/assets/banner-dark-mobile.svg" />
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/banner-dark.svg" />
-  <source media="(max-width: 600px)" srcset="docs/assets/banner-light-mobile.svg" />
-  <img src="docs/assets/banner-light.svg" alt="Context Relay — task context across agent harnesses. Experimental source preview." width="100%" />
+  <img src="docs/assets/workspace/hero.svg" alt="Context Relay — keep the work, change the thread. A local CLI, workspace and MCP server for coding context." width="100%" />
 </picture>
 
 <p align="center">
-  <a href="https://github.com/mahekara28/context-relay/actions/workflows/alpha.yml"><img src="https://github.com/mahekara28/context-relay/actions/workflows/alpha.yml/badge.svg?branch=main" alt="Alpha checks on main" /></a>
-  <a href="docs/TASK_QUICKSTART.md"><img src="https://img.shields.io/badge/status-source_preview-e65241?labelColor=25292f" alt="Status: source preview" /></a>
-  <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-3.10%2B-555b64?labelColor=25292f" alt="Core: Python 3.10 or newer" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-555b64?labelColor=25292f" alt="MIT license" /></a>
+  <a href="https://github.com/mahekara28/context-relay/actions/workflows/npm.yml"><img src="https://github.com/mahekara28/context-relay/actions/workflows/npm.yml/badge.svg" alt="npm product checks" /></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/Node-22.16%2B-456b55?labelColor=252d29" alt="Node 22.16 or newer" /></a>
+  <a href="docs/releases/NPM_RELEASE_PLAN.md"><img src="https://img.shields.io/badge/release-0.3.0--beta.1-c84429?labelColor=252d29" alt="Release 0.3.0 beta 1" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-68716b?labelColor=252d29" alt="MIT license" /></a>
 </p>
 
-<p align="center"><strong>Pick up the task with its current instructions, sources and open work.</strong></p>
-
-<picture>
-  <source media="(prefers-reduced-motion: reduce) and (max-width: 600px)" srcset="docs/assets/demo-mobile.png" />
-  <source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/demo.png" />
-  <source media="(max-width: 600px)" srcset="docs/assets/demo-mobile.gif" />
-  <img src="docs/assets/demo.gif" alt="Local example: CSV is explicitly superseded by JSON. The receiver accepts revision 2 with Use JSON active. Task verification is not recorded. No model or network calls." width="100%" />
-</picture>
-
-<p align="center"><sub>Output from the runnable local example; playback timing edited for readability.<br />
-<a href="examples/task_handoff_demo.py">Run it yourself</a> · <a href="docs/assets/demo-transcript.txt">Text transcript</a> · <a href="docs/assets/demo.png">Still image</a></sub></p>
+<p align="center"><strong>Your next coding session should inherit the decisions, not the confusion.</strong></p>
 
 <p align="center">
-  <a href="#quick-start">Quick start</a> ·
-  <a href="#connect-an-agent">Connect an agent</a> ·
-  <a href="#how-it-works">Architecture</a> ·
-  <a href="#evidence">Evidence</a> ·
-  <a href="#roadmap">Roadmap</a>
+  <a href="#why-context-relay">Why Relay</a> · <a href="#try-it-locally">Install</a> · <a href="#the-workflow">Workflow</a> · <a href="#where-mcp-fits">Architecture</a> · <a href="#what-is-verified">Verification</a>
 </p>
 
+## Why Context Relay?
+
+You've spent hours in a coding thread. Requirements changed. A tool failed. The agent tried three approaches. The context keeps growing, and starting a fresh thread means explaining everything again.
+
+**Context Relay turns that history into a reviewed handoff.** Find a session, select its evidence, capture the current instructions and open work, then continue in a fresh thread—even in another harness.
+
+- **See the history.** Browse captured threads from Claude Code, Codex, OpenCode and Goose, with visible source events and character growth.
+- **Keep the corrections.** Review instructions beside the evidence they cite. Merge checkpoints with explicit conflict choices.
+- **Continue with a receipt.** Offer an immutable packet to a destination agent through MCP, or export readable Markdown. Check source revisions, recorded files and Git HEAD before acceptance.
+
 <picture>
-  <source media="(prefers-color-scheme: dark) and (max-width: 600px)" srcset="docs/assets/capabilities-dark-mobile.svg" />
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/capabilities-dark.svg" />
-  <source media="(max-width: 600px)" srcset="docs/assets/capabilities-light-mobile.svg" />
-  <img src="docs/assets/capabilities-light.svg" alt="Current source: 8 MCP tools, 2 project configuration generators, 0 core runtime dependencies." width="100%" />
+  <source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/workspace/threads.png" />
+  <source media="(max-width: 600px)" srcset="docs/assets/workspace/mobile-dark.png" />
+  <img src="docs/assets/workspace/workflow.gif" alt="Real local workspace: browse a Claude Code thread, review a corrected seven-day retention instruction, offer a Codex handoff, and inspect the architecture." width="100%" />
 </picture>
+<p align="center"><sub>Actual npm workspace, synthetic example data. No model calls or task execution in this demo.<br /><a href="docs/assets/workspace/README.md">Demo description</a> · <a href="docs/assets/workspace/threads.png">Still image</a> · <a href="scripts/npm/render-demo.mjs">Reproduce the capture</a></sub></p>
 
-## Why Relay
+## Try it locally
 
-An agent starts a report. You change the output from CSV to JSON. Another agent
-picks up the work later. Which instruction is current? Where did it come from?
-What still needs doing?
+**Node 22.16+ · npm · no Python or model API key required**
 
-Context Relay stores those answers as a **versioned task packet** in local SQLite:
-
-- **Current instructions with history.** Explicitly replace an instruction while
-  keeping the old version and its source available for inspection.
-- **Handoffs with checks.** Freeze a revision, name its recipient, and check packet
-  integrity and revision freshness when the recipient accepts it.
-- **Completion backed by evidence.** Host-run checks bind verification to artifact
-  state. An accepted handoff or a model's report alone does not prove completion.
-
-> **Source preview.** The task API is experimental. Install from this checkout;
-> the bundled v0.22.0a3 wheel predates it. Live model handoff evaluation is pending.
-
-<a id="install"></a>
-
-## Quick start
-
-**Python 3.10+** · No model API key · No core runtime dependencies
+The npm package is prepared as `@mahekara28/context-relay`. **It is not published to the npm registry yet.** Install the beta from this checkout:
 
 ```sh
 git clone https://github.com/mahekara28/context-relay.git
 cd context-relay
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install .
-python examples/task_handoff_demo.py
+# While the final beta PR is open:
+git switch release/npm-beta
+npm ci
+npm pack
+npm install --global ./mahekara28-context-relay-0.3.0-beta.1.tgz
+
+relay demo
+relay ui
 ```
 
-On Windows PowerShell, activate with `.venv\Scripts\Activate.ps1`.
-Source installation may download build tools; this alpha is not published on PyPI.
+The package includes the compiled CLI, local service, MCP server, SQLite store and UI assets. After installation, Relay needs no frontend build step or CDN. `relay demo` creates explicitly synthetic sessions in its own demo project. `relay stop` stops the local service.
 
-The example creates a temporary database, replaces `Use CSV` with `Use JSON`,
-and accepts a handoff as the named receiver. It checks the resulting state before
-printing it, then removes the database. Add `--json` to inspect the selected result
-fields. It does not call a model or implement the report.
+Use `--data-dir /path/to/workspace` on any command for a separate profile. The default is `~/.context-relay`. [Installation and CLI reference →](docs/NPM_QUICKSTART.md)
 
-For a persistent task and the equivalent CLI commands, follow the
-[task quickstart](docs/TASK_QUICKSTART.md).
+## The workflow
 
-<a id="integrations"></a>
-<a id="connect-to-your-agent"></a>
-
-## Connect an agent
-
-Use **Python 3.11+** for the optional MCP server. Choose the project configuration
-generator for your harness:
+| Step | What happens |
+| --- | --- |
+| **1. Connect** | Register a project and connect a harness. Relay can add a project MCP entry while preserving unrelated settings. |
+| **2. Capture** | Discover matching sessions and choose what to import. Background jobs expose progress, failures and cancellation. |
+| **3. Review** | Select source events. Write the current goal, cited instructions, acceptance criteria and open work. Optionally generate a draft with Nebius. |
+| **4. Merge** | Combine existing checkpoints into a new snapshot. Resolve conflicting instruction keys explicitly. |
+| **5. Continue** | Offer the packet to a harness. Open a fresh session, inspect the handoff and accept it through MCP; or use a Markdown export. |
 
 ```sh
-python -m pip install '.[mcp]'
-
-context-relay connector claude configure --root .
-# Or:
-context-relay connector codex configure --root .
+relay project add --root /absolute/path/to/project
+relay connect --project PROJECT_ID --harness claude
+relay discover --id CONNECTION_ID
+relay sync --id CONNECTION_ID
+relay ui
 ```
 
-| Entry point | Included today |
-| --- | --- |
-| **Claude Code** | Project MCP configuration generator and diagnostics |
-| **Codex CLI** | Project MCP configuration generator and diagnostics |
-| **Other MCP clients** | Stdio server; configure and check compatibility manually |
-| **CLI / Python** | Direct access to task state, packets, handoffs and diagnostics |
+For a configured Claude Code or Codex destination, `relay launch --id HANDOFF_ID` opens a fresh interactive session with the continuation prompt and the harness's normal approvals. OpenCode and Goose use the copied prompt or export. Relay never writes into native chat databases.
 
-Reload your harness, then invoke the MCP tools explicitly. Diagnose the generated
-configuration with `context-relay connector claude diagnose --root .` (or `codex`).
-These are configuration integrations; a live Claude-to-Codex model evaluation is
-still needed. See [MCP setup](docs/MCP_TASK_SERVER.md).
+## Where MCP fits
 
-## How it works
+<img src="docs/assets/workspace/architecture.svg" alt="Harness-specific capture and MCP context access connect to one local service. SQLite stores reviewed state; optional Nebius drafts require review." width="100%" />
 
-<picture>
-  <source media="(prefers-color-scheme: dark) and (max-width: 600px)" srcset="docs/assets/architecture-dark-mobile.svg" />
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/architecture-dark.svg" />
-  <source media="(max-width: 600px)" srcset="docs/assets/architecture-light-mobile.svg" />
-  <img src="docs/assets/architecture-light.svg" alt="MCP clients call the optional stdio server. MCP, CLI and Python access the task service and local SQLite. The host supplies identity, context injection and completion checks." width="100%" />
-</picture>
+**Capture and MCP solve different parts of the workflow.** Native adapters read history. MCP gives agents a standard way to inspect Relay's context and accept an addressed handoff. Installing MCP alone does not make a harness's conversation history available.
 
-The eight MCP tools expose health, task inspection, packets, diffs, reports and
-handoff inspection/acceptance. Authoritative instruction changes and handoff
-offers use the CLI or Python API. The host supplies identity and policy, decides
-when to inject context, and runs completion checks.
+| Harness | Capture | MCP configuration | Fresh continuation |
+| --- | --- | --- | --- |
+| Claude Code | Project-filtered JSONL | `.mcp.json` | Interactive CLI launch or copied prompt |
+| Codex | App-server, completed turns | `.codex/config.toml` | Interactive CLI launch or copied prompt |
+| OpenCode | Loopback session/messages API | `opencode.json` | Copied prompt or Markdown |
+| Goose | CLI JSON list/export | Project extension command manifest | Copied prompt or Markdown |
 
-A packet carries the goal and criteria, active instructions and sources, Git
-workspace identity, artifact references, evidence and open work. It has a
-**character budget**: required state must fit; omitted optional entries are counted.
-Artifact references do not transfer file bytes. The receiver checks their availability
-and recorded state.
+All four have implemented capture adapters. Native format coverage and limits are explicit in the [connection guide](docs/HARNESS_CONNECTIONS.md); they are not a claim that every harness version has been live-certified.
 
-<details>
-<summary><strong>Inspect the example's packet fields</strong></summary>
+### Optional Nebius Token Factory
 
-Selected fields from the [checked example output](docs/assets/demo-output.json);
-IDs, timestamps and workspace paths are omitted here.
+Manual checkpoints work without a key. To request model-assisted drafts, set `NEBIUS_API_KEY` and `NEBIUS_MODEL` in the service environment and restart Relay. The UI previews the exact selected, redacted evidence before sending it. Responses must pass schema and citation validation, then return to the editor for review.
 
-```json
-{
-  "revision": 2,
-  "goal": "Produce a regional revenue report",
-  "instructions": [
-    {"text": "Use JSON", "source": {"kind": "user", "ref": "message-2"}}
-  ],
-  "open_work": ["Implement JSON export", "Run the report oracle"]
-}
-```
+No automatic summarization loop, hidden provider fallback or model-written authoritative state. [Provider setup and data flow →](docs/WORKSPACE.md#nebius-proposals)
 
-The full contract is in the [JSON Schema](schemas/task-context-v1alpha1.schema.json).
-See the [design](docs/TASK_CONTEXT_ADR.md) and [packet compiler](src/context_relay/task_packet.py).
+## What is verified
 
-</details>
+- **19 Node tests:** transactional imports, provenance, explicit merge conflicts, packet budgets, stale source/file rejection, recipient checks, adapters, provider validation and launch planning.
+- **Real transports:** an MCP stdio client, a JSON-RPC subprocess, a loopback HTTP capture source and an isolated installed Codex app-server initialization/listing check.
+- **4 Chromium workflows:** source review → handoff → export, conflict resolution, mobile/dark navigation and unauthenticated entry.
+- **Installed package gates:** packed-tarball installation, CLI/service lifecycle, bundled UI assets, authentication and restart persistence on Linux, macOS and Windows CI.
 
-<details>
-<summary><strong>Using the earlier Python memory API?</strong></summary>
+The model quality benchmark remains pending: no live Nebius completion or cross-harness coding result is claimed. Acceptance proves delivery, not successful task completion. [Detailed verification and release boundaries →](docs/releases/NPM_VERIFICATION.md)
 
-The existing session and provider APIs remain available:
+## Local by default
 
-```python
-from context_relay import auto_connect
+Relay binds to `127.0.0.1`, authenticates API requests and rejects foreign origins and host headers. The browser token is passed in a URL fragment, removed immediately and retained in the current tab's session storage. Drafts stay in memory until saved. Files are referenced by path and digest; they are not transferred.
 
-with auto_connect(existing_client, conversation="report-42") as ai:
-    response = ai(messages=full_history, model=your_model)
-```
+Capture and discovery are explicit. Recognized credentials are redacted before persistence, but this is best effort: inspect sensitive material before sharing it. Nebius receives only evidence you explicitly select and approve. [Workspace operations →](docs/WORKSPACE.md)
 
-Pass your actual client, model and full original message history; append messages
-without rewriting previous ones. Async clients use `async with` and `await`.
-Calls through the original client bypass Relay. Anthropic also requires
-`max_tokens`. Reuse the conversation name and storage location across restarts.
-
-Paths include Python callables, Ollama, OpenAI, Anthropic and an optional
-LangChain/LangGraph bridge. See [connection options](docs/AUTO_CONNECT.md),
-[named memory](docs/NAMED_MEMORY.md), [provider support and recovery](docs/RESPONSES_WORKFLOW.md),
-and [instruction clarification](docs/INSTRUCTION_CLARIFICATION.md).
-
-Run `python -m context_relay quickstart` for the offline memory check supported
-by the bundled wheel. See [distribution notes](PUBLIC_DISTRIBUTION.md) and
-[Verified Release Desk](examples/verified_release_desk.py) with its
-[setup guide](docs/PROTECTION_PROFILE.md).
-
-</details>
-
-<a id="what-has-been-tested"></a>
-
-## Evidence
-
-| Check | What it establishes |
-| --- | --- |
-| [Core CI: Linux and Windows](https://github.com/mahekara28/context-relay/actions/workflows/alpha.yml) | Regression coverage, installed-package checks and offline examples |
-| [MCP adapter tests](tests/test_mcp_adapter.py) | Two-client task handoffs and a real stdio subprocess client |
-| [Concurrency](tests/test_task_concurrency.py) / [restart recovery](tests/test_task_effect_restart.py) | Conflicting revisions and interrupted file effects under the covered conditions |
-| [Continuation fixture](evaluations/continuation/README.md) | A disclosed stale CSV implementation fails an independent JSON report oracle |
-
-These checks do not establish a model quality improvement. A live cross-harness
-run and a matched Markdown baseline remain open. Earlier memory evaluation
-results and limits are in the [validation report](docs/VALIDATION.md).
-
-## Limits and trust
-
-- **Local storage.** SQLite state is plaintext. Keep it private to your OS user.
-  A subject label is not remote authentication; distributed reliability is unproven.
-- **Host responsibility.** MCP registration does not capture sessions automatically.
-  Reports retain their provenance; verification depends on the supplied checks
-  and sources. Receipts cannot undo external writes, and interrupted effects need
-  destination evidence to resolve their outcome.
-- **Explicit instruction updates.** The legacy parser recognised only 1 of 11
-  clear changes in a separate wording test. Broad natural-language interpretation
-  remains future work.
-
-[Storage and privacy](docs/STORAGE_PRIVACY.md) ·
-[Task trust model](docs/TASK_CONTEXT_ADR.md#trust-and-scope) ·
-[Recovery](docs/RESPONSES_WORKFLOW.md#results-and-recovery)
-
-## Roadmap
-
-- [x] Versioned task state, sourced updates and immutable handoff offers
-- [x] Local MCP server, project configuration generators and host verification APIs
-- [ ] Publish a reproducible task finished across two coding harnesses
-- [ ] Compare it with a matched Markdown handoff and independent completion oracle
-- [ ] Evaluate optional Nebius-assisted interpretation and additional harness adapters
-
-See the [design direction](docs/TASK_CONTEXT_ADR.md) and
-[evaluation fixture](evaluations/continuation/README.md). Remote collaboration
-comes after local validation.
-
-## Contributing
-
-Bring a failing handoff, missed instruction, stale artifact or reproducible harness
-integration. [Open an issue](https://github.com/mahekara28/context-relay/issues)
-with expected behavior, actual behavior and synthetic input.
+## Develop and contribute
 
 ```sh
-python -m pip install -e .
-python -m unittest discover -s tests -v
+npm ci
+npm run typecheck
+npm test
+npm run test:package
+npx playwright install chromium
+npm run test:browser
 ```
 
-Add regression coverage for behavior changes. Optional SDK tests may skip;
-see [validation dependencies](requirements-validation.txt). Install `'.[mcp]'`
-for the MCP tests. The [artwork and replay](docs/assets/README.md) are reproducible
-from source.
+The TypeScript product lives in [`packages/relay`](packages/relay). The existing Python research/API implementation remains available with its own database and versioning; see the [Python reference](README.python.md). No automatic migration or shared writable database is implied.
 
----
-
-[MIT license](LICENSE) · [Task quickstart](docs/TASK_QUICKSTART.md) · [Design notes](docs/TASK_CONTEXT_ADR.md)
+See the [release series](docs/releases/NPM_RELEASE_PLAN.md), [contribution guide](CONTRIBUTING.md) and [license](LICENSE). Harness logos are bundled from the MIT-licensed Lobe Icons package with [attribution](packages/relay/ui/assets/THIRD_PARTY_LICENSE.txt); product names identify integrations and do not imply endorsement.
