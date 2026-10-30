@@ -241,6 +241,101 @@ class TaskService:
         return {"task_id": task_id, "from_revision": from_revision,
                 "to_revision": to_revision, "fields": fields, "collections": collections}
 
+    def propose_update(self, principal: Principal, task_id: str, *, expected_revision: int,
+                       request_id: str, changes: dict) -> dict:
+        """Retain a stale proposal without applying it or pretending it won the race."""
+        self._check(principal, "task.propose")
+        validate_revision(expected_revision)
+        nonempty_string(request_id, "request_id", limit=128)
+        if type(changes) is not dict or not changes or set(changes) - {"goal", "completion_criteria", "open_work"}:
+            raise ValueError("proposal changes contain unsupported fields.")
+        if self.source_class == "agent_report" and set(changes) != {"open_work"}:
+            raise AccessDenied("Agent reports may propose only open work.")
+        changes = clone(changes)
+        with self.store._transaction(write=True):
+            self.store._assert_mutable()
+            row = self._row(task_id, principal)
+            if row["revision"] <= expected_revision:
+                raise ValueError("Conflict proposals require a stale expected revision.")
+            prior = self.store._connection.execute(
+                "SELECT * FROM task_conflicts WHERE task_id=? AND request_id=?", (task_id, request_id)
+            ).fetchone()
+            if prior is None:
+                now = timestamp()
+                proposal_id = uuid.uuid4().hex
+                self.store._connection.execute(
+                    "INSERT INTO task_conflicts VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NULL, ?, NULL)",
+                    (proposal_id, task_id, request_id, expected_revision, row["revision"],
+                     principal.subject, self.source_class, encode(changes), now),
+                )
+                prior = self.store._connection.execute(
+                    "SELECT * FROM task_conflicts WHERE id=?", (proposal_id,)
+                ).fetchone()
+            elif json.loads(prior["changes"]) != changes or prior["proposer"] != principal.subject:
+                raise TaskRequestConflict("request_id was already used for a different proposal.")
+            return self._proposal_record(prior)
+
+    @staticmethod
+    def _proposal_record(row) -> dict:
+        return {"id": row["id"], "task_id": row["task_id"],
+                "expected_revision": row["expected_revision"],
+                "observed_revision": row["observed_revision"],
+                "changes": json.loads(row["changes"]), "status": row["status"],
+                "proposer": row["proposer"], "resolver": row["resolver"]}
+
+    def resolve_proposal(self, principal: Principal, proposal_id: str, *,
+                         decision: str, expected_revision: int,
+                         request_id: str) -> dict:
+        """Apply or reject a conflict explicitly; applying is atomic with task revision."""
+        self._check(principal, "task.resolve")
+        if self.source_class != "host":
+            raise AccessDenied("Only the host may resolve conflicting proposals.")
+        if decision not in ("apply", "reject"):
+            raise ValueError("decision must be apply or reject.")
+        validate_revision(expected_revision)
+        nonempty_string(proposal_id, "proposal_id", limit=128)
+        nonempty_string(request_id, "request_id", limit=128)
+        with self.store._transaction():
+            row = self.store._connection.execute(
+                "SELECT c.* FROM task_conflicts c JOIN tasks t ON t.id=c.task_id "
+                "WHERE c.id=? AND t.tenant=?", (proposal_id, principal.tenant),
+            ).fetchone()
+            if row is None:
+                raise TaskNotFound("Proposal not found.")
+            proposal = self._proposal_record(row)
+        if proposal["status"] != "pending":
+            if proposal["status"] == "rejected" and decision == "reject":
+                return {"proposal_id": proposal_id, "decision": "reject"}
+            if proposal["status"] != "applied" or decision != "apply":
+                raise ValueError("Proposal has already been resolved differently.")
+        if decision == "reject":
+            with self.store._transaction(write=True):
+                task = self._row(proposal["task_id"], principal)
+                if task["revision"] != expected_revision:
+                    raise ConflictError(expected_revision, task["revision"])
+                self.store._connection.execute(
+                    "UPDATE task_conflicts SET status='rejected', resolver=?, resolved_at=? "
+                    "WHERE id=? AND status='pending'", (principal.subject, timestamp(), proposal_id),
+                )
+            return {"proposal_id": proposal_id, "decision": "reject"}
+
+        def apply(task: dict) -> None:
+            pending = self.store._connection.execute(
+                "SELECT status FROM task_conflicts WHERE id=?", (proposal_id,)
+            ).fetchone()
+            if pending is None or pending["status"] != "pending":
+                raise ValueError("Proposal has already been resolved.")
+            task.update(proposal["changes"])
+            self.store._connection.execute(
+                "UPDATE task_conflicts SET status='applied', resolver=?, resolved_at=? WHERE id=?",
+                (principal.subject, timestamp(), proposal_id),
+            )
+
+        result = self._mutate(principal, proposal["task_id"], expected_revision=expected_revision,
+                              request_id=request_id, operation="resolve", payload={"proposal_id": proposal_id},
+                              transform=apply)
+        return {"proposal_id": proposal_id, "decision": "apply", "task": result}
+
     def add_instruction(self, principal: Principal, task_id: str, *, expected_revision: int,
                         request_id: str, text: str, source: dict, scope: str = "task",
                         supersedes: list[str] | None = None,

@@ -157,6 +157,19 @@ class TaskServiceTests(unittest.TestCase):
                                       request_id="next", changes={"open_work": ["Review"]})
         self.assertEqual(revised["instructions"][0]["status"], "expired")
 
+    def test_stale_proposal_is_retained_until_explicit_resolution(self):
+        task = self.create()
+        current = self.service.update(self.alice, task["id"], expected_revision=0,
+                                      request_id="first", changes={"open_work": ["First"]})
+        proposal = self.service.propose_update(self.alice, task["id"], expected_revision=0,
+                                               request_id="alternative", changes={"open_work": ["Second"]})
+        self.assertEqual(proposal["status"], "pending")
+        self.assertEqual(self.service.show(self.alice, task["id"]), current)
+        resolved = self.service.resolve_proposal(self.alice, proposal["id"], decision="apply",
+                                                 expected_revision=1, request_id="resolve")
+        self.assertEqual(resolved["task"]["open_work"], ["Second"])
+        self.assertEqual(resolved["task"]["revision"], 2)
+
 
 if __name__ == "__main__":
     unittest.main()
