@@ -5,6 +5,7 @@ from pathlib import Path
 from context_relay import ConflictError, RelayStore
 from context_relay.organization import Principal
 from context_relay.task_actions import check_file_action
+from context_relay.task_effects import TaskEffectService
 from context_relay.task_service import TaskService
 
 
@@ -32,6 +33,32 @@ class TaskActionTests(unittest.TestCase):
                     check_file_action(service, principal, task["id"], expected_revision=0,
                                       operation="write_file", path="report.json",
                                       allowed_operations={"write_file"})
+            finally:
+                store.close()
+
+    def test_intent_is_durable_and_destination_key_is_idempotent(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            store = RelayStore(Path(temporary) / "tasks.db")
+            try:
+                principal = Principal("team", "host")
+                tasks = TaskService(store, authorize=lambda identity, action: True)
+                task = tasks.create(principal, goal="Finish", completion_criteria=["Done"],
+                                    workspace={"repository": "example", "root": temporary})
+                effects = TaskEffectService(tasks)
+                prepared = effects.prepare(principal, task["id"], expected_revision=0,
+                                           destination_key="write-1", operation="write_file",
+                                           path="result.json", content=b"{}",
+                                           allowed_operations={"write_file"})
+                self.assertEqual(prepared["status"], "prepared")
+                self.assertEqual(effects.prepare(principal, task["id"], expected_revision=0,
+                                                 destination_key="write-1", operation="write_file",
+                                                 path="result.json", content=b"{}",
+                                                 allowed_operations={"write_file"}), prepared)
+                with self.assertRaises(ValueError):
+                    effects.prepare(principal, task["id"], expected_revision=0,
+                                    destination_key="write-1", operation="write_file",
+                                    path="result.json", content=b"different",
+                                    allowed_operations={"write_file"})
             finally:
                 store.close()
 
