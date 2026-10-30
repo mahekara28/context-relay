@@ -108,6 +108,22 @@ class TaskServiceTests(unittest.TestCase):
                                          source={"kind": "user", "ref": "message-3"},
                                          supersedes=[old_id])
 
+    def test_reported_evidence_cannot_be_laundered_into_tool_evidence(self):
+        task = self.create()
+        reporting = TaskService(self.store, authorize=lambda principal, action: True,
+                                source_class="agent_report")
+        with self.assertRaises(AccessDenied):
+            reporting.attach_evidence(self.alice, task["id"], expected_revision=0,
+                                      request_id="fake", claim="Tests passed",
+                                      source={"kind": "tool", "ref": "pytest"})
+        result = reporting.attach_evidence(self.alice, task["id"], expected_revision=0,
+                                           request_id="report", claim="I think tests passed",
+                                           source={"kind": "agent_report", "ref": "assistant-1"})
+        self.assertEqual(result["evidence"][0]["source"]["kind"], "agent_report")
+        self.assertEqual(reporting.attach_evidence(self.alice, task["id"], expected_revision=0,
+                                                   request_id="report", claim="I think tests passed",
+                                                   source={"kind": "agent_report", "ref": "assistant-1"}), result)
+
 
 if __name__ == "__main__":
     unittest.main()

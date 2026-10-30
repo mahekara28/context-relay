@@ -211,3 +211,28 @@ class TaskService:
         return self._mutate(principal, task_id, expected_revision=expected_revision,
                             request_id=request_id, operation="instruction", payload=payload,
                             transform=transform)
+
+    def attach_evidence(self, principal: Principal, task_id: str, *, expected_revision: int,
+                        request_id: str, claim: str, source: dict,
+                        digest: str | None = None) -> dict:
+        """Attach a bounded claim with provenance; agent reports remain labeled as reports."""
+        nonempty_string(claim, "evidence claim", limit=4096)
+        source = validate_source(source)
+        if self.source_class == "agent_report" and source["kind"] != "agent_report":
+            raise AccessDenied("Agent reports cannot attest host, tool, or file evidence.")
+        if self.source_class == "host" and source["kind"] == "agent_report":
+            raise ValueError("Use an agent_report service to label an agent claim.")
+        payload = {"claim": claim, "source": source}
+        if digest is not None:
+            payload["digest"] = digest
+
+        def transform(task: dict) -> None:
+            item = {"id": uuid.uuid4().hex, "claim": claim, "source": source,
+                    "captured_at": timestamp()}
+            if digest is not None:
+                item["digest"] = digest
+            task["evidence"].append(item)
+
+        return self._mutate(principal, task_id, expected_revision=expected_revision,
+                            request_id=request_id, operation="evidence", payload=payload,
+                            transform=transform)
