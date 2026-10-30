@@ -135,6 +135,12 @@ class RelayStore:
                     UNIQUE(task_id, revision)
                 );
                 CREATE INDEX IF NOT EXISTS task_events_task ON task_events(task_id, revision);
+                CREATE TABLE IF NOT EXISTS task_mutations (
+                    task_id TEXT NOT NULL REFERENCES tasks(id),
+                    request_id TEXT NOT NULL, request_digest TEXT NOT NULL,
+                    result_payload TEXT NOT NULL,
+                    PRIMARY KEY(task_id, request_id)
+                );
                 PRAGMA user_version = 2;
             """)
         except BaseException as error:

@@ -2,9 +2,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from context_relay import RelayStore
+from context_relay import ConflictError, RelayStore
 from context_relay.organization import AccessDenied, Principal
-from context_relay.task_service import TaskNotFound, TaskService
+from context_relay.task_service import TaskNotFound, TaskRequestConflict, TaskService
 
 
 class TaskServiceTests(unittest.TestCase):
@@ -40,6 +40,21 @@ class TaskServiceTests(unittest.TestCase):
         with self.assertRaises(AccessDenied):
             denied.create(self.alice, goal="X", completion_criteria=["Y"],
                           workspace={"repository": "repo", "root": "/work"})
+
+    def test_update_is_cas_and_idempotent(self):
+        task = self.create()
+        updated = self.service.update(self.alice, task["id"], expected_revision=0,
+                                      request_id="update-1", changes={"open_work": ["Run oracle"]})
+        self.assertEqual(updated["revision"], 1)
+        self.assertEqual(self.service.update(self.alice, task["id"], expected_revision=0,
+                                             request_id="update-1", changes={"open_work": ["Run oracle"]}), updated)
+        with self.assertRaises(ConflictError):
+            self.service.update(self.alice, task["id"], expected_revision=0,
+                                request_id="update-2", changes={"goal": "Stale"})
+        with self.assertRaises(TaskRequestConflict):
+            self.service.update(self.alice, task["id"], expected_revision=0,
+                                request_id="update-1", changes={"goal": "Different"})
+        self.assertEqual(self.service.show(self.alice, task["id"]), updated)
 
 
 if __name__ == "__main__":
