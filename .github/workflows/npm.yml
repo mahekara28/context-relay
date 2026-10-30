@@ -34,6 +34,15 @@ jobs:
       - run: npm test
       - run: npm run test:package
       - run: npm audit --omit=dev --audit-level=high
+      - name: Pack reviewable npm artifact
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '24'
+        run: npm pack --ignore-scripts
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '24'
+        with:
+          name: context-relay-npm-beta
+          path: mahekara28-context-relay-*.tgz
+          if-no-files-found: error
 
   browser:
     name: workspace / Chromium

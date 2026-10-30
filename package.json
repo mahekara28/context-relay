@@ -34,7 +34,8 @@
     "test": "npm run build && node --test packages/relay/test/*.test.mjs",
     "test:package": "node scripts/npm/package-smoke.mjs",
     "prepack": "npm run build",
-    "test:browser": "npm run build && playwright test"
+    "test:browser": "npm run build && playwright test",
+    "demo:render": "npm run build && node scripts/npm/render-demo.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",
