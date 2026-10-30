@@ -56,6 +56,25 @@ class TaskServiceTests(unittest.TestCase):
                                 request_id="update-1", changes={"goal": "Different"})
         self.assertEqual(self.service.show(self.alice, task["id"]), updated)
 
+    def test_agent_report_cannot_claim_host_authority(self):
+        task = self.create()
+        reporting = TaskService(self.store, authorize=lambda principal, action: True,
+                                source_class="agent_report")
+        with self.assertRaises(AccessDenied):
+            reporting.create(self.alice, goal="Fake", completion_criteria=["Anything"],
+                             workspace={"repository": "repo", "root": "/work"})
+        with self.assertRaises(AccessDenied):
+            reporting.update(self.alice, task["id"], expected_revision=0,
+                             request_id="claim", changes={"goal": "Done"})
+        report = reporting.update(self.alice, task["id"], expected_revision=0,
+                                  request_id="report", changes={"open_work": ["I think it works"]})
+        self.assertEqual(report["revision"], 1)
+        with self.store._transaction():
+            event = self.store._connection.execute(
+                "SELECT source_class FROM task_events WHERE task_id=? AND revision=1", (task["id"],)
+            ).fetchone()
+        self.assertEqual(event["source_class"], "agent_report")
+
 
 if __name__ == "__main__":
     unittest.main()

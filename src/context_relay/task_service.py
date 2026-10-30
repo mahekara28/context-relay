@@ -24,11 +24,15 @@ class TaskRequestConflict(ValueError):
 class TaskService:
     """The host supplies identity and authorization; a model cannot self-attest either."""
 
-    def __init__(self, store: RelayStore, *, authorize: Callable[[Principal, str], bool]):
+    def __init__(self, store: RelayStore, *, authorize: Callable[[Principal, str], bool],
+                 source_class: str = "host"):
         if not isinstance(store, RelayStore) or not callable(authorize):
             raise TypeError("TaskService requires a RelayStore and synchronous authorization callback.")
+        if source_class not in ("host", "agent_report"):
+            raise ValueError("source_class must be host or agent_report.")
         self.store = store
         self.authorize = authorize
+        self.source_class = source_class
 
     def _check(self, principal: Principal, operation: str) -> None:
         if not isinstance(principal, Principal):
@@ -47,6 +51,8 @@ class TaskService:
     def create(self, principal: Principal, *, goal: str, completion_criteria: list[str],
                workspace: dict, open_work: list[str] | None = None) -> dict:
         self._check(principal, "task.create")
+        if self.source_class != "host":
+            raise AccessDenied("Only the host may create a task.")
         nonempty_string(goal, "goal", limit=4096)
         now = timestamp()
         task = validate_task_snapshot({
@@ -65,7 +71,7 @@ class TaskService:
             self.store._connection.execute(
                 "INSERT INTO task_events VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 (uuid.uuid4().hex, task["id"], 0, "create", principal.subject,
-                 "host", encode({"goal": goal}), now),
+                 self.source_class, encode({"goal": goal}), now),
             )
         return task
 
@@ -86,9 +92,12 @@ class TaskService:
         validate_revision(expected_revision)
         if type(changes) is not dict or not changes or set(changes) - {"goal", "completion_criteria", "open_work"}:
             raise ValueError("changes must contain only goal, completion_criteria, or open_work.")
+        if self.source_class == "agent_report" and set(changes) != {"open_work"}:
+            raise AccessDenied("Agent reports may update only open work.")
         changes = clone(changes)
         fingerprint = hashlib.sha256(json.dumps(
-            {"expected_revision": expected_revision, "changes": changes},
+            {"principal": principal.subject, "source_class": self.source_class,
+             "expected_revision": expected_revision, "changes": changes},
             sort_keys=True, separators=(",", ":"), ensure_ascii=False,
         ).encode("utf-8")).hexdigest()
         with self.store._transaction(write=True):
@@ -118,7 +127,7 @@ class TaskService:
             self.store._connection.execute(
                 "INSERT INTO task_events VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 (uuid.uuid4().hex, task_id, task["revision"], "update", principal.subject,
-                 "host", encode(changes), task["updated_at"]),
+                 self.source_class, encode(changes), task["updated_at"]),
             )
             self.store._connection.execute(
                 "INSERT INTO task_mutations VALUES (?, ?, ?, ?)",
