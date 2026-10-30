@@ -72,6 +72,14 @@ test("Nebius sends only selected redacted evidence, validates citations, and nev
   );
   assert.equal(result.requiresReview, true);
   assert.equal(store.checkpoints().length, 0);
+  proposal.goal = 'Preserve config: password="example-secret"';
+  const quoted = await generateProposal(
+    store,
+    { ...input, consent: true },
+    transport,
+  );
+  assert.match(quoted.proposal.goal, /REDACTED/);
+  assert(!quoted.proposal.goal.includes("example-secret"));
   proposal.instructions[0].sources = [
     { sessionId: session.id, eventId: "two" },
   ];

@@ -149,9 +149,17 @@ export async function generateProposal(
     keys.add(instruction.key);
   }
   return {
-    proposal: JSON.parse(redact(JSON.stringify(proposal))) as z.infer<
-      typeof Proposal
-    >,
+    proposal: {
+      ...proposal,
+      title: redact(proposal.title),
+      goal: redact(proposal.goal),
+      instructions: proposal.instructions.map((item) => ({
+        ...item,
+        text: redact(item.text),
+      })),
+      criteria: proposal.criteria.map(redact),
+      openWork: proposal.openWork.map(redact),
+    },
     evidence: data.evidence,
     requiresReview: true,
     provider: preview.provider,
