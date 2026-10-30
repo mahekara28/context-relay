@@ -20,7 +20,7 @@
 
 ## Development preview: local thread map
 
-This checkout is `0.4.0-dev.0`. The new default UI automatically discovers local harness sessions, displays them as movable thread cards, and lets you drag connections to review and relay context. It includes background capture, source filters, targeted MCP handoffs, freshness checks, and editable pending connections. **This revamp is not yet published to npm; the public beta below remains `0.3.0-beta.1`.**
+This checkout is `0.4.0-dev.0`. The new default UI automatically discovers local harness sessions, displays them as movable thread cards, and lets you drag connections to review and relay context. It includes background capture, magnetic drag-to-connect, targeted handoffs, a persistent delivery queue, and receiving integrations for Claude MCP Channels, reachable Codex hosts, and OpenCode. See the receiver requirements below; native desktop attachment varies by harness. **This revamp is not yet published to npm; the public beta below remains `0.3.0-beta.1`.**
 
 ```sh
 npm ci

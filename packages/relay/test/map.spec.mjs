@@ -144,14 +144,12 @@ test("dragging source to destination creates a reviewed targeted handoff and ref
     .locator("#goal")
     .fill("Implement the session graph with a local collector.");
   await page
-    .getByRole("button", { name: "Create handoff", exact: true })
+    .getByRole("button", { name: "Connect & send", exact: true })
     .click();
   await expect(
     page.getByRole("heading", { name: "Connection", exact: true }),
   ).toBeVisible();
-  await expect(page.locator(".drawer .pill").first()).toHaveText(
-    "awaiting target",
-  );
+  await expect(page.locator(".drawer .pill").first()).toHaveText("queued");
   const handoff = app.store.handoffs()[0];
   expect(handoff.packet.destination.sessionId).toBe(threads[1].id);
   expect(handoff.packet.evidence.length).toBe(3);
@@ -180,7 +178,7 @@ test("keyboard selection combines multiple source threads; cancellation and stal
     .click();
   await page.locator("#target").selectOption(threads[1].id);
   await page
-    .getByRole("button", { name: "Create handoff", exact: true })
+    .getByRole("button", { name: "Connect & send", exact: true })
     .click();
   await expect(
     page.getByRole("heading", { name: "Connection", exact: true }),
@@ -287,14 +285,14 @@ test("a pending graph connection can be rewired to another destination", async (
     .click();
   await page.locator("#target").selectOption(threads[1].id);
   await page
-    .getByRole("button", { name: "Create handoff", exact: true })
+    .getByRole("button", { name: "Connect & send", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Change destination", exact: true })
     .click();
   await page.locator("#target").selectOption(threads[2].id);
   await page
-    .getByRole("button", { name: "Update connection", exact: true })
+    .getByRole("button", { name: "Update & send", exact: true })
     .click();
   await expect(
     page.getByRole("heading", { name: "Connection", exact: true }),
@@ -306,4 +304,178 @@ test("a pending graph connection can be rewired to another destination", async (
   expect(
     app.store.handoffs().filter((h) => h.status === "cancelled"),
   ).toHaveLength(1);
+});
+
+test("connectors snap near a destination, keep the viewport still, and retain a draft wire", async ({
+  page,
+}) => {
+  await enter(page);
+  const before = await page.locator("#world").getAttribute("style");
+  const from = await page
+    .locator(`[data-port="${threads[0].id}"]`)
+    .boundingBox();
+  const to = await page.locator(`[data-node="${threads[1].id}"]`).boundingBox();
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(to.x - 12, to.y + to.height / 2, { steps: 20 });
+  await expect(page.locator(`[data-node="${threads[1].id}"]`)).toHaveClass(
+    /target-hover/,
+  );
+  await page.mouse.up();
+  await expect(page.locator("#target")).toHaveValue(threads[1].id);
+  expect(await page.locator("#world").getAttribute("style")).toBe(before);
+  await expect(page.locator(".wire.preview")).toHaveCount(1);
+  await page.getByRole("button", { name: "Close panel" }).click();
+  await expect(page.locator(".wire.preview")).toHaveCount(0);
+});
+
+test("click and keyboard connect work without dragging, and Escape cancels cleanly", async ({
+  page,
+}) => {
+  await enter(page);
+  const port = page.locator(`[data-port="${threads[0].id}"]`),
+    target = page.locator(`[data-node="${threads[1].id}"]`);
+  await port.focus();
+  await page.keyboard.press("Enter");
+  await expect(target).toHaveClass(/target-eligible/);
+  await page.keyboard.press("Escape");
+  await expect(target).not.toHaveClass(/target-eligible/);
+  await port.focus();
+  await page.keyboard.press("Enter");
+  await target.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#target")).toHaveValue(threads[1].id);
+  await expect(
+    page.getByRole("button", { name: "Connect & send", exact: true }),
+  ).toBeVisible();
+});
+
+test("background updates do not replace a card under a pointer or reset its movement", async ({
+  page,
+}) => {
+  await enter(page);
+  const selector = `[data-node="${threads[0].id}"]`;
+  await page.evaluate(
+    (selector) => (window.draggedCard = document.querySelector(selector)),
+    selector,
+  );
+  const from = await page.locator(selector).boundingBox();
+  await page.mouse.move(from.x + 80, from.y + 70);
+  await page.mouse.down();
+  await page.mouse.move(from.x + 160, from.y + 90, { steps: 10 });
+  app.store.importSession({
+    projectId: project.id,
+    harness: threads[0].harness,
+    externalId: threads[0].externalId,
+    title: threads[0].title,
+    events: [{ id: "fresh", role: "user", text: "New data while dragging." }],
+  });
+  await page.waitForTimeout(3300);
+  expect(
+    await page.evaluate(
+      (selector) => window.draggedCard === document.querySelector(selector),
+      selector,
+    ),
+  ).toBe(true);
+  await page.mouse.move(from.x + 200, from.y + 110, { steps: 10 });
+  await page.mouse.up();
+  await expect
+    .poll(
+      async () =>
+        (await client.request("/api/graph")).positions[threads[0].id]?.x,
+    )
+    .toBeGreaterThan(60);
+  await expect(page.locator(selector + " code")).toHaveText("4 events", {
+    timeout: 7000,
+  });
+  expect(
+    await page.evaluate(
+      (selector) => window.draggedCard === document.querySelector(selector),
+      selector,
+    ),
+  ).toBe(true);
+});
+
+test("Connect & send reaches a bound receiver without showing a copy-prompt step", async ({
+  page,
+}) => {
+  const receiver = await client.request("/api/receivers", {
+    projectId: project.id,
+    harness: "claude",
+    externalId: threads[3].externalId,
+  });
+  await enter(page);
+  await page.locator(`[data-port="${threads[0].id}"]`).click();
+  await page.locator(`[data-node="${threads[3].id}"]`).click();
+  await page
+    .getByRole("button", { name: "Connect & send", exact: true })
+    .click();
+  await expect(page.locator(".drawer .pill").first()).toHaveText("queued");
+  await expect(
+    page.getByRole("textbox", { name: "Continuation prompt" }),
+  ).not.toBeVisible();
+  const delivery = await client.request(
+    `/api/receivers/${receiver.id}/next`,
+    {},
+  );
+  expect(delivery.handoffId).toBeTruthy();
+  await client.request(`/api/receivers/${receiver.id}/receipt`, {
+    handoffId: delivery.handoffId,
+    attemptId: delivery.attemptId,
+    sent: true,
+  });
+  await expect(page.locator(".drawer .pill").first()).toHaveText("sent", {
+    timeout: 7000,
+  });
+  await client.request(`/api/handoffs/${delivery.handoffId}/accept`, {
+    recipient: "claude",
+    destinationExternalId: threads[3].externalId,
+  });
+  await expect(page.locator(".drawer .pill").first()).toHaveText("accepted", {
+    timeout: 7000,
+  });
+});
+
+test("invalid targets stay muted and Escape rolls a drag back without creating a handoff", async ({
+  page,
+}) => {
+  const otherRoot = join(dir, "other-project");
+  mkdirSync(otherRoot);
+  const otherProject = app.store.addProject({ root: otherRoot });
+  const foreign = app.store.importSession({
+    projectId: otherProject.id,
+    harness: "claude",
+    externalId: "foreign",
+    title: "Another project",
+    events: [],
+  }).session;
+  await page.goto(app.connection.url + "/#token=" + app.token);
+  await expect(page.locator("[data-node]")).toHaveCount(7);
+  const source = page.locator(`[data-node="${threads[0].id}"]`);
+  const from = await page
+    .locator(`[data-port="${threads[0].id}"]`)
+    .boundingBox();
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(from.x + 35, from.y + 55, { steps: 6 });
+  await expect(page.locator(`[data-node="${foreign.id}"]`)).toHaveClass(
+    /target-muted/,
+  );
+  await expect(source).toHaveClass(/target-muted/);
+  await page.keyboard.press("Escape");
+  await page.mouse.up();
+  await expect(page.locator(".wire.preview")).toHaveCount(0);
+  await expect(page.locator(".drawer")).toHaveCount(0);
+  expect(app.store.handoffs()).toHaveLength(0);
+  const before = await source.boundingBox();
+  await page.mouse.move(before.x + 70, before.y + 60);
+  await page.mouse.down();
+  await page.mouse.move(before.x + 140, before.y + 110, { steps: 8 });
+  await page.keyboard.press("Escape");
+  await page.mouse.up();
+  const restored = await source.boundingBox();
+  expect(Math.abs(restored.x - before.x)).toBeLessThan(1);
+  expect(
+    (await client.request("/api/graph")).positions[threads[0].id],
+  ).toBeUndefined();
 });

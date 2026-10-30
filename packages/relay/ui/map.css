@@ -386,13 +386,14 @@ label > span.field-label {
   width: 1px;
   height: 1px;
   transform-origin: 0 0;
+  will-change: transform;
 }
 .wires {
   position: absolute;
-  left: -10000px;
-  top: -10000px;
-  width: 20000px;
-  height: 20000px;
+  left: -11000px;
+  top: -11000px;
+  width: 22000px;
+  height: 22000px;
   overflow: visible;
   pointer-events: none;
 }
@@ -402,6 +403,14 @@ label > span.field-label {
   stroke-width: 2;
   opacity: 0.65;
   pointer-events: stroke;
+  cursor: pointer;
+  vector-effect: non-scaling-stroke;
+}
+.wire-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 18;
+  vector-effect: non-scaling-stroke;
   cursor: pointer;
 }
 .wire:hover,
@@ -421,13 +430,22 @@ label > span.field-label {
   stroke: var(--good);
 }
 .wire.preview {
-  stroke-dasharray: 5 5;
+  stroke-width: 2.5;
+  opacity: 0.9;
   pointer-events: none;
+}
+.wire.sent {
+  stroke: var(--good);
+  stroke-dasharray: 5 4;
+}
+.wire.uncertain,
+.wire.blocked {
+  stroke-dasharray: 3 5;
 }
 .thread {
   position: absolute;
   width: 266px;
-  min-height: 164px;
+  height: 188px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
@@ -445,13 +463,35 @@ label > span.field-label {
   box-shadow: 0 10px 30px #25301e12;
 }
 .thread.selected {
-  border: 2px solid var(--accent);
-  padding: 16px;
+  border-color: var(--accent);
   box-shadow: 0 0 0 4px var(--accent-soft);
 }
 .thread.target-hover {
   border-color: var(--good);
   box-shadow: 0 0 0 5px color-mix(in srgb, var(--good) 20%, transparent);
+}
+.connecting {
+  cursor: crosshair;
+}
+.thread.target-eligible {
+  border-color: color-mix(in srgb, var(--good) 45%, var(--line));
+}
+.thread.target-muted {
+  opacity: 0.45;
+}
+.thread.target-hover::after {
+  content: "Release to connect";
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--good);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  pointer-events: none;
 }
 .thread-top {
   display: flex;
@@ -511,31 +551,51 @@ label > span.field-label {
 }
 .port {
   position: absolute;
-  top: 86px;
-  right: -9px;
-  width: 17px;
-  height: 17px;
+  top: 50%;
+  right: -19px;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
   padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 50%;
+  box-shadow: none;
+  cursor: crosshair;
+  touch-action: none;
+}
+.port::before {
+  content: "";
+  position: absolute;
+  inset: 11px;
   border: 3px solid var(--surface);
   background: var(--accent);
   border-radius: 50%;
   box-shadow: 0 0 0 1px var(--accent);
-  cursor: crosshair;
-  touch-action: none;
+  transition: box-shadow 120ms;
 }
 .port:hover {
-  background: var(--accent);
-  transform: scale(1.2);
+  background: transparent;
+  transform: translateY(-50%);
+}
+.port:hover::before,
+.port:focus-visible::before {
+  box-shadow:
+    0 0 0 5px var(--accent-soft),
+    0 0 0 1px var(--accent);
 }
 .port.in {
-  left: -6px;
+  left: -19px;
   right: auto;
-  width: 11px;
-  height: 11px;
-  background: var(--line);
-  border-width: 2px;
-  box-shadow: 0 0 0 1px var(--line);
   pointer-events: none;
+}
+.port.in::before {
+  background: var(--line);
+  box-shadow: 0 0 0 1px var(--line);
+}
+.target-hover .port.in::before {
+  background: var(--good);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--good) 20%, transparent);
 }
 .canvas-top {
   position: absolute;
@@ -631,6 +691,8 @@ label > span.field-label {
   line-height: 1.8;
 }
 .drawer {
+  position: absolute;
+  inset: 0 0 0 auto;
   width: 390px;
   flex: none;
   background: var(--surface);
@@ -639,6 +701,7 @@ label > span.field-label {
   flex-direction: column;
   min-height: 0;
   z-index: 5;
+  box-shadow: -12px 0 35px #0000000c;
 }
 .drawer-head {
   display: flex;
@@ -1018,4 +1081,41 @@ body.panel-open .canvas-legend {
   stroke-width: 6px;
   paint-order: stroke;
   cursor: pointer;
+}
+.delivery-progress {
+  display: grid;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.delivery-progress span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.delivery-progress span::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+.delivery-progress .done {
+  color: var(--ink);
+}
+.delivery-progress .done::before {
+  background: var(--good);
+  border-color: var(--good);
+}
+.evidence-review > section {
+  margin-top: 16px;
+}
+#receiver-endpoint {
+  width: 100%;
+  margin: 8px 0 12px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
 }

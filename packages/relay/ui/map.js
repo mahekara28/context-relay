@@ -78,6 +78,8 @@ const state = {
   busy: false,
   export: null,
   revision: 0,
+  armed: null,
+  receiver: null,
 };
 let timer,
   noticeTimer,
@@ -228,12 +230,25 @@ function renderMap() {
   if (!$("#nodes")) return;
   layout();
   const visible = sessions().slice(0, 80);
-  $("#nodes").innerHTML = visible
+  const markup = visible
     .map(
       (s) =>
         `<article class="thread ${state.selected.has(s.id) || state.detail === s.id ? "selected" : ""}" data-node="${esc(s.id)}" tabindex="0" role="button" aria-label="Open thread: ${esc(s.title)}"><div class="thread-top"><div class="logo-wrap">${logo(s.harness)}</div><div><div class="harness-label">${names[s.harness]}</div><div class="time">${esc(ago(s.activityAt))}</div></div><button class="pick ${state.selected.has(s.id) ? "picked" : ""}" data-pick="${esc(s.id)}" aria-label="${state.selected.has(s.id) ? "Deselect" : "Select"} source: ${esc(s.title)}" aria-pressed="${state.selected.has(s.id)}">${icon(state.selected.has(s.id) ? "check" : "plus")}</button></div><h3>${esc(s.title)}</h3><div class="thread-bottom"><span>${esc(project(s.projectId)?.name)}</span><code>${s.captureError ? "Needs attention" : !s.captured ? "Indexing…" : num(s.eventCount) + " events" + (s.captureWarning ? " · excerpts" : "")}</code></div><span class="port in"></span><button class="port" data-port="${esc(s.id)}" aria-label="Connect from ${esc(s.title)}" title="Drag onto another thread to relay context"></button></article>`,
     )
     .join("");
+  const template = document.createElement("template");
+  template.innerHTML = markup;
+  const host = $("#nodes");
+  const existing = new Map([...host.children].map((n) => [n.dataset.node, n]));
+  for (const fresh of [...template.content.children]) {
+    const old = existing.get(fresh.dataset.node);
+    if (old) {
+      if (old.innerHTML !== fresh.innerHTML) old.innerHTML = fresh.innerHTML;
+      old.className = fresh.className;
+      existing.delete(fresh.dataset.node);
+    } else host.append(fresh);
+  }
+  for (const old of existing.values()) old.remove();
   for (const node of document.querySelectorAll("[data-node]")) {
     const p = state.positions[node.dataset.node];
     node.style.transform = `translate(${p.x}px, ${p.y}px)`;
@@ -243,7 +258,11 @@ function renderMap() {
   $("#empty").innerHTML = visible.length
     ? ""
     : `<div class="empty"><div class="empty-art">${["claude", "codex", "opencode"].map((h) => `<div class="logo-wrap">${logo(h)}</div>`).join("")}</div><h2>${state.search || state.harness || state.project ? "No matching threads" : state.data.discovery.scanning ? "Finding your local threads…" : "Your next idea starts here."}</h2><p>${state.search || state.harness || state.project ? "Try another project, harness, or search." : state.data.discovery.scanning ? "Relay is looking in your harnesses’ local session stores. Threads will appear as they are discovered." : "Open a session in a supported harness, then refresh. Sources shows which harnesses are available and how to connect them."}</p>${button("sources", "View sources", "settings")}</div>`;
-  mapSnapshot = JSON.stringify([state.data.sessions, state.data.relays]);
+  mapSnapshot = JSON.stringify([
+    state.data.sessions,
+    state.data.relays,
+    state.data.deliveries,
+  ]);
   renderSelection();
   drawEdges();
   transform();
@@ -258,51 +277,106 @@ function bezier(a, b) {
   return `M ${a.x} ${a.y} C ${a.x + bend} ${a.y}, ${b.x - bend} ${b.y}, ${b.x} ${b.y}`;
 }
 function relayStatus(h) {
-  return h.status === "offered"
-    ? h.freshness?.current === false
-      ? "stale"
-      : "awaiting target"
-    : h.status;
+  if (h.status !== "offered") return h.status;
+  if (h.freshness?.current === false) return "stale";
+  return (
+    state.data.deliveries?.find((d) => d.handoffId === h.id)?.state ||
+    "awaiting target"
+  );
 }
 function drawEdges() {
-  const points = sessions()
-    .slice(0, 80)
-    .map((s) => state.positions[s.id])
-    .filter(Boolean);
-  if (state.drag?.kind === "connect") points.push(state.drag.end);
-  const minX = Math.min(0, ...points.map((p) => p.x)) - 500,
-    minY = Math.min(0, ...points.map((p) => p.y)) - 500;
-  const width = Math.max(0, ...points.map((p) => p.x)) + 800 - minX,
-    height = Math.max(0, ...points.map((p) => p.y)) + 500 - minY;
   const svg = $(".wires");
-  svg.setAttribute("viewBox", `${minX} ${minY} ${width} ${height}`);
-  Object.assign(svg.style, {
-    left: minX + "px",
-    top: minY + "px",
-    width: width + "px",
-    height: height + "px",
-  });
+  if (!svg) return;
+  // Keep a fixed coordinate space; pointer frames only update path attributes.
+  svg.setAttribute("viewBox", "-11000 -11000 22000 22000");
   const visible = new Set(
     sessions()
       .slice(0, 80)
       .map((s) => s.id),
   );
-  let html = "";
-  for (const relay of state.data.relays) {
-    const target = relay.packet.destination.sessionId;
-    if (!visible.has(target)) continue;
-    for (const source of relay.packet.sources) {
-      if (!visible.has(source.sessionId)) continue;
-      const a = state.positions[source.sessionId],
-        b = state.positions[target];
-      html += `<path class="wire ${relayStatus(relay)} ${state.detail === relay.id ? "selected" : ""}" data-edge="${esc(relay.id)}" d="${bezier({ x: a.x + 274, y: a.y + 94 }, { x: b.x - 7, y: b.y + 94 })}" marker-end="url(#arrowhead)"><title>${esc(relayStatus(relay))}: ${esc(relay.packet.goal)}</title></path><text class="edge-label" data-edge="${esc(relay.id)}" x="${(a.x + 274 + b.x - 7) / 2}" y="${(a.y + b.y) / 2 + 82}" text-anchor="middle">${esc(relayStatus(relay))}</text>`;
+  const wanted = new Map();
+  const add = (key, source, target, status, relayId, label) => {
+    if (!visible.has(source) || !visible.has(target)) return;
+    const a = state.positions[source],
+      b = state.positions[target];
+    wanted.set(key, {
+      a: { x: a.x + 266, y: a.y + 94 },
+      b: { x: b.x, y: b.y + 94 },
+      status,
+      relayId,
+      label,
+    });
+  };
+  for (const h of state.data.relays)
+    for (const source of h.packet.sources)
+      add(
+        h.id + ":" + source.sessionId,
+        source.sessionId,
+        h.packet.destination.sessionId,
+        relayStatus(h),
+        h.id,
+        relayStatus(h),
+      );
+  if (state.draft?.target)
+    for (const source of state.draft.sources)
+      add(
+        "draft:" + source.sessionId,
+        source.sessionId,
+        state.draft.target,
+        "preview",
+        null,
+        "reviewing",
+      );
+  const d = state.drag?.kind === "connect" ? state.drag : state.armed;
+  if (d && d.end) {
+    const end = d.target
+      ? { x: state.positions[d.target].x, y: state.positions[d.target].y + 94 }
+      : d.end;
+    for (const source of d.sources) {
+      const a = state.positions[source];
+      wanted.set("preview:" + source, {
+        a: { x: a.x + 266, y: a.y + 94 },
+        b: end,
+        status: "preview",
+        label: "",
+        relayId: null,
+      });
     }
   }
-  if (state.drag?.kind === "connect") {
-    const a = state.positions[state.drag.id];
-    html += `<path class="wire preview" d="${bezier({ x: a.x + 274, y: a.y + 94 }, state.drag.end)}"/>`;
+  const host = $("#edges"),
+    ns = "http://www.w3.org/2000/svg";
+  const old = new Map([...host.children].map((g) => [g.dataset.key, g]));
+  for (const [key, edge] of wanted) {
+    let g = old.get(key);
+    if (!g) {
+      g = document.createElementNS(ns, "g");
+      g.dataset.key = key;
+      g.innerHTML =
+        '<path class="wire-hit"/><path class="wire"/><text class="edge-label" text-anchor="middle"/>';
+      host.append(g);
+    }
+    old.delete(key);
+    const [hit, path, text] = g.children;
+    const line = bezier(edge.a, edge.b);
+    path.setAttribute("d", line);
+    hit.setAttribute("d", line);
+    path.setAttribute(
+      "class",
+      "wire " +
+        edge.status +
+        (state.detail === edge.relayId ? " selected" : ""),
+    );
+    for (const el of [hit, path, text]) {
+      if (edge.relayId) el.dataset.edge = edge.relayId;
+      else delete el.dataset.edge;
+    }
+    hit.style.pointerEvents = edge.relayId ? "stroke" : "none";
+    path.setAttribute("marker-end", edge.relayId ? "url(#arrowhead)" : "");
+    text.setAttribute("x", (edge.a.x + edge.b.x) / 2);
+    text.setAttribute("y", (edge.a.y + edge.b.y) / 2 - 12);
+    text.textContent = edge.label;
   }
-  $("#edges").innerHTML = html;
+  for (const g of old.values()) g.remove();
 }
 function fit(minScale = 0.15) {
   const canvas = $("#canvas");
@@ -366,106 +440,238 @@ function worldPoint(e) {
     y: (e.clientY - r.top - state.view.y) / state.view.z,
   };
 }
-let suppressClick = false;
-function pointerDown(e) {
-  if (
-    e.button !== 0 ||
-    e.target.closest(".canvas-controls,.empty,.selection-bar,[data-pick]")
-  )
-    return;
-  const port = e.target.closest("[data-port]"),
-    node = e.target.closest("[data-node]");
-  if (e.target.closest("[data-edge]")) return;
-  const kind = port ? "connect" : node ? "move" : "pan";
-  state.drag = {
-    kind,
-    id: (port || node)?.dataset[port ? "port" : "node"],
-    startX: e.clientX,
-    startY: e.clientY,
-    view: { ...state.view },
-    origin: node ? { ...state.positions[node.dataset.node] } : null,
-    moved: false,
-    end: worldPoint(e),
-  };
-  $("#canvas").setPointerCapture(e.pointerId);
+let suppressClick = false,
+  dragFrame = 0;
+const activeConnector = () =>
+  state.drag?.kind === "connect" ? state.drag : state.armed;
+function connectorSources(id) {
+  return state.selected.has(id) ? [...state.selected] : [id];
 }
-window.addEventListener("pointermove", (e) => {
-  const d = state.drag;
-  if (!d) return;
-  const dx = e.clientX - d.startX,
+function highlightTargets(d) {
+  for (const node of document.querySelectorAll("[data-node]")) {
+    const s = session(node.dataset.node);
+    const valid =
+      d && !d.sources.includes(s.id) && s.projectId === session(d.id).projectId;
+    node.classList.toggle("target-eligible", !!valid);
+    node.classList.toggle("target-muted", !!d && !valid);
+    node.classList.toggle("target-hover", d?.target === s.id);
+  }
+  $("#canvas").classList.toggle("connecting", !!d);
+}
+function targetAt(e, d) {
+  const canvas = $("#canvas").getBoundingClientRect();
+  if (
+    e.clientX < canvas.left ||
+    e.clientX > canvas.right ||
+    e.clientY < canvas.top ||
+    e.clientY > canvas.bottom ||
+    document
+      .elementFromPoint(e.clientX, e.clientY)
+      ?.closest(".drawer,.canvas-controls,.selection-bar")
+  )
+    return null;
+  const p = worldPoint(e),
+    padding = 24 / state.view.z;
+  let best = null,
+    distance = Infinity;
+  for (const s of sessions().slice(0, 80)) {
+    if (d.sources.includes(s.id) || s.projectId !== session(d.id).projectId)
+      continue;
+    const n = state.positions[s.id];
+    const dx = Math.max(n.x - p.x, 0, p.x - (n.x + 266));
+    const dy = Math.max(n.y - p.y, 0, p.y - (n.y + 188));
+    const dist = Math.hypot(dx, dy);
+    if (dist <= padding && dist < distance) {
+      best = s.id;
+      distance = dist;
+    }
+  }
+  return best;
+}
+function dragTick() {
+  dragFrame = 0;
+  const d = state.drag || state.armed;
+  if (!d || !d.last) return;
+  const e = d.last,
+    dx = e.clientX - d.startX,
     dy = e.clientY - d.startY;
-  if (Math.hypot(dx, dy) > 4) d.moved = true;
-  if (!d.moved) return;
+  if (state.drag && Math.hypot(dx, dy) > 4) d.moved = true;
+  if (state.drag && !d.moved) return;
   if (d.kind === "pan") {
     state.view.x = d.view.x + dx;
     state.view.y = d.view.y + dy;
     transform();
-  }
-  if (d.kind === "move") {
-    const p = {
-      x: Math.max(-9900, Math.min(9600, d.origin.x + dx / state.view.z)),
-      y: Math.max(-9900, Math.min(9600, d.origin.y + dy / state.view.z)),
-    };
-    state.positions[d.id] = p;
-    const node = document.querySelector(`[data-node="${CSS.escape(d.id)}"]`);
-    node.style.transform = `translate(${p.x}px, ${p.y}px)`;
+  } else {
+    if (state.drag) {
+      const r = $("#canvas").getBoundingClientRect(),
+        edge = 40;
+      const vx =
+        e.clientX < r.left + edge
+          ? Math.min(10, (r.left + edge - e.clientX) / 4)
+          : e.clientX > r.right - edge
+            ? -Math.min(10, (e.clientX - r.right + edge) / 4)
+            : 0;
+      const vy =
+        e.clientY < r.top + edge
+          ? Math.min(10, (r.top + edge - e.clientY) / 4)
+          : e.clientY > r.bottom - edge
+            ? -Math.min(10, (e.clientY - r.bottom + edge) / 4)
+            : 0;
+      state.view.x += vx;
+      state.view.y += vy;
+      if (vx || vy) {
+        transform();
+        dragFrame = requestAnimationFrame(dragTick);
+      }
+    }
+    if (d.kind === "move") {
+      const point = worldPoint(e);
+      const p = {
+        x: Math.max(-9900, Math.min(9600, point.x - d.offset.x)),
+        y: Math.max(-9900, Math.min(9600, point.y - d.offset.y)),
+      };
+      state.positions[d.id] = p;
+      document.querySelector(
+        `[data-node="${CSS.escape(d.id)}"]`,
+      ).style.transform = `translate(${p.x}px, ${p.y}px)`;
+    } else {
+      d.end = worldPoint(e);
+      d.target = targetAt(e, d);
+      highlightTargets(d);
+    }
     drawEdges();
   }
-  if (d.kind === "connect") {
-    d.end = worldPoint(e);
-    drawEdges();
-    document
-      .querySelectorAll(".target-hover")
-      .forEach((n) => n.classList.remove("target-hover"));
-    const target = document
-      .elementFromPoint(e.clientX, e.clientY)
-      ?.closest("[data-node]");
-    if (target && target.dataset.node !== d.id)
-      target.classList.add("target-hover");
-  }
+}
+function pointerDown(e) {
+  if (
+    e.button !== 0 ||
+    !e.isPrimary ||
+    e.target.closest(
+      ".canvas-controls,.empty,.selection-bar,[data-pick],[data-edge]",
+    ) ||
+    state.armed
+  )
+    return;
+  const port = e.target.closest("[data-port]"),
+    node = e.target.closest("[data-node]");
+  const id = (port || node)?.dataset[port ? "port" : "node"];
+  const point = worldPoint(e),
+    origin = node ? { ...state.positions[id] } : null;
+  state.drag = {
+    kind: port ? "connect" : node ? "move" : "pan",
+    id,
+    pointerId: e.pointerId,
+    captureEl: port || node || $("#canvas"),
+    sources: port ? connectorSources(id) : [],
+    startX: e.clientX,
+    startY: e.clientY,
+    view: { ...state.view },
+    origin,
+    offset: origin ? { x: point.x - origin.x, y: point.y - origin.y } : null,
+    moved: false,
+    end: point,
+    last: e,
+    target: null,
+  };
+  state.drag.captureEl.setPointerCapture(e.pointerId);
+  if (port) highlightTargets(state.drag);
+}
+window.addEventListener("pointermove", (e) => {
+  const d = state.drag || state.armed;
+  if (!d || (state.drag && e.pointerId !== d.pointerId)) return;
+  d.last = e;
+  if (!dragFrame) dragFrame = requestAnimationFrame(dragTick);
 });
 window.addEventListener("pointerup", async (e) => {
   const d = state.drag;
-  if (!d) return;
+  if (!d) {
+    if (suppressClick) setTimeout(() => (suppressClick = false), 0);
+    return;
+  }
+  if (e.pointerId !== d.pointerId) return;
+  d.last = e;
+  cancelAnimationFrame(dragFrame);
+  dragFrame = 0;
+  dragTick();
+  cancelAnimationFrame(dragFrame);
+  dragFrame = 0;
   state.drag = null;
+  if (d.captureEl.hasPointerCapture(e.pointerId))
+    d.captureEl.releasePointerCapture(e.pointerId);
   suppressClick = d.moved;
   setTimeout(() => (suppressClick = false), 0);
-  document
-    .querySelectorAll(".target-hover")
-    .forEach((n) => n.classList.remove("target-hover"));
+  highlightTargets(null);
   if (d.kind === "move" && d.moved)
     api("/graph/position", { sessionId: d.id, ...state.positions[d.id] }).catch(
       (e) => notice(e.message),
     );
   if (d.kind === "connect" && d.moved) {
-    const target = document
-      .elementFromPoint(e.clientX, e.clientY)
-      ?.closest("[data-node]");
-    if (target) {
-      if (!state.selected.has(d.id)) state.selected = new Set([d.id]);
-      await compose(target.dataset.node);
-    } else notice("Drop the connector onto a destination thread.");
+    if (d.target) {
+      state.selected = new Set(d.sources);
+      await compose(d.target);
+    } else
+      notice("Drop on another thread in the same project. Escape cancels.");
   }
-  drawEdges();
+  renderMap();
 });
 window.addEventListener("pointercancel", () => cancelDrag());
+window.addEventListener("blur", () => {
+  if (state.drag) cancelDrag();
+});
 function cancelDrag() {
-  if (state.drag?.kind === "move")
-    state.positions[state.drag.id] = state.drag.origin;
+  cancelAnimationFrame(dragFrame);
+  dragFrame = 0;
+  const d = state.drag;
+  if (d?.kind === "move") state.positions[d.id] = d.origin;
+  if (d?.captureEl.hasPointerCapture(d.pointerId))
+    d.captureEl.releasePointerCapture(d.pointerId);
   state.drag = null;
-  document
-    .querySelectorAll(".target-hover")
-    .forEach((n) => n.classList.remove("target-hover"));
-  renderMap();
+  state.armed = null;
+  suppressClick = !!d;
+  if ($("#canvas")) {
+    highlightTargets(null);
+    renderMap();
+  }
+}
+function armConnector(id) {
+  const p = state.positions[id];
+  state.armed = {
+    kind: "connect",
+    id,
+    sources: connectorSources(id),
+    end: { x: p.x + 320, y: p.y + 94 },
+    target: null,
+  };
+  highlightTargets(state.armed);
+  drawEdges();
+  notice(
+    "Choose a destination thread. You can also drag between cards. Escape cancels.",
+  );
+}
+async function chooseTarget(id) {
+  const d = state.armed;
+  if (!d) return;
+  if (
+    d.sources.includes(id) ||
+    session(id).projectId !== session(d.id).projectId
+  ) {
+    notice("Choose another thread in the same project.");
+    return;
+  }
+  state.selected = new Set(d.sources);
+  state.armed = null;
+  highlightTargets(null);
+  await compose(id);
 }
 window.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
-    if (state.drag) cancelDrag();
+    if (state.drag || state.armed) cancelDrag();
     else closePanel();
   }
   if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-node]")) {
     e.preventDefault();
-    openThread(e.target.dataset.node);
+    if (state.armed) chooseTarget(e.target.dataset.node);
+    else openThread(e.target.dataset.node);
   }
 });
 function filterProject(id) {
@@ -495,13 +701,22 @@ function pick(id) {
   renderMap();
 }
 function panel(title, body, footer = "") {
-  const wasOpen = document.body.classList.contains("panel-open");
+  const samePanel = $(".drawer")?.getAttribute("aria-label") === title;
+  const scroll = samePanel ? $(".drawer-body")?.scrollTop || 0 : 0;
+  const details = [...document.querySelectorAll(".drawer details[open]")].map(
+    (el) => el.querySelector("summary")?.textContent,
+  );
   document.body.classList.add("panel-open");
   $("#panel-host").innerHTML =
     `<aside class="drawer" aria-label="${esc(title)}"><header class="drawer-head"><h2>${title}</h2>${button("close", "", "close", 'aria-label="Close panel"')}</header><div class="drawer-body">${body}</div>${footer ? `<footer class="drawer-foot">${footer}</footer>` : ""}</aside>`;
-  if (!wasOpen) requestAnimationFrame(() => fit(0.65));
+  $(".drawer-body").scrollTop = scroll;
+  for (const detail of document.querySelectorAll(".drawer details"))
+    if (details.includes(detail.querySelector("summary")?.textContent))
+      detail.open = true;
 }
 function closePanel() {
+  state.armed = null;
+  state.receiver = null;
   state.panel = null;
   state.detail = null;
   state.draft = null;
@@ -629,7 +844,7 @@ function composePanel() {
       })
       .join(
         "",
-      )}</div><label><span class="field-label">Destination thread</span><select id="target"><option value="">Choose a thread…</option>${targets.map((s) => `<option value="${esc(s.id)}" ${d.target === s.id ? "selected" : ""}>${esc(names[s.harness])} · ${esc(s.title)}</option>`).join("")}</select></label>${!targets.length ? '<p class="note">Start another session in this project, then refresh to use it as a destination.</p>' : ""}<label><span class="field-label">What should the next agent do?</span><textarea id="goal" maxlength="4000">${esc(d.goal)}</textarea></label><details><summary>Open work & file references</summary><label><span class="field-label">Open work, one item per line</span><textarea id="open-work">${esc(d.openWork)}</textarea></label><label><span class="field-label">Project-relative files, one per line</span><textarea id="files" placeholder="src/server.ts">${esc(d.files)}</textarea></label><p class="description">Relay records file digests and Git state to check freshness. It does not move files.</p></details><div class="section-label"><h3>Messages to carry forward</h3><small id="evidence-count">${d.evidence.size} selected</small></div>${d.sources
+      )}</div><label><span class="field-label">Destination thread</span><select id="target"><option value="">Choose a thread…</option>${targets.map((s) => `<option value="${esc(s.id)}" ${d.target === s.id ? "selected" : ""}>${esc(names[s.harness])} · ${esc(s.title)}</option>`).join("")}</select></label>${!targets.length ? '<p class="note">Start another session in this project, then refresh to use it as a destination.</p>' : ""}<label><span class="field-label">What should the next agent do?</span><textarea id="goal" maxlength="4000">${esc(d.goal)}</textarea></label><details><summary>Open work & file references</summary><label><span class="field-label">Open work, one item per line</span><textarea id="open-work">${esc(d.openWork)}</textarea></label><label><span class="field-label">Project-relative files, one per line</span><textarea id="files" placeholder="src/server.ts">${esc(d.files)}</textarea></label><p class="description">Relay records file digests and Git state to check freshness. It does not move files.</p></details><details class="evidence-review"><summary>Review <span id="evidence-count">${d.evidence.size} selected</span> messages</summary>${d.sources
       .map(({ sessionId }) => {
         const s = session(sessionId),
           data = state.events.get(sessionId);
@@ -637,15 +852,18 @@ function composePanel() {
       })
       .join(
         "",
-      )}<p class="note">This creates a handoff for the chosen thread. Paste the continuation prompt there so the receiving agent can inspect and accept it.</p>`,
+      )}</details><p class="note">Connect & send delivers the selected context to the receiving agent. It may start a turn with the harness’s normal permissions. An offline receiver stays queued.</p>`,
     button(
       "send",
-      d.replacesHandoffId ? "Update connection" : "Create handoff",
+      d.replacesHandoffId ? "Update & send" : "Connect & send",
       "link",
       'class="primary"',
     ) + button("close", "Cancel"),
   );
-  $("#target").onchange = (e) => (d.target = e.target.value);
+  $("#target").onchange = (e) => {
+    d.target = e.target.value;
+    drawEdges();
+  };
   $("#goal").oninput = (e) => (d.goal = e.target.value);
   $("#open-work").oninput = (e) => (d.openWork = e.target.value);
   $("#files").oninput = (e) => (d.files = e.target.value);
@@ -669,6 +887,7 @@ async function send() {
   btn.textContent = "Creating handoff…";
   try {
     const h = await api("/relays", {
+      deliver: true,
       projectId: d.projectId,
       title: d.goal.slice(0, 200),
       goal: d.goal,
@@ -694,7 +913,9 @@ async function send() {
     state.draft = null;
     await refresh();
     await openRelay(h.id);
-    notice("Handoff ready. Open it in the destination thread to continue.");
+    notice(
+      "Connection created. Relay will deliver when the receiver is ready.",
+    );
   } catch (e) {
     notice(e.message);
     if (state.draft) composePanel();
@@ -713,6 +934,10 @@ async function openRelay(id) {
     const data = await api(`/handoffs/${encodeURIComponent(id)}/export`);
     if (state.revision !== revision) return;
     state.export = data;
+    state.receiver = await api(
+      `/sessions/${encodeURIComponent(data.handoff.packet.destination.sessionId)}/receiver`,
+    );
+    if (state.revision !== revision) return;
     relayPanel();
   } catch (e) {
     notice(e.message);
@@ -724,33 +949,62 @@ function relayPanel() {
     state.export?.handoff;
   if (!h || !state.export) return;
   const target = session(h.packet.destination.sessionId);
+  const delivery = state.data.deliveries?.find((d) => d.handoffId === h.id);
+  const pending = h.status === "offered";
+  const dispatched = ["sending", "sent", "uncertain"].includes(delivery?.state);
   const c = state.data.connections.find(
     (c) =>
       c.projectId === target?.projectId &&
       c.harness === target.harness &&
       c.configureMcp,
   );
+  const receiver = state.receiver;
+  const setup = receiver
+    ? `<details ${delivery?.state === "queued" && target.harness === "claude" ? "open" : ""}><summary>Receiver connection</summary><p class="description">${esc(receiver.message)}</p>${receiver.command ? `<p class="description">Close the existing terminal for this thread, then run this once to resume it with its bound channel. Future handoffs arrive automatically.</p><pre class="native-id">${esc(receiver.command)}</pre>${button("copy-receiver", "Copy receiver command")}` : ""}${target.harness === "codex" ? `<label><span class="field-label">Running Codex app-server</span><input id="receiver-endpoint" value="${esc(receiver.endpoint)}" placeholder="unix:// or ws://127.0.0.1:4500"></label>${button("save-receiver", "Save receiver address")}<p class="description">Use the endpoint your Codex client is attached to. Relay never starts a second agent over the same chat. A desktop app without an accessible host stays queued.</p>` : ""}</details>`
+    : "";
   panel(
     "Connection",
-    `<span class="pill ${h.freshness?.current === false ? "warn" : ""}">${esc(relayStatus(h))}</span><h2>${esc(h.packet.goal)}</h2><div class="route">${h.packet.sources
+    `<span class="pill ${h.freshness?.current === false || ["blocked", "uncertain"].includes(delivery?.state) ? "warn" : ""}">${esc(relayStatus(h))}</span><h2>${esc(h.packet.goal)}</h2><div class="route">${h.packet.sources
       .map((s) => {
         const source = session(s.sessionId);
         return `<span>${logo(source.harness)}${esc(source.title)}</span>`;
       })
       .join(
         "",
-      )}<span>${icon("arrow")}To ${esc(names[target.harness])}</span><strong>${esc(target.title)}</strong></div>${h.freshness?.current === false ? `<p class="note warn">The source context has changed. Review a new handoff before continuing.<br>${h.freshness.reasons.map(esc).join("<br>")}</p>` : ""}${h.status === "offered" ? `<p class="description">Paste this into the destination thread. Its agent will inspect the handoff and acknowledge it through Relay’s MCP tools.</p>${!c ? `<p class="note">Enable Relay’s MCP tools for ${esc(names[target.harness])} in this project first. Reload the harness’s MCP configuration when prompted.</p>${button("enable-mcp", "Enable MCP for this project", "settings")}` : c.harness === "goose" ? '<p class="note">Goose needs the stdio extension command from Sources. The generated manifest does not register an extension automatically.</p>' : '<p class="description">MCP configuration is installed. If the thread was already open, reload its MCP connection before pasting.</p>'}<textarea class="prompt" aria-label="Continuation prompt" readonly>${esc(state.export.prompt)}</textarea><p class="description">Acceptance is reported by the receiving harness with the destination ID. Relay cannot independently authenticate which native chat called an MCP tool.</p>` : h.status === "accepted" ? '<p class="note">The receiving agent acknowledged this handoff. Acceptance records receipt, not completion of the task.</p>' : '<p class="note">This handoff was cancelled. Its history remains visible.</p>'}<div class="detail-grid"><div><small>Source threads</small><strong>${h.packet.sources.length}</strong></div><div><small>Messages included</small><strong>${h.packet.evidence.length}</strong></div></div><details><summary>Inspect packet contents</summary><pre class="native-id">${esc(JSON.stringify(h.packet, null, 2))}</pre></details>`,
-    (h.status === "offered"
-      ? button("copy", "Copy continuation prompt", null, 'class="primary"')
+      )}<span>${icon("arrow")}To ${esc(names[target.harness])}</span><strong>${esc(target.title)}</strong></div>
+    ${h.freshness?.current === false ? `<p class="note warn">Source context changed. Review an updated connection before sending.<br>${h.freshness.reasons.map(esc).join("<br>")}</p>` : ""}
+    ${pending ? `<div class="delivery-progress" aria-label="Delivery progress"><span class="done">Context saved</span><span class="${["sent"].includes(delivery?.state) ? "done" : ""}">Sent to harness</span><span>Agent acknowledgement</span></div><p class="note">${esc(delivery?.message || "Ready to send to the destination.")}</p>${!dispatched ? setup : ""}` : h.status === "accepted" ? '<p class="note">The receiving agent acknowledged this handoff. Its normal approvals still apply to any work it performs.</p>' : '<p class="note">This handoff was cancelled. A message already dispatched to a harness cannot be recalled.</p>'}
+    <div class="detail-grid"><div><small>Source threads</small><strong>${h.packet.sources.length}</strong></div><div><small>Messages included</small><strong>${h.packet.evidence.length}</strong></div></div>
+    <details><summary>Packet & manual fallback</summary><p class="description">Direct delivery is the default. Use this prompt only for a harness that cannot receive automatically.</p><textarea class="prompt" aria-label="Continuation prompt" readonly>${esc(state.export.prompt)}</textarea>${button("copy", "Copy fallback prompt")}${!c ? button("enable-mcp", "Enable MCP for this project", "settings") : ""}<p class="description">MCP acknowledgement confirms receipt, not task completion. An unbound MCP client declares its native session identity.</p><pre class="native-id">${esc(JSON.stringify(h.packet, null, 2))}</pre></details>`,
+    (pending && !delivery
+      ? button("deliver", "Send to session", "link", 'class="primary"')
       : "") +
-      button("export", "Export Markdown") +
-      (h.status === "offered"
+      (pending &&
+      delivery?.state === "blocked" &&
+      h.freshness?.current !== false
+        ? button("retry-delivery", "Retry delivery", null, 'class="primary"')
+        : "") +
+      (pending && delivery?.state === "uncertain"
+        ? button(
+            "retry-delivery",
+            "I checked the chat — retry delivery",
+            null,
+            'class="primary"',
+          )
+        : "") +
+      (pending && !dispatched
         ? button("rewire", "Change destination") +
           button("cancel-relay", "Cancel handoff", null, 'class="danger"')
         : "") +
       (h.freshness?.current === false
-        ? button("renew-relay", "Review updated context", "refresh")
-        : ""),
+        ? button(
+            "renew-relay",
+            "Review updated context",
+            "refresh",
+            'class="primary"',
+          )
+        : "") +
+      button("export", "Export Markdown"),
   );
 }
 function sourcesPanel() {
@@ -790,6 +1044,7 @@ async function refresh() {
   state.fetching = true;
   try {
     const data = await api("/graph");
+    if (state.drag || state.armed) return data;
     state.data = data;
     if (state.panel === "sources")
       for (const source of data.discovery.sources) {
@@ -805,14 +1060,26 @@ async function refresh() {
       }
     for (const [id, p] of Object.entries(data.positions))
       if (!state.positions[id]) state.positions[id] = p;
-    if ($("#canvas")) {
+    if ($("#canvas") && !state.drag && !state.armed) {
       renderChrome();
       if (
         !state.drag &&
-        mapSnapshot !== JSON.stringify([state.data.sessions, state.data.relays])
+        mapSnapshot !==
+          JSON.stringify([
+            state.data.sessions,
+            state.data.relays,
+            state.data.deliveries,
+          ])
       )
         renderMap();
-      if (state.panel === "relay" && state.export) {
+      if (
+        state.panel === "relay" &&
+        state.export &&
+        !document.activeElement?.matches(
+          ".drawer input,.drawer textarea,.drawer select",
+        ) &&
+        !state.busy
+      ) {
         const h = data.relays.find((h) => h.id === state.detail);
         if (h) state.export.handoff = h;
         relayPanel();
@@ -882,14 +1149,13 @@ document.addEventListener("click", async (e) => {
   }
   const port = e.target.closest("[data-port]");
   if (port) {
-    if (!state.selected.has(port.dataset.port))
-      state.selected = new Set([port.dataset.port]);
-    await compose();
+    armConnector(port.dataset.port);
     return;
   }
   const node = e.target.closest("[data-node]");
   if (node) {
-    if (e.shiftKey) pick(node.dataset.node);
+    if (state.armed) await chooseTarget(node.dataset.node);
+    else if (e.shiftKey) pick(node.dataset.node);
     else await openThread(node.dataset.node);
     return;
   }
@@ -1001,6 +1267,27 @@ document.addEventListener("click", async (e) => {
         break;
       case "send":
         await send();
+        break;
+      case "copy-receiver":
+        await navigator.clipboard.writeText(state.receiver.command);
+        notice("Receiver command copied. Run it once in your terminal.");
+        break;
+      case "save-receiver":
+        state.receiver = await api(
+          `/sessions/${encodeURIComponent(state.export.handoff.packet.destination.sessionId)}/receiver`,
+          { endpoint: $("#receiver-endpoint").value },
+        );
+        notice(
+          "Receiver address saved. Queued delivery will retry automatically.",
+        );
+        break;
+      case "deliver":
+      case "retry-delivery":
+        await api(`/handoffs/${encodeURIComponent(state.detail)}/deliver`, {
+          retry: action === "retry-delivery",
+        });
+        await refresh();
+        relayPanel();
         break;
       case "copy":
         await navigator.clipboard.writeText(state.export.prompt);

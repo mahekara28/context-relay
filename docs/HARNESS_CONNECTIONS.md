@@ -1,5 +1,7 @@
 # Harness connections
 
+> The unpublished 0.4 development map adds direct receiving integrations. See [receiver setup and delivery limits](THREAD_MAP.md#connecting-a-receiver). The manual capture/MCP setup below also applies to the published beta.
+
 Relay has two independent integration paths: **capture** reads native session history; **MCP** lets a destination agent inspect and accept a reviewed handoff. Installing an MCP server does not expose a harness's chat history.
 
 | Harness | Capture path | MCP setup | Continuation |
