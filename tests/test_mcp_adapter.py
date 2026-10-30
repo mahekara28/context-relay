@@ -50,6 +50,34 @@ class McpAdapterTests(unittest.TestCase):
 
         asyncio.run(run())
 
+    def test_mcp_report_write_is_revisioned_and_cannot_edit_goal(self):
+        from mcp import Client
+        from context_relay.organization import Principal
+        from context_relay.task_service import TaskService
+
+        async def run():
+            store = RelayStore()
+            try:
+                task = TaskService(store, authorize=lambda identity, action: True).create(
+                    Principal("local", "test"), goal="Original", completion_criteria=["Done"],
+                    workspace={"repository": "example", "root": "/work"})
+                async with Client(build_mcp_server(store, subject="test")) as client:
+                    names = [tool.name for tool in (await client.list_tools()).tools]
+                    self.assertNotIn("relay_task_create", names)
+                    result = await client.call_tool("relay_task_report_open_work", {
+                        "task_id": task["id"], "expected_revision": 0,
+                        "request_id": "report-1", "open_work": ["Still needs review"]})
+                    self.assertFalse(result.is_error)
+                    self.assertEqual(result.structured_content["goal"], "Original")
+                    stale = await client.call_tool("relay_task_report_open_work", {
+                        "task_id": task["id"], "expected_revision": 0,
+                        "request_id": "report-2", "open_work": ["Stale"]})
+                    self.assertTrue(stale.is_error)
+            finally:
+                store.close()
+
+        asyncio.run(run())
+
 
 if __name__ == "__main__":
     unittest.main()

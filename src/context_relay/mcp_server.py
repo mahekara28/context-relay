@@ -16,10 +16,13 @@ def build_mcp_server(store: RelayStore, *, subject: str):
     """Build a local stdio server; importing the core never requires MCP."""
     try:
         from mcp.server import MCPServer
+        from mcp.server.mcpserver.exceptions import ToolError
     except ImportError as error:
         raise RuntimeError("MCP support requires Python 3.11+ and context-relay-local[mcp].") from error
     principal = Principal("local", subject)
     tasks = TaskService(store, authorize=lambda host_principal, action: host_principal == principal)
+    reports = TaskService(store, authorize=lambda host_principal, action: host_principal == principal,
+                          source_class="agent_report")
     server = MCPServer("Context Relay")
 
     @server.tool(structured_output=True)
@@ -46,6 +49,16 @@ def build_mcp_server(store: RelayStore, *, subject: str):
     def task_resource(task_id: str) -> str:
         """Current task snapshot as a portable JSON resource."""
         return json.dumps(tasks.show(principal, task_id), ensure_ascii=False)
+
+    @server.tool(structured_output=True)
+    def relay_task_report_open_work(task_id: str, expected_revision: int,
+                                    request_id: str, open_work: list[str]) -> dict[str, Any]:
+        """Report remaining work at a known revision; this cannot change the goal or instructions."""
+        try:
+            return reports.update(principal, task_id, expected_revision=expected_revision,
+                                  request_id=request_id, changes={"open_work": open_work})
+        except (ValueError, LookupError, PermissionError) as error:
+            raise ToolError(str(error)) from None
 
     return server
 
