@@ -170,6 +170,27 @@ class TaskServiceTests(unittest.TestCase):
         self.assertEqual(resolved["task"]["open_work"], ["Second"])
         self.assertEqual(resolved["task"]["revision"], 2)
 
+    def test_archive_requires_host_evidence_and_can_reopen(self):
+        task = self.create()
+        report = TaskService(self.store, authorize=lambda principal, action: True,
+                             source_class="agent_report").attach_evidence(
+            self.alice, task["id"], expected_revision=0, request_id="report",
+            claim="I finished", source={"kind": "agent_report", "ref": "agent"})
+        with self.assertRaises(ValueError):
+            self.service.archive(self.alice, task["id"], expected_revision=1,
+                                 request_id="bad", completion_evidence_ids=[report["evidence"][0]["id"]])
+        verified = self.service.attach_evidence(self.alice, task["id"], expected_revision=1,
+                                                 request_id="host", claim="Oracle passed",
+                                                 source={"kind": "tool", "ref": "oracle-run-1"})
+        archived = self.service.archive(self.alice, task["id"], expected_revision=2,
+                                        request_id="archive", completion_evidence_ids=[verified["evidence"][1]["id"]])
+        self.assertEqual(archived["status"], "archived")
+        with self.assertRaises(ValueError):
+            self.service.update(self.alice, task["id"], expected_revision=3,
+                                request_id="blocked", changes={"goal": "Change"})
+        self.assertEqual(self.service.reopen(self.alice, task["id"], expected_revision=3,
+                                             request_id="reopen", reason="New work")["status"], "active")
+
 
 if __name__ == "__main__":
     unittest.main()

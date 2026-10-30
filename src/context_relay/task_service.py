@@ -153,7 +153,8 @@ class TaskService:
                             transform=lambda task: task.update(changes))
 
     def _mutate(self, principal: Principal, task_id: str, *, expected_revision: int,
-                request_id: str, operation: str, payload: dict, transform: Callable[[dict], None]) -> dict:
+                request_id: str, operation: str, payload: dict, transform: Callable[[dict], None],
+                allow_archived: bool = False) -> dict:
         """Serialize one task transition and its replay receipt in one transaction."""
         self._check(principal, f"task.{operation}")
         nonempty_string(task_id, "task_id", limit=128)
@@ -177,7 +178,7 @@ class TaskService:
                 return json.loads(previous["result_payload"])
             if row["revision"] != expected_revision:
                 raise ConflictError(expected_revision, row["revision"])
-            if row["status"] != "active":
+            if row["status"] != "active" and not allow_archived:
                 raise ValueError("Archived tasks must be reopened before updating.")
             task = json.loads(row["payload"])
             transform(task)
@@ -188,8 +189,8 @@ class TaskService:
             task["updated_at"] = timestamp()
             task = validate_task_snapshot(task)
             self.store._connection.execute(
-                "UPDATE tasks SET revision=?, payload=?, updated_at=? WHERE id=?",
-                (task["revision"], encode(task), task["updated_at"], task_id),
+                "UPDATE tasks SET revision=?, status=?, payload=?, updated_at=? WHERE id=?",
+                (task["revision"], task["status"], encode(task), task["updated_at"], task_id),
             )
             self.store._connection.execute(
                 "INSERT INTO task_events VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -335,6 +336,46 @@ class TaskService:
                               request_id=request_id, operation="resolve", payload={"proposal_id": proposal_id},
                               transform=apply)
         return {"proposal_id": proposal_id, "decision": "apply", "task": result}
+
+    def archive(self, principal: Principal, task_id: str, *, expected_revision: int,
+                request_id: str, completion_evidence_ids: list[str]) -> dict:
+        """Close a task only with named non-agent evidence; this is a host decision."""
+        if self.source_class != "host":
+            raise AccessDenied("Only the host may archive a task.")
+        if type(completion_evidence_ids) is not list or not completion_evidence_ids:
+            raise ValueError("Archiving requires at least one evidence id.")
+        for evidence_id in completion_evidence_ids:
+            nonempty_string(evidence_id, "evidence id", limit=128)
+        if len(set(completion_evidence_ids)) != len(completion_evidence_ids):
+            raise ValueError("completion evidence ids must be unique.")
+
+        def transform(task: dict) -> None:
+            evidence = {item["id"]: item for item in task["evidence"]}
+            for evidence_id in completion_evidence_ids:
+                item = evidence.get(evidence_id)
+                if item is None or item["source"]["kind"] == "agent_report":
+                    raise ValueError("Completion evidence must be present and not model-reported.")
+            task["status"] = "archived"
+
+        return self._mutate(principal, task_id, expected_revision=expected_revision,
+                            request_id=request_id, operation="archive",
+                            payload={"completion_evidence_ids": completion_evidence_ids},
+                            transform=transform)
+
+    def reopen(self, principal: Principal, task_id: str, *, expected_revision: int,
+               request_id: str, reason: str) -> dict:
+        if self.source_class != "host":
+            raise AccessDenied("Only the host may reopen a task.")
+        nonempty_string(reason, "reason", limit=1024)
+
+        def transform(task: dict) -> None:
+            if task["status"] != "archived":
+                raise ValueError("Only an archived task can be reopened.")
+            task["status"] = "active"
+
+        return self._mutate(principal, task_id, expected_revision=expected_revision,
+                            request_id=request_id, operation="reopen", payload={"reason": reason},
+                            transform=transform, allow_archived=True)
 
     def add_instruction(self, principal: Principal, task_id: str, *, expected_revision: int,
                         request_id: str, text: str, source: dict, scope: str = "task",
