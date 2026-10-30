@@ -102,6 +102,14 @@ A disputed preference can pause a call with `MemoryClarificationRequired`.
 user's answer to the history. The [connection guide](docs/AUTO_CONNECT.md) and
 [persistence guide](docs/NAMED_MEMORY.md) cover the full setup.
 
+## Task handoff preview
+
+For work that moves between agent harnesses, the source checkout has an
+experimental [task handoff path](docs/TASK_QUICKSTART.md). It stores versioned
+task context, explicit instruction changes, file digests, and immutable offers.
+Its CLI and optional stdio MCP server use the same local store. This path is
+under development and is not part of the bundled v0.22.0a3 wheel.
+
 ## How it works
 
 The full workflow follows the instruction all the way to the saved result:

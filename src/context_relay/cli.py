@@ -42,6 +42,21 @@ def main(argv: list[str] | None = None) -> int:
     diagnose_task = task_sub.add_parser("diagnose", help="Inspect one task's context, verification and effects")
     diagnose_task.add_argument("task_id")
     diagnose_task.add_argument("--root", default=None)
+    instruct_task = task_sub.add_parser("instruct", help="Record a sourced instruction at a task revision")
+    instruct_task.add_argument("task_id")
+    instruct_task.add_argument("--expected-revision", type=int, required=True)
+    instruct_task.add_argument("--request-id", required=True)
+    instruct_task.add_argument("--text", required=True)
+    instruct_task.add_argument("--source-kind", choices=("user", "host", "file"), required=True)
+    instruct_task.add_argument("--source-ref", required=True)
+    instruct_task.add_argument("--scope", choices=("task", "workspace", "repository"), default="task")
+    instruct_task.add_argument("--supersedes", action="append", default=[])
+    instruct_task.add_argument("--expires-at-revision", type=int, default=None)
+    artifact_task = task_sub.add_parser("artifact", help="Capture a workspace file by digest")
+    artifact_task.add_argument("task_id")
+    artifact_task.add_argument("path")
+    artifact_task.add_argument("--expected-revision", type=int, required=True)
+    artifact_task.add_argument("--request-id", required=True)
     handoff = sub.add_parser("handoff", help="Offer, accept, and inspect task handoffs")
     handoff.add_argument("--db", default=".relay/tasks.db")
     handoff.add_argument("--subject", default=getpass.getuser(),
@@ -138,6 +153,17 @@ def main(argv: list[str] | None = None) -> int:
                 result = service.show(principal, args.task_id)
             elif args.task_command == "diagnose":
                 result = service.task_diagnostics(principal, args.task_id, root=args.root)
+            elif args.task_command == "instruct":
+                result = service.add_instruction(
+                    principal, args.task_id, expected_revision=args.expected_revision,
+                    request_id=args.request_id, text=args.text,
+                    source={"kind": args.source_kind, "ref": args.source_ref},
+                    scope=args.scope, supersedes=args.supersedes,
+                    expires_at_revision=args.expires_at_revision)
+            elif args.task_command == "artifact":
+                result = service.capture_artifact(
+                    principal, args.task_id, expected_revision=args.expected_revision,
+                    request_id=args.request_id, path=args.path)
             else:
                 result = service.diagnostics(principal)
             print(json.dumps(result, indent=2, ensure_ascii=False))

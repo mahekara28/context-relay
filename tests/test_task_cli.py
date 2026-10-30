@@ -25,9 +25,24 @@ class TaskCliTests(unittest.TestCase):
 
             output = io.StringIO()
             with contextlib.redirect_stdout(output):
+                self.assertEqual(main(["task", "--db", database, "instruct", created["id"],
+                                       "--expected-revision", "0", "--request-id", "old",
+                                       "--text", "Use CSV", "--source-kind", "user",
+                                       "--source-ref", "message-1"]), 0)
+            old_instruction = json.loads(output.getvalue())["instructions"][0]["id"]
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                self.assertEqual(main(["task", "--db", database, "instruct", created["id"],
+                                       "--expected-revision", "1", "--request-id", "new",
+                                       "--text", "Use JSON", "--source-kind", "user",
+                                       "--source-ref", "message-2", "--supersedes", old_instruction]), 0)
+
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
                 self.assertEqual(main(["handoff", "--db", database, "--subject", "sender", "offer",
                                        created["id"], "--recipient", "receiver"]), 0)
             offered = json.loads(output.getvalue())
+            self.assertEqual([item["text"] for item in offered["packet"]["instructions"]], ["Use JSON"])
             output = io.StringIO()
             with contextlib.redirect_stdout(output):
                 self.assertEqual(main(["handoff", "--db", database, "--subject", "receiver", "accept",

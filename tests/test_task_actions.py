@@ -85,6 +85,10 @@ class TaskActionTests(unittest.TestCase):
                     result = effects.execute(principal, prepared["id"], content=b"{}")
                 self.assertEqual(result["status"], "applied")
                 self.assertEqual((Path(temporary) / "result.json").read_bytes(), b"{}")
+                self.assertEqual(effects.prepare(principal, task["id"], expected_revision=0,
+                                                 destination_key="write", operation="write_file",
+                                                 path="result.json", content=b"{}",
+                                                 allowed_operations={"write_file"})["status"], "applied")
             finally:
                 store.close()
 

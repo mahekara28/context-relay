@@ -34,6 +34,8 @@ class TaskEffectService:
         if self.tasks.source_class != "host":
             raise AccessDenied("Only the host may prepare external effects.")
         nonempty_string(destination_key, "destination_key", limit=128)
+        if type(allowed_operations) is not set or operation not in allowed_operations:
+            raise AccessDenied("Host policy did not allow this file action.")
         if operation == "write_file":
             if type(content) is not bytes or len(content) > MAX_ARTIFACT_BYTES:
                 raise ValueError("write_file content must be bytes of at most 16 MiB.")
@@ -44,6 +46,23 @@ class TaskEffectService:
             desired_digest = None
         else:
             raise ValueError("Unsupported effect operation.")
+        # A replay after the file effect may observe different destination bytes.
+        # Match the original intent before rechecking the destination so the key
+        # remains idempotent across a successful external write.
+        with self.store._transaction():
+            self.tasks._row(task_id, principal)
+            prior = self.store._connection.execute(
+                "SELECT * FROM task_effects WHERE task_id=? AND destination_key=?",
+                (task_id, destination_key),
+            ).fetchone()
+            if prior is not None:
+                record = self._record(prior)
+                if (record["task_revision"] != expected_revision or
+                    record["operation"] != operation or
+                    record["path"] != Path(path).as_posix() or
+                    record["desired_digest"] != desired_digest):
+                    raise ValueError("destination_key was already used for a different effect.")
+                return record
         checked = check_file_action(self.tasks, principal, task_id,
                                     expected_revision=expected_revision, operation=operation,
                                     path=path, allowed_operations=allowed_operations)
