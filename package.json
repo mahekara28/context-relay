@@ -1,6 +1,6 @@
 {
   "name": "@mahekara28/context-relay",
-  "version": "0.1.0-alpha.1",
+  "version": "0.2.0-alpha.1",
   "description": "Review and carry working context between coding agent sessions.",
   "type": "module",
   "license": "MIT",

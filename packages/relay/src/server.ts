@@ -15,11 +15,13 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";
+import { AdapterManager } from "./adapters/manager.js";
+import { CAPABILITIES } from "./adapters/types.js";
 import { RelayError } from "./model.js";
 import { RelayStore } from "./store.js";
 import { id, privateDirectory } from "./util.js";
 
-export const VERSION = "0.1.0-alpha.1";
+export const VERSION = "0.2.0-alpha.1";
 export interface Connection {
   url: string;
   pid: number;
@@ -160,6 +162,7 @@ export async function startService(
   const closed = new Promise<void>((resolve) => {
     finish = resolve;
   });
+  const adapters = new AdapterManager(store);
   let url = "";
   let closing = false;
   const close = async () => {
@@ -167,6 +170,7 @@ export async function startService(
     closing = true;
     server.closeAllConnections();
     await new Promise<void>((resolve) => server.close(() => resolve()));
+    await adapters.close();
     store.close();
     cleanupFiles();
     finish();
@@ -217,6 +221,71 @@ export async function startService(
           instance,
           pid: process.pid,
         });
+        return;
+      }
+      if (path === "/api/capabilities" && method === "GET") {
+        json(response, 200, CAPABILITIES);
+        return;
+      }
+      if (path === "/api/connections") {
+        if (method === "GET") {
+          json(
+            response,
+            200,
+            adapters.connections(
+              parsed.searchParams.get("projectId") ?? undefined,
+            ),
+          );
+          return;
+        }
+        if (method === "POST") {
+          json(response, 201, adapters.connect(await readBody(request)));
+          return;
+        }
+      }
+      const adapterRoute = path.match(
+        /^\/api\/connections\/([^/]+)\/(discover|sync|disconnect|command)$/,
+      );
+      if (adapterRoute) {
+        const connectionId = adapterRoute[1]!;
+        if (adapterRoute[2] === "discover" && method === "GET") {
+          json(response, 200, await adapters.discover(connectionId));
+          return;
+        }
+        if (adapterRoute[2] === "command" && method === "GET") {
+          json(response, 200, adapters.command(connectionId));
+          return;
+        }
+        if (adapterRoute[2] === "sync" && method === "POST") {
+          const body = z
+            .object({ externalIds: z.array(z.string()).optional() })
+            .strict()
+            .parse(await readBody(request));
+          json(
+            response,
+            202,
+            adapters.startSync(connectionId, body.externalIds),
+          );
+          return;
+        }
+        if (adapterRoute[2] === "disconnect" && method === "POST") {
+          json(response, 200, adapters.disconnect(connectionId));
+          return;
+        }
+      }
+      if (path === "/api/jobs" && method === "GET") {
+        json(response, 200, adapters.jobs());
+        return;
+      }
+      const jobRoute = path.match(/^\/api\/jobs\/([^/]+)(\/cancel)?$/);
+      if (jobRoute && method === (jobRoute[2] ? "POST" : "GET")) {
+        json(
+          response,
+          200,
+          jobRoute[2]
+            ? adapters.cancel(jobRoute[1]!)
+            : adapters.job(jobRoute[1]!),
+        );
         return;
       }
       if (path === "/api/projects") {
