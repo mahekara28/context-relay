@@ -3,6 +3,8 @@ import { spawn } from "node:child_process";
 import { parseArgs } from "node:util";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { executable } from "./adapters/local.js";
 import { connect, ensureService, recoverDeadLock } from "./client.js";
 import { startService, VERSION } from "./server.js";
 import { dataDirectory } from "./util.js";
@@ -40,6 +42,7 @@ Usage: relay <command> [options]
   handoff show|export|accept|cancel --id ID [--recipient codex] [--destination-id NATIVE_ID]
   launch --id HANDOFF           Start a fresh interactive Claude/Codex session
   mcp --project ID --harness codex
+  receive --id SESSION         Resume a Claude thread with its Relay MCP channel
   demo                          Create an explicitly synthetic local example
 
 Options: --data-dir PATH, --root PATH, --name NAME, --project ID,
@@ -156,6 +159,7 @@ async function main(): Promise<void> {
     "checkpoint",
     "handoff",
     "mcp",
+    "receive",
     "demo",
   ];
   if (!supported.includes(command))
@@ -164,6 +168,64 @@ async function main(): Promise<void> {
       `Unknown command: ${command}. Run relay --help.`,
     );
   const client = await ensureService(directory);
+  if (command === "receive") {
+    const session = await client.request<Session>(
+      "/api/sessions/" + encodeURIComponent(need("id")),
+    );
+    if (session.harness !== "claude")
+      throw new RelayError(
+        "unsupported_channel",
+        "This receiver command currently supports Claude Code.",
+      );
+    const project = (await client.request<Project[]>("/api/projects")).find(
+      (p) => p.id === session.projectId,
+    )!;
+    const bin = values.executable ?? executable("claude");
+    if (!bin)
+      throw new RelayError(
+        "harness_unavailable",
+        "Claude Code was not found. Install it or pass --executable PATH.",
+      );
+    const args = [
+      fileURLToPath(import.meta.url),
+      "mcp",
+      "--data-dir",
+      directory,
+      "--project",
+      session.projectId,
+      "--harness",
+      "claude",
+      "--destination-id",
+      session.externalId,
+    ];
+    const config = JSON.stringify({
+      mcpServers: {
+        context_relay: { type: "stdio", command: process.execPath, args },
+      },
+    });
+    console.log(
+      "Resuming this Claude Code thread with the Context Relay channel. Custom channels require Claude’s development-channel opt-in. Normal tool permissions remain in effect.",
+    );
+    process.exitCode = await new Promise<number>((resolve, reject) => {
+      const child = spawn(
+        bin,
+        [
+          "--resume",
+          session.externalId,
+          "--mcp-config",
+          config,
+          "--dangerously-load-development-channels",
+          "server:context_relay",
+        ],
+        { cwd: project.root, stdio: "inherit", shell: false },
+      );
+      child.once("error", () =>
+        reject(new RelayError("launch_failed", "Claude Code could not start.")),
+      );
+      child.once("exit", (code) => resolve(code ?? 1));
+    });
+    return;
+  }
   if (command === "connect") {
     print(
       await client.request("/api/connections", {
@@ -402,7 +464,12 @@ async function main(): Promise<void> {
       if (!(projects as Project[]).some((p) => p.id === need("project")))
         throw new RelayError("not_found", "Register the MCP project first.");
     });
-    await serveMcp(client, need("harness"), need("project"));
+    await serveMcp(
+      client,
+      need("harness"),
+      need("project"),
+      values["destination-id"],
+    );
     return;
   }
   if (command === "demo") {

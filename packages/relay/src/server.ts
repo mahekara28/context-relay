@@ -24,6 +24,7 @@ import {
 import { continuationPrompt, markdownPacket } from "./delivery.js";
 import { AdapterManager } from "./adapters/manager.js";
 import { Workspace, type WorkspaceOptions } from "./workspace.js";
+import { Receiving, type DeliveryOptions } from "./receiving.js";
 import { CAPABILITIES } from "./adapters/types.js";
 import { RelayError } from "./model.js";
 import { RelayStore } from "./store.js";
@@ -136,6 +137,7 @@ export async function startService(
   directory: string,
   port = 0,
   workspaceOptions: WorkspaceOptions = {},
+  deliveryOptions: DeliveryOptions = {},
 ): Promise<Service> {
   privateDirectory(directory);
   const instance = id();
@@ -173,11 +175,13 @@ export async function startService(
   });
   const adapters = new AdapterManager(store);
   const workspace = new Workspace(store, adapters, workspaceOptions);
+  const receiving = new Receiving(store, adapters, deliveryOptions);
   let url = "";
   let closing = false;
   const close = async () => {
     if (closing) return closed;
     closing = true;
+    await receiving.close();
     server.closeAllConnections();
     await new Promise<void>((resolve) => server.close(() => resolve()));
     await workspace.close();
@@ -261,7 +265,10 @@ export async function startService(
         return;
       }
       if (path === "/api/graph" && method === "GET") {
-        json(response, 200, workspace.graph());
+        json(response, 200, {
+          ...workspace.graph(),
+          deliveries: receiving.list(),
+        });
         return;
       }
       if (path === "/api/workspace" && method === "POST") {
@@ -278,7 +285,55 @@ export async function startService(
         return;
       }
       if (path === "/api/relays" && method === "POST") {
-        json(response, 201, workspace.relay(await readBody(request)));
+        const { deliver, ...draft } = z
+          .object({ deliver: z.boolean().optional() })
+          .passthrough()
+          .parse(await readBody(request));
+        const handoff = store.transaction(() => {
+          if (typeof draft.replacesHandoffId === "string")
+            receiving.assertUndispatched(draft.replacesHandoffId);
+          const h = workspace.relay(draft);
+          if (deliver) receiving.enqueue(h.id);
+          return h;
+        });
+        json(response, 201, handoff);
+        return;
+      }
+      const deliveryRoute = path.match(/^\/api\/handoffs\/([^/]+)\/deliver$/);
+      if (deliveryRoute && method === "POST") {
+        const { retry } = z
+          .object({ retry: z.boolean().default(false) })
+          .strict()
+          .parse(await readBody(request));
+        json(response, 202, receiving.enqueue(deliveryRoute[1]!, retry));
+        return;
+      }
+      const receiverSetup = path.match(/^\/api\/sessions\/([^/]+)\/receiver$/);
+      if (receiverSetup && (method === "GET" || method === "POST")) {
+        json(
+          response,
+          200,
+          method === "GET"
+            ? receiving.info(receiverSetup[1]!)
+            : receiving.configure(receiverSetup[1]!, await readBody(request)),
+        );
+        return;
+      }
+      if (path === "/api/receivers" && method === "POST") {
+        json(response, 201, receiving.register(await readBody(request)));
+        return;
+      }
+      const receiverRoute = path.match(
+        /^\/api\/receivers\/([^/]+)\/(next|receipt)$/,
+      );
+      if (receiverRoute && method === "POST") {
+        json(
+          response,
+          200,
+          receiverRoute[2] === "next"
+            ? receiving.next(receiverRoute[1]!)
+            : receiving.receipt(receiverRoute[1]!, await readBody(request)),
+        );
         return;
       }
       if (path === "/api/capabilities" && method === "GET") {
@@ -476,6 +531,7 @@ export async function startService(
           return;
         }
         if (method === "POST" && match[2] === "cancel") {
+          receiving.assertUndispatched(match[1]!);
           json(response, 200, store.cancel(match[1]!));
           return;
         }
@@ -501,6 +557,7 @@ export async function startService(
       server.listen(port, "127.0.0.1", resolve);
     });
   } catch (error) {
+    await receiving.close();
     await workspace.close();
     await adapters.close();
     store.close();

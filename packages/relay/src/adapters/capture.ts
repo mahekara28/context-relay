@@ -175,6 +175,40 @@ export async function openCodeGet(
     throw new RelayError("harness_protocol", "OpenCode returned invalid JSON.");
   }
 }
+export async function openCodePost(
+  connection: HarnessConnection,
+  project: Project,
+  path: string,
+  body: unknown,
+): Promise<void> {
+  const url = new URL(path, localEndpoint(connection.source));
+  url.searchParams.set("directory", project.root);
+  const password = process.env.OPENCODE_SERVER_PASSWORD;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(password
+        ? {
+            Authorization:
+              "Basic " +
+              Buffer.from(
+                `${process.env.OPENCODE_SERVER_USERNAME ?? "opencode"}:${password}`,
+              ).toString("base64"),
+          }
+        : {}),
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(10000),
+    redirect: "error",
+  });
+  await response.body?.cancel();
+  if (!response.ok)
+    throw new RelayError(
+      "harness_http",
+      `OpenCode returned HTTP ${response.status} during dispatch.`,
+    );
+}
 export async function goose(
   connection: HarnessConnection,
   project: Project,
