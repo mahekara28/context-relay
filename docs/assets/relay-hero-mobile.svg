@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800" role="img" aria-labelledby="title desc">
+  <title id="title">Context Relay — give the next agent a place to pick up</title>
+  <desc id="desc">Local task continuity. A sender's JSON correction becomes a versioned context packet for a receiver. Experimental source preview.</desc>
+  <rect width="600" height="800" rx="24" fill="#16251f"/>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <path d="M52 34H40V62H52M72 44H84V72H72M53 53H72M65 46L72 53L65 60" fill="none" stroke="#d0f28e" stroke-width="3"/>
+    <text x="105" y="61" font-size="21" letter-spacing="1" fill="#dbe4da">LOCAL TASK CONTINUITY</text>
+    <path d="M40 96H560" stroke="#3c4d43"/>
+    <text x="36" y="201" font-size="93" font-weight="700" letter-spacing="-4" fill="#f6f4eb">Context</text>
+    <text x="36" y="291" font-size="93" font-weight="700" letter-spacing="-4" fill="#d0f28e">Relay<tspan fill="#c8bcf6">.</tspan></text>
+    <text x="42" y="345" font-size="31" fill="#f6f4eb">Give the next agent</text>
+    <text x="42" y="385" font-size="31" fill="#f6f4eb">a place to pick up.</text>
+    <rect x="40" y="429" width="520" height="74" rx="12" fill="#26372e" stroke="#526353"/>
+    <text x="60" y="475" font-size="28" fill="#f6f4eb"><tspan fill="#c8bcf6" font-weight="700">A</tspan><tspan dx="22">“Actually, use JSON.”</tspan></text>
+    <path d="M300 503V532M293 524L300 532L307 524" fill="none" stroke="#d0f28e" stroke-width="3"/>
+    <rect x="40" y="532" width="520" height="76" rx="12" fill="#d0f28e"/>
+    <text x="60" y="578" font-size="27" font-weight="700" fill="#16251f">Task context / revision 2</text>
+    <path d="M300 608V637M293 629L300 637L307 629" fill="none" stroke="#d0f28e" stroke-width="3"/>
+    <rect x="40" y="637" width="520" height="74" rx="12" fill="#26372e" stroke="#526353"/>
+    <text x="60" y="683" font-size="27" fill="#f6f4eb"><tspan fill="#c8bcf6" font-weight="700">B</tspan><tspan dx="22">Continue from this state.</tspan></text>
+    <text x="40" y="763" font-size="22" fill="#b9c9b8">SOURCE PREVIEW · MCP · LOCAL SQLITE</text>
+  </g>
+</svg>
