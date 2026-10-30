@@ -12,7 +12,7 @@
 <p align="center"><strong>Your next coding session should inherit the decisions, not the confusion.</strong></p>
 
 <p align="center">
-  <a href="#why-context-relay">Why Relay</a> · <a href="#try-it-locally">Install</a> · <a href="#the-workflow">Workflow</a> · <a href="#where-mcp-fits">Architecture</a> · <a href="#what-is-verified">Verification</a>
+  <a href="https://mahekara28.github.io/context-relay/">Website &amp; interactive tour</a> · <a href="#why-context-relay">Why Relay</a> · <a href="#try-it-locally">Install</a> · <a href="#the-workflow">Workflow</a> · <a href="#where-mcp-fits">Architecture</a> · <a href="#what-is-verified">Verification</a>
 </p>
 
 ## Why Context Relay?
@@ -41,8 +41,6 @@ The npm package is prepared as `@mahekara28/context-relay`. **It is not publishe
 ```sh
 git clone https://github.com/mahekara28/context-relay.git
 cd context-relay
-# While the final beta PR is open:
-git switch release/npm-beta
 npm ci
 npm pack
 npm install --global ./mahekara28-context-relay-0.3.0-beta.1.tgz
