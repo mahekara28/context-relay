@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
+from typing import Any
 
 from .organization import Principal
 from .store import RelayStore
+from .task_packet import compile_task_packet
 from .task_service import TaskService
 
 
@@ -23,6 +26,26 @@ def build_mcp_server(store: RelayStore, *, subject: str):
     def relay_health() -> dict[str, str]:
         """Report the local task protocol version without exposing stored content."""
         return {"service": "context-relay", "task_schema": "task-context/v1alpha1"}
+
+    @server.tool(structured_output=True)
+    def relay_task_show(task_id: str) -> dict[str, Any]:
+        """Read the current validated task snapshot by ID."""
+        return tasks.show(principal, task_id)
+
+    @server.tool(structured_output=True)
+    def relay_task_packet(task_id: str, max_chars: int = 16000) -> dict[str, Any]:
+        """Read a bounded continuation packet with current instructions and source refs."""
+        return compile_task_packet(tasks.show(principal, task_id), max_chars=max_chars)
+
+    @server.tool(structured_output=True)
+    def relay_task_diff(task_id: str, from_revision: int) -> dict[str, Any]:
+        """Read changes since a task revision, including instruction provenance."""
+        return tasks.diff(principal, task_id, from_revision=from_revision)
+
+    @server.resource("relay://task/{task_id}")
+    def task_resource(task_id: str) -> str:
+        """Current task snapshot as a portable JSON resource."""
+        return json.dumps(tasks.show(principal, task_id), ensure_ascii=False)
 
     return server
 

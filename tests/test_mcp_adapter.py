@@ -25,6 +25,31 @@ class McpAdapterTests(unittest.TestCase):
 
         asyncio.run(run())
 
+    def test_sdk_client_reads_task_tool_and_resource(self):
+        from mcp import Client
+        from context_relay.organization import Principal
+        from context_relay.task_service import TaskService
+
+        async def run():
+            store = RelayStore()
+            try:
+                principal = Principal("local", "test")
+                task = TaskService(store, authorize=lambda identity, action: True).create(
+                    principal, goal="Finish report", completion_criteria=["Oracle passes"],
+                    workspace={"repository": "example", "root": "/work"})
+                async with Client(build_mcp_server(store, subject="test")) as client:
+                    shown = await client.call_tool("relay_task_show", {"task_id": task["id"]})
+                    self.assertFalse(shown.is_error)
+                    self.assertEqual(shown.structured_content["id"], task["id"])
+                    packet = await client.call_tool("relay_task_packet", {"task_id": task["id"]})
+                    self.assertEqual(packet.structured_content["revision"], 0)
+                    resource = await client.read_resource(f"relay://task/{task['id']}")
+                    self.assertIn(task["id"], resource.contents[0].text)
+            finally:
+                store.close()
+
+        asyncio.run(run())
+
 
 if __name__ == "__main__":
     unittest.main()
