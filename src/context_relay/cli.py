@@ -38,7 +38,44 @@ def main(argv: list[str] | None = None) -> int:
     create_task.add_argument("--open-work", action="append", default=[])
     show_task = task_sub.add_parser("show", help="Show a task snapshot")
     show_task.add_argument("task_id")
+    handoff = sub.add_parser("handoff", help="Offer, accept, and inspect task handoffs")
+    handoff.add_argument("--db", default=".relay/tasks.db")
+    handoff.add_argument("--subject", default=getpass.getuser(),
+                         help="Local harness identity; the database must be private to this OS user")
+    handoff_sub = handoff.add_subparsers(dest="handoff_command", required=True)
+    offer_handoff = handoff_sub.add_parser("offer")
+    offer_handoff.add_argument("task_id")
+    offer_handoff.add_argument("--recipient", required=True)
+    offer_handoff.add_argument("--max-chars", type=int, default=16000)
+    accept_handoff = handoff_sub.add_parser("accept")
+    accept_handoff.add_argument("handoff_id")
+    inspect_handoff = handoff_sub.add_parser("inspect")
+    inspect_handoff.add_argument("handoff_id")
     args = parser.parse_args(argv)
+    if args.command == "handoff":
+        from .handoffs import HandoffService
+        from .organization import Principal
+        from .task_service import TaskService
+        path = Path(args.db).resolve()
+        private_directory(path.parent)
+        store = RelayStore(path)
+        try:
+            handoffs = HandoffService(TaskService(store, authorize=lambda principal, action: True))
+            principal = Principal("local", args.subject)
+            if args.handoff_command == "offer":
+                result = handoffs.offer(principal, args.task_id, recipient=args.recipient,
+                                        max_chars=args.max_chars)
+            elif args.handoff_command == "accept":
+                result = handoffs.accept(principal, args.handoff_id)
+            else:
+                result = handoffs.inspect(principal, args.handoff_id)
+            print(json.dumps(result, indent=2, ensure_ascii=False))
+            return 0
+        except (OSError, ValueError, LookupError) as error:
+            print(f"Handoff error: {error}", file=sys.stderr)
+            return 1
+        finally:
+            store.close()
     if args.command == "task":
         from .organization import Principal
         from .task_service import TaskService, inspect_git_workspace

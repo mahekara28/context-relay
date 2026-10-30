@@ -23,6 +23,17 @@ class TaskCliTests(unittest.TestCase):
                 self.assertEqual(main(["task", "--db", database, "show", created["id"]]), 0)
             self.assertEqual(json.loads(output.getvalue()), created)
 
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                self.assertEqual(main(["handoff", "--db", database, "--subject", "sender", "offer",
+                                       created["id"], "--recipient", "receiver"]), 0)
+            offered = json.loads(output.getvalue())
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                self.assertEqual(main(["handoff", "--db", database, "--subject", "receiver", "accept",
+                                       offered["id"]]), 0)
+            self.assertEqual(json.loads(output.getvalue())["status"], "accepted")
+
 
 if __name__ == "__main__":
     unittest.main()
