@@ -1,16 +1,44 @@
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const temporary = mkdtempSync(join(tmpdir(), "relay-package-"));
 const npm = process.env.npm_execpath;
 if (!npm) throw new Error("Run this gate with npm run test:package.");
-const runNpm = (args) =>
+// Exercise an anonymous consumer install without borrowing the maintainer's
+// registry credentials, global tools or npm cache.
+const npmEnvironment = Object.fromEntries(
+  Object.entries(process.env).filter(
+    ([key]) =>
+      !/^npm_config_/i.test(key) &&
+      !["NPM_TOKEN", "NODE_AUTH_TOKEN"].includes(key),
+  ),
+);
+writeFileSync(
+  join(temporary, "user.npmrc"),
+  "registry=https://registry.npmjs.org/\n",
+  { mode: 0o600 },
+);
+writeFileSync(join(temporary, "global.npmrc"), "");
+Object.assign(npmEnvironment, {
+  npm_config_userconfig: join(temporary, "user.npmrc"),
+  npm_config_globalconfig: join(temporary, "global.npmrc"),
+  npm_config_cache: join(temporary, "cache"),
+  npm_config_registry: "https://registry.npmjs.org/",
+});
+const runNpm = (args, cwd = root) =>
   execFileSync(process.execPath, [npm, ...args], {
-    cwd: root,
+    cwd,
+    env: npmEnvironment,
     encoding: "utf8",
     timeout: 120000,
     maxBuffer: 4 * 1024 * 1024,
@@ -37,11 +65,14 @@ try {
   assert(packed.files.some((file) => file.path === "dist/cli.js"));
   assert(
     !packed.files.some((file) =>
-      /(?:workspace\.db|access-token|\.env$|test\/|\.whl$|\.py$)/.test(file.path),
+      /(?:workspace\.db|access-token|\.env$|test\/|\.whl$|\.py$)/.test(
+        file.path,
+      ),
     ),
   );
   runNpm([
     "install",
+    "--global",
     "--prefix",
     join(temporary, "install"),
     "--ignore-scripts",
@@ -51,11 +82,42 @@ try {
   ]);
   cli = join(
     temporary,
-    "install/node_modules/@mahekara28/context-relay/dist/cli.js",
+    "install",
+    ...(process.platform === "win32" ? [] : ["lib"]),
+    "node_modules/@mahekara28/context-relay/dist/cli.js",
   );
   const expected = JSON.parse(
     readFileSync(join(root, "package.json"), "utf8"),
   ).version;
+  const commandCheck = join(temporary, "command-check");
+  mkdirSync(commandCheck);
+  writeFileSync(
+    join(commandCheck, "package.json"),
+    JSON.stringify({ private: true, scripts: { check: "relay --version" } }),
+  );
+  const pathKey =
+    Object.keys(npmEnvironment).find((key) => key.toLowerCase() === "path") ||
+    "PATH";
+  const originalPath = npmEnvironment[pathKey];
+  const globalBin = join(
+    temporary,
+    "install",
+    ...(process.platform === "win32" ? [] : ["bin"]),
+  );
+  npmEnvironment[pathKey] = globalBin + delimiter + originalPath;
+  const globalVersion = runNpm(["run", "--silent", "check"], commandCheck);
+  npmEnvironment[pathKey] = originalPath;
+  assert.equal(globalVersion.trim(), expected);
+  const ephemeral = [
+    "exec",
+    "--yes",
+    "--package",
+    join(temporary, packed.filename),
+    "--",
+    "relay",
+  ];
+  assert.equal(runNpm([...ephemeral, "--version"], temporary).trim(), expected);
+  assert.match(runNpm([...ephemeral, "--help"], temporary), /Usage: relay/);
   assert.equal(run(["--version"]).trim(), expected);
   assert.match(run(["--help"]), /Context Relay/);
   assert(packed.files.some((file) => file.path === "dist/ui/app.js"));
@@ -93,7 +155,7 @@ try {
     "accepted",
   );
   console.log(
-    `Installed tarball ${packed.filename}: CLI, service, checkpoint, acceptance and restart passed.`,
+    `Installed tarball ${packed.filename}: global command, npm exec/npx, service, checkpoint, acceptance and restart passed.`,
   );
 } finally {
   if (cli) {

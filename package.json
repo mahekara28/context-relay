@@ -5,6 +5,24 @@
   "type": "module",
   "license": "MIT",
   "author": "Mahek Ara",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/",
+    "tag": "beta"
+  },
+  "keywords": [
+    "ai-agents",
+    "context",
+    "mcp",
+    "cli",
+    "claude-code",
+    "codex",
+    "opencode",
+    "goose"
+  ],
+  "bugs": {
+    "url": "https://github.com/mahekara28/context-relay/issues"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/mahekara28/context-relay.git"
@@ -29,7 +47,8 @@
     "LICENSE",
     "docs/NPM_QUICKSTART.md",
     "docs/HARNESS_CONNECTIONS.md",
-    "docs/WORKSPACE.md"
+    "docs/WORKSPACE.md",
+    "docs/releases/NPM_PUBLISHING.md"
   ],
   "engines": {
     "node": ">=22.16.0"

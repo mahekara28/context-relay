@@ -1,25 +1,56 @@
 # Node CLI and local context service
 
-The npm runtime is a release candidate built from this repository. It requires
+The npm runtime is available as the public `@mahekara28/context-relay` beta. It requires
 **Node 22.16 or newer** and npm, with no Python prerequisite. Node may print an
 experimental SQLite warning on older supported releases. The existing Python
 API continues to use its own database and release version.
 
-## Install the reviewed tarball
-
-This package has not been published to the public npm registry. Build and install
-its reviewed tarball from the checkout:
+## Install from npm
 
 ```sh
+npm install --global @mahekara28/context-relay@beta
+relay --help
+relay ui
+```
+
+Use `@0.3.0-beta.1` instead of `@beta` to install this exact version. Beta updates
+are explicit: rerun the installation command when you want to update.
+
+### Try with npx
+
+```sh
+npx @mahekara28/context-relay@beta demo
+npx @mahekara28/context-relay@beta ui
+```
+
+`npx` downloads the published package into npm's cache and runs its `relay`
+executable. It requires no global installation or Git checkout. Use the full
+scoped name; the unscoped `context-relay` package is a different project.
+Global and npx invocations use the same default local data directory. Add
+`--data-dir /path/to/workspace` to keep a separate profile.
+
+To stop the service and remove a global installation:
+
+```sh
+relay stop
+npm uninstall --global @mahekara28/context-relay
+```
+
+Uninstalling the CLI does not delete your saved local workspace.
+
+### Build from source (contributors)
+
+```sh
+git clone https://github.com/mahekara28/context-relay.git
+cd context-relay
 npm ci --ignore-scripts
 npm run build
 npm pack
-npm install -g ./mahekara28-context-relay-0.3.0-beta.1.tgz
-relay --help
+npm install --global ./mahekara28-context-relay-0.3.0-beta.1.tgz
 ```
 
 Alternatively use `node dist/cli.js` from the checkout wherever this guide uses
-`relay`. Avoid installing an unverified package with a similar name.
+`relay`. See the [publication procedure](releases/NPM_PUBLISHING.md) for maintainers.
 
 ## Try the local workflow
 

@@ -49,6 +49,18 @@ function announce(message) {
   toastTimeout = setTimeout(() => toast.classList.remove("visible"), 2400);
 }
 const copyDialog = $("#copy-dialog");
+const installCommands = {
+  npm: "npm install --global @mahekara28/context-relay@beta\nrelay demo\nrelay ui",
+  npx: "npx @mahekara28/context-relay@beta demo\nnpx @mahekara28/context-relay@beta ui",
+};
+$$("[data-install]").forEach((button) =>
+  button.addEventListener("click", () => {
+    $$("[data-install]").forEach((choice) =>
+      choice.setAttribute("aria-pressed", String(choice === button)),
+    );
+    $("#install-command").textContent = installCommands[button.dataset.install];
+  }),
+);
 $$("[data-copy]").forEach((button) =>
   button.addEventListener("click", async () => {
     const command = document
@@ -151,8 +163,8 @@ function showStage(next) {
       : stages[stage][1];
   $("#delivery-label").textContent =
     stage === 2
-      ? `MCP → ${destination} / fresh thread`
-      : "MCP · inspect → accept → continue";
+      ? `MCP · ${destination} / fresh thread`
+      : "MCP · inspect · accept · continue";
   $$(".step-dots button").forEach((button) =>
     button.setAttribute(
       "aria-pressed",
