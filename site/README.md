@@ -36,6 +36,8 @@ npm run site:social
 npm run site:build
 ```
 
+The hero and social preview advertise the public npm beta with the same runnable npx command. The release badge links to npm; release notes link to the matching GitHub prerelease. Keep these in sync with `package.json` and the [README artwork](../docs/assets/workspace/ARTWORK.md).
+
 The workspace screenshots and optional GIF are captured from the real interface
 using synthetic data. See [capture instructions](../docs/assets/workspace/README.md).
 Harness logos retain their [bundled attribution](../packages/relay/ui/assets/THIRD_PARTY_LICENSE.txt).

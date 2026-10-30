@@ -6,7 +6,7 @@
     <meta name="color-scheme" content="light dark" />
     <meta
       name="description"
-      content="Keep the work. Change the thread. Context Relay is a local CLI, workspace and MCP server for reviewed handoffs between coding agents."
+      content="Keep the work. Change the thread. Install Context Relay from npm. A local CLI, workspace and MCP server for reviewed handoffs between coding agents."
     />
     <meta name="theme-color" content="#f6f5f1" />
     <meta property="og:type" content="website" />
@@ -16,7 +16,7 @@
     />
     <meta
       property="og:description"
-      content="Carry the decisions, evidence and open work into your next coding session. A local CLI, workspace and MCP server."
+      content="Carry the decisions, evidence and open work into your next coding session. Available on npm: local CLI, workspace and MCP server."
     />
     <meta
       property="og:url"
@@ -24,7 +24,13 @@
     />
     <meta
       property="og:image"
-      content="https://mahekara28.github.io/context-relay/assets/social-card.png"
+      content="https://mahekara28.github.io/context-relay/assets/social-card.png?v={{VERSION}}"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Context Relay public npm beta. Keep the work, change the thread. Run npx @mahekara28/context-relay@beta ui."
     />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="canonical" href="https://mahekara28.github.io/context-relay/" />
@@ -71,9 +77,9 @@
         <div class="hero-copy">
           <a
             class="release-tag"
-            href="https://github.com/mahekara28/context-relay/blob/main/docs/releases/NPM_VERIFICATION.md"
+            href="https://www.npmjs.com/package/@mahekara28/context-relay"
             ><span class="status-dot"></span>v{{VERSION}}
-            <span class="tag-divider"></span> Open source · MIT</a
+            <span class="tag-divider"></span> Public npm beta</a
           >
           <h1>Keep the work.<br /><span>Change the thread.</span></h1>
           <p class="hero-description">
@@ -88,18 +94,20 @@
           <div class="quick-command">
             <div>
               <span class="command-prefix" aria-hidden="true">$</span
-              ><code id="quick-command">relay demo &amp;&amp; relay ui</code>
+              ><code id="quick-command"
+                >npx @mahekara28/context-relay@beta ui</code
+              >
             </div>
             <button
               class="copy-button"
               data-copy="quick-command"
-              aria-label="Copy demo command"
+              aria-label="Copy npx command"
             >
               Copy
             </button>
           </div>
           <p class="command-note">
-            After installation · Node 22.16+ · No model key needed
+            Run directly with npx · Node 22.16+ · No model key needed
           </p>
           <div class="hero-facts">
             <div>
@@ -837,6 +845,11 @@ relay ui</pre
               class="text-link"
               href="https://github.com/mahekara28/context-relay/blob/main/docs/NPM_QUICKSTART.md"
               >Full installation guide</a
+            >
+            <a
+              class="text-link"
+              href="https://github.com/mahekara28/context-relay/releases/tag/npm-v{{VERSION}}"
+              >Release notes</a
             >
           </div>
           <div class="install-terminal">

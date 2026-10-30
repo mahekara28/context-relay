@@ -331,7 +331,7 @@ a:not(.button):hover {
   justify-content: space-between;
   padding: 10px 12px;
   gap: 8px;
-  max-width: 420px;
+  max-width: 520px;
 }
 .quick-command > div {
   display: flex;
@@ -341,6 +341,9 @@ a:not(.button):hover {
 }
 .quick-command code {
   font-size: 12px;
+  line-height: 1.7;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .command-prefix {
   color: var(--accent);
@@ -2371,6 +2374,7 @@ dialog textarea {
   border-top: 1px solid var(--line);
 }
 .install-copy .text-link {
+  margin-right: 18px;
   font-size: 11px;
   margin-top: 15px;
   text-decoration: none;
