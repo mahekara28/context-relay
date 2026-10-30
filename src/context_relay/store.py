@@ -67,7 +67,7 @@ class RelayStore:
             self._connection.execute("PRAGMA temp_store = MEMORY")
             self._enable_wal()
             version = self._connection.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1):
+            if version not in (0, 1, 2):
                 raise ValueError(f"Unsupported database schema version {version}.")
             self._connection.executescript("""
                 CREATE TABLE IF NOT EXISTS sessions (
@@ -121,7 +121,21 @@ class RelayStore:
                     previous_session_id TEXT UNIQUE REFERENCES conversations(session_id),
                     UNIQUE(root_id, ordinal)
                 );
-                PRAGMA user_version = 1;
+                CREATE TABLE IF NOT EXISTS tasks (
+                    id TEXT PRIMARY KEY, tenant TEXT NOT NULL,
+                    revision INTEGER NOT NULL, status TEXT NOT NULL,
+                    payload TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS tasks_tenant_status ON tasks(tenant, status, updated_at);
+                CREATE TABLE IF NOT EXISTS task_events (
+                    id TEXT PRIMARY KEY, task_id TEXT NOT NULL REFERENCES tasks(id),
+                    revision INTEGER NOT NULL, operation TEXT NOT NULL,
+                    principal TEXT NOT NULL, source_class TEXT NOT NULL,
+                    payload TEXT NOT NULL, created_at TEXT NOT NULL,
+                    UNIQUE(task_id, revision)
+                );
+                CREATE INDEX IF NOT EXISTS task_events_task ON task_events(task_id, revision);
+                PRAGMA user_version = 2;
             """)
         except BaseException as error:
             if self._connection is not None:
