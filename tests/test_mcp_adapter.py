@@ -1,6 +1,9 @@
 import asyncio
 import importlib.util
+import sys
+import tempfile
 import unittest
+from pathlib import Path
 
 from context_relay import RelayStore
 from context_relay.mcp_server import build_mcp_server
@@ -105,6 +108,42 @@ class McpAdapterTests(unittest.TestCase):
                 store.close()
 
         asyncio.run(run())
+
+    def test_real_stdio_client_handles_bounded_packet_and_errors(self):
+        from mcp import Client
+        from mcp.client.stdio import StdioServerParameters
+        from context_relay.organization import Principal
+        from context_relay.task_service import TaskService
+
+        with tempfile.TemporaryDirectory() as temporary:
+            database = Path(temporary) / "tasks.db"
+            store = RelayStore(database)
+            try:
+                task = TaskService(store, authorize=lambda identity, action: True).create(
+                    Principal("local", "test"), goal="Finish " + "x" * 600,
+                    completion_criteria=["Oracle passes"],
+                    workspace={"repository": "example", "root": temporary})
+            finally:
+                store.close()
+
+            async def run():
+                source = str(Path(__file__).resolve().parents[1] / "src")
+                parameters = StdioServerParameters(
+                    command=sys.executable,
+                    args=["-m", "context_relay", "mcp", "--db", str(database), "--subject", "test"],
+                    env={"PYTHONPATH": source},
+                )
+                async with Client(parameters) as client:
+                    shown = await client.call_tool("relay_task_show", {"task_id": task["id"]})
+                    self.assertEqual(shown.structured_content["id"], task["id"])
+                    too_small = await client.call_tool("relay_task_packet", {
+                        "task_id": task["id"], "max_chars": 512})
+                    self.assertTrue(too_small.is_error)
+                    self.assertIn("budget", too_small.content[0].text.lower())
+                    missing = await client.call_tool("relay_task_show", {"task_id": "missing"})
+                    self.assertTrue(missing.is_error)
+
+            asyncio.run(asyncio.wait_for(run(), timeout=15))
 
 
 if __name__ == "__main__":
