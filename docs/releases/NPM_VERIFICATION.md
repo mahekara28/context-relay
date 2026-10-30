@@ -21,6 +21,6 @@ Release candidate: **0.3.0-beta.1**. These results describe implementation check
 
 ## Release review
 
-Merge the PRs in sequence: runtime → adapters → workspace. Retarget a stacked PR after its base merges. Preserve the individual commits. Verify the **final head** checks before merging. Do not rewrite open-PR history to manufacture contribution counts.
+The runtime PR reached main; the adapter and workspace PRs were merged into intermediate stacked bases. The final `release/npm-beta` PR brings the complete product and packaging fix into main, preserving published history. Verify its **final head** checks and npm artifact before merging. Do not rewrite open-PR history to manufacture contribution counts.
 
 The beta is a complete local review-and-handoff workflow. It does not restore hidden model state, move files across machines, claim uncaptured native history is current, or treat accepted handoffs as successful task execution.

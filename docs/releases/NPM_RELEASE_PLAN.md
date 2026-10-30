@@ -18,7 +18,9 @@ writable database. The Node workspace has an independently versioned schema.
    destination selection and handoff receipts; optional Nebius interpretation;
    packaged browser tests, documentation and reproducible release assets.
 
-PRs are stacked in that order. A release is ready to review when its behavior
+The original PRs were stacked in that order and merged into their intermediate
+bases. `release/npm-beta` now consolidates that published history plus the final
+packaging fix into a single PR targeting `main`. A release is ready to review when its behavior
 passes tests against the installed npm tarball. Publishing to npm is a separate
 release operation; documentation must not claim an unpublished package works
 through the public registry.
@@ -57,3 +59,5 @@ through the public registry.
 - Harness connections implemented: [PR #8](https://github.com/mahekara28/context-relay/pull/8).
 - Workspace, optional proposals, launch/export and release documentation implemented: [PR #9](https://github.com/mahekara28/context-relay/pull/9).
 - Public npm publication and live-model quality evaluation are separate pending release activities; see [verification](NPM_VERIFICATION.md).
+
+The final beta consolidation preserves all published commits and merges. Review its final-head CI and npm artifact before merging into main.

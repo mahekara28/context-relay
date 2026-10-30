@@ -41,8 +41,8 @@ The npm package is prepared as `@mahekara28/context-relay`. **It is not publishe
 ```sh
 git clone https://github.com/mahekara28/context-relay.git
 cd context-relay
-# While the release PRs are open:
-git switch release/local-workspace
+# While the final beta PR is open:
+git switch release/npm-beta
 npm ci
 npm pack
 npm install --global ./mahekara28-context-relay-0.3.0-beta.1.tgz
