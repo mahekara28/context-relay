@@ -1,72 +1,71 @@
-# README artwork
+# README artwork and demo
 
-This original artwork is part of Context Relay and uses the repository's MIT license.
-The SVG sources contain editable text and vector shapes, without external images,
-fonts or scripts. The banner also has generated GIF versions.
+Original vector artwork and a replay of the runnable local task example.
+The files use this repository's MIT license. No external images, fonts or
+scripts are embedded. The layout takes inspiration from the concise banner
+and prominent product demo in [AgentMemory](https://github.com/rohitg00/agentmemory);
+its artwork and content are not reused.
 
-| File pair | Purpose |
+## Visual system
+
+A compact geometric mark, neutral surfaces, system typography and one red accent
+(`#e65241`). Diagrams show the implemented call paths. The terminal is the main
+product visual; decorative animation is omitted.
+
+| Files | Purpose |
 | --- | --- |
-| `relay-hero.svg` / `relay-hero-mobile.svg` | Project identity and the sender → packet → receiver story. |
-| `relay-hero.gif` / `relay-hero-mobile.gif` | A 12-second illustrated loop of the instruction change, offer and acceptance. |
-| `relay-handoff.svg` / `relay-handoff-mobile.svg` | Explicit CSV-to-JSON supersession and handoff acceptance. |
-| `relay-cli.svg` / `relay-cli-mobile.svg` | An illustrated, abbreviated CLI result from the task quickstart. |
-| `relay-packet.svg` / `relay-packet-mobile.svg` | Fields carried by the task packet and its budget behavior. |
-| `relay-integrations.svg` / `relay-integrations-mobile.svg` | The available connection paths into the local task service. |
+| `banner-{light,dark}[-mobile].svg` | Wordmark and project identity |
+| `capabilities-{light,dark}[-mobile].svg` | Current interface counts, not performance or adoption metrics |
+| `architecture-{light,dark}[-mobile].svg` | Local MCP, CLI and Python paths into task storage |
+| `demo[-mobile].gif` | 16-second replay with a held final state |
+| `demo[-mobile].png` | Final state for reduced motion and direct still-image links |
+| `demo-output.json` / `demo-transcript.txt` | Checked example results and accessible transcript |
 
-Desktop layouts use a 1280-unit viewBox. Mobile layouts use 600 units and are
-selected by the README's `<picture>` elements at viewport widths of 600px or less.
-Each file includes a title and description; each README image also has alt text.
-The fixed palettes remain legible on light and dark page backgrounds.
+The README selects light/dark artwork with `prefers-color-scheme`. At 600px
+and below it uses separate mobile layouts. Reduced motion selects PNGs before
+any animated source. SVGs have titles and descriptions; the README provides
+alt text and the transcript. Essential facts also appear in normal Markdown.
 
-## Animated banner
+## What the replay shows
 
-The banner is for developers discovering the project. It shows how an explicit
-instruction change reaches another harness through a versioned task snapshot.
-It illustrates the documented local handoff, not a live agent recording or a
-performance benchmark. Its claims follow the implementation and reproducible
-quickstart; its timing is visibly labeled as illustrative.
+Audience: developers deciding whether to try the source preview.
+The example makes a sourced instruction change and transfers its current state
+between two local principals. It does not invoke agent harnesses or models,
+implement the report, or measure runtime performance.
 
-| Claim | Evidence | Visual consequence |
+| Claim | Evidence | Presentation |
 | --- | --- | --- |
-| The JSON instruction explicitly supersedes CSV at revision 2. | [Task quickstart](../TASK_QUICKSTART.md) | The sender changes first; the packet changes after the update reaches it. |
-| Packets carry active instructions and source references. | [Packet compiler](../../src/context_relay/task_packet.py) | The packet shows `Use JSON` and `message-2`. |
-| Offers freeze a revision; acceptance checks the recipient and revision. | [Handoff service](../../src/context_relay/handoffs.py) | The offer appears before receiver checks and acceptance. |
-| Accepting context does not verify task completion. | [Task quickstart](../TASK_QUICKSTART.md) | The final caption leaves completion unchecked. |
+| JSON explicitly supersedes CSV at revision 2. | [Runnable example](../../examples/task_handoff_demo.py), [task service](../../src/context_relay/task_service.py) | The actual old and current instruction texts are printed. |
+| An offer can be accepted by its named recipient. | [Handoff service](../../src/context_relay/handoffs.py) | The example checks acceptance and prints the returned revision and status. |
+| Acceptance does not establish completion. | [Task diagnostics](../../src/context_relay/task_service.py) | The example checks that verification is absent and prints `not recorded`. |
+| The server exposes eight tools. | [MCP server](../../src/context_relay/mcp_server.py) | The renderer counts tool decorators from source. |
+| Two project configuration generators exist; core has zero runtime dependencies. | [Connectors](../../src/context_relay/connectors.py), [package metadata](../../pyproject.toml) | Generator count is authored; dependency count is read from metadata. |
 
-Lime marks task context; lilac identifies the two harnesses. A moving square
-marks an active transfer. The final state holds before replay. The README
-selects a static SVG when `prefers-reduced-motion: reduce` is set and also
-offers a direct still-image link.
+The renderer runs the example with `--json` and uses its transcript unchanged.
+Random IDs, timestamps and local paths are deliberately excluded by the example.
+Only command typing and output reveal timing are edited for readability. The
+caption states this in both the image and the surrounding README.
 
-Regenerate both GIFs with the documentation-only renderer:
+## Regenerate
+
+From the repository root, with Python 3.11+ and `uv`:
 
 ```sh
 uv run --no-project --with playwright==1.64.1 playwright install chromium
 uv run --script scripts/render_readme_animation.py
 ```
 
-Alternatively, pass `--browser /path/to/chrome` to use an installed Chromium
-browser. The renderer reads the existing SVGs and uses a single deterministic
-timeline. Its Pillow and Playwright dependencies are pinned in the script;
-they are not dependencies of Context Relay. Fonts follow the rendering browser.
-Consecutive unchanged frames are merged while retaining their display duration.
-Use `--output-dir /tmp/relay-animation` for an export outside the repository.
+Pass `--browser /path/to/chrome` to use an installed Chromium browser, or
+`--output-dir /tmp/relay-artwork` for a separate export. Pillow and Playwright
+versions are pinned in the script; neither is a core runtime dependency.
+Fonts follow the rendering machine's available system fonts.
 
-After a change, inspect the original instruction, correction, saved revision,
-offer, checks, accepted state and loop boundary. Verify GIF loading and still
-selection on GitHub at desktop, 768px and 320px widths, with reduced motion
-enabled and disabled. The GIF has no playback controls; the still version is
-the non-animated reading path.
+The renderer generates every SVG and runs the local example before rendering
+the replay. It uses a shared palette and merges consecutive unchanged GIF
+frames while preserving duration. Both GIFs are under 55 KB with the current fonts. Regeneration validates replay duration, looping and transcript overflow.
 
-## Editing the diagrams
-
-Edit both sizes when changing a feature or label. Keep essential information in
-the surrounding Markdown too. Use the [task quickstart](../TASK_QUICKSTART.md)
-to verify command examples and the [packet compiler](../../src/context_relay/task_packet.py)
-to check packet fields. The terminal artwork abbreviates output, omits IDs and
-fields, and does not depict a live model run or a completed reporting task.
-
-Before publishing, render the README at desktop and phone widths, check for
-clipped text, and confirm that the mobile sources still survive GitHub's
-Markdown renderer. Avoid putting benchmark claims or unverified integrations
-into the artwork.
+After edits, inspect light and dark rendering at desktop, 768px and 320px widths.
+Check the first frame, instruction change, acceptance, final hold and loop
+boundary. Verify the README's source selection with reduced motion on and off,
+and confirm GitHub preserves the `<picture>` sources. Keep the counts and
+architecture aligned with source, and avoid claims about untested integrations.

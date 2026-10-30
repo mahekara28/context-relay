@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="216" viewBox="0 0 640 216" role="img" aria-labelledby="title desc">
+<title id="title">Available interfaces</title><desc id="desc">8 MCP tools, two project configuration generators, 0 core runtime dependencies. Counts describe the current source.</desc>
+<rect width="640" height="216" fill="#ffffff"/>
+<text x="62" y="46" font-family="Menlo, Consolas, monospace" font-size="34" font-weight="500" fill="#e65241" text-anchor="middle">8</text>
+<text x="112" y="46" font-family="Helvetica Neue, Arial, sans-serif" font-size="25" font-weight="400" fill="#616872" text-anchor="start">MCP tools</text>
+<text x="62" y="110" font-family="Menlo, Consolas, monospace" font-size="34" font-weight="500" fill="#e65241" text-anchor="middle">2</text>
+<text x="112" y="110" font-family="Helvetica Neue, Arial, sans-serif" font-size="25" font-weight="400" fill="#616872" text-anchor="start">project config generators</text>
+<text x="62" y="174" font-family="Menlo, Consolas, monospace" font-size="34" font-weight="500" fill="#e65241" text-anchor="middle">0</text>
+<text x="112" y="174" font-family="Helvetica Neue, Arial, sans-serif" font-size="25" font-weight="400" fill="#616872" text-anchor="start">core runtime dependencies</text>
+</svg>

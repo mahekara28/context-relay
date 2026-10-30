@@ -1,0 +1,17 @@
+$ python examples/task_handoff_demo.py
+
+01  Record the instruction
+    Use CSV  /  revision 1
+
+02  Apply the correction
+  - Use CSV   superseded
+  + Use JSON  active
+    source: user:message-2
+
+03  Hand off the current state
+    sender -> receiver  /  revision 2
+    handoff: accepted
+    instruction: Use JSON
+    verification: not recorded
+
+Local example. No model or network calls.
