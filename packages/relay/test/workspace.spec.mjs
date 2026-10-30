@@ -116,6 +116,9 @@ test("merge requires an explicit conflict choice and preserves parents", async (
   await page.getByRole("button", { name: "Merge selected (2)" }).click();
   await expect(page.getByText("Resolve: retention")).toBeVisible();
   await page.getByLabel("7 days", { exact: true }).check();
+  await page
+    .locator('[data-field="text"]')
+    .fill("Retain for 7 days, including retries.");
   await page.locator("#review-confirm").check();
   await page
     .getByRole("button", { name: "Save checkpoint & offer handoff" })
@@ -126,7 +129,9 @@ test("merge requires an explicit conflict choice and preserves parents", async (
   const merged = app.store
     .checkpoints(project.id)
     .find((c) => c.parents.length === 2);
-  expect(merged.resolutions.retention).toBe("7 days");
+  expect(merged.resolutions.retention).toBe(
+    "Retain for 7 days, including retries.",
+  );
   expect(app.store.checkpoint(first.id).instructions[0].text).toBe("24 hours");
 });
 test("mobile and dark views stay within the viewport and remain navigable", async ({

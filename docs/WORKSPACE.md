@@ -18,7 +18,7 @@ Use a dedicated `--data-dir` or `CONTEXT_RELAY_HOME` for separate experiments. K
 6. In **Handoffs**, copy the continuation prompt or export Markdown. For configured Claude Code/Codex, `relay launch --id HANDOFF_ID` starts a fresh interactive terminal session in the project. It preserves native approvals and does not accept the handoff automatically. On Windows, launch requires a native `.exe` configured with `--executable`; otherwise use the copied prompt.
 7. The receiving agent inspects and accepts through MCP. Acceptance is not a successful test result.
 
-Review drafts stay in browser memory, with a navigation-away warning. A page reload or changing projects discards an unsaved draft. Browser state is not an authoritative checkpoint. The UI requires a new explicit review after editing fields or applying a model proposal.
+Review drafts stay in browser memory, with a navigation-away warning. A page reload discards an unsaved draft. Replacing a draft or changing projects asks before discarding it. Browser state is not an authoritative checkpoint. The UI requires a new explicit review after editing fields or applying a model proposal.
 
 **Freshness has a precise scope:** captured source revisions, selected file digests and Git HEAD. It cannot detect native messages that have not yet been captured. Capture again before a consequential handoff. A revision change blocks acceptance; review a new checkpoint rather than editing the old one. Captured character growth is not a model context-window measurement.
 

@@ -325,7 +325,16 @@ async function setSession(id) {
   state.events = await api("/sessions/" + id + "/events?limit=200");
   render();
 }
+function replaceDraft() {
+  return (
+    !state.draft ||
+    window.confirm(
+      "Replace the unsaved review draft? Its changes will be discarded.",
+    )
+  );
+}
 function newDraft() {
+  if (!replaceDraft()) return;
   const s = currentSession();
   const chosen = state.events.filter((e) => state.selected.has(e.id));
   if (!chosen.length) throw Error("Select at least one source event first.");
@@ -353,6 +362,7 @@ function newDraft() {
   render();
 }
 async function draftFrom(ids) {
+  if (!replaceDraft()) return;
   const checkpoints = ids.map((id) =>
     state.checkpoints.find((c) => c.id === id),
   );
@@ -546,6 +556,10 @@ async function action(button) {
       login();
       break;
     case "add-project":
+      if (state.draft)
+        throw Error(
+          "Save or discard the review draft before adding another project.",
+        );
       modal(
         '<h2>Add a local project</h2><form id="project-form"><label>Absolute project directory<input name="root" placeholder="/path/to/project" required></label><label>Display name · optional<input name="name"></label><div class="actions"><button type="button" data-action="close-modal">Cancel</button><button type="submit" class="primary">Add project</button></div></form>',
       );
@@ -676,7 +690,10 @@ document.addEventListener("input", (event) => {
     d.reviewed = false;
   }
   if (el.dataset.instruction !== undefined) {
-    d.instructions[Number(el.dataset.instruction)][el.dataset.field] = el.value;
+    const item = d.instructions[Number(el.dataset.instruction)];
+    item[el.dataset.field] = el.value;
+    if (el.dataset.field === "text" && d.resolutions[item.key])
+      d.resolutions[item.key] = el.value;
     d.reviewed = false;
   }
   if ($("#review-confirm") && el.id !== "review-confirm")
@@ -687,6 +704,10 @@ document.addEventListener("change", (event) => {
   Promise.resolve()
     .then(async () => {
       if (el.id === "project-select") {
+        if (!replaceDraft()) {
+          el.value = state.projectId;
+          return;
+        }
         state.projectId = el.value;
         state.sessionId = "";
         state.draft = null;
