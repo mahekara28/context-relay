@@ -58,6 +58,23 @@ class HandoffTests(unittest.TestCase):
         path.unlink()
         self.assertEqual(resolve_artifacts(offer["packet"], root=self.temporary.name)[0]["status"], "missing")
 
+    def test_new_client_receives_current_instruction_with_source(self):
+        old = self.tasks.add_instruction(self.sender, self.task["id"], expected_revision=0,
+                                         request_id="old", text="Produce CSV",
+                                         source={"kind": "user", "ref": "message-1"})
+        old_id = old["instructions"][0]["id"]
+        current = self.tasks.add_instruction(self.sender, self.task["id"], expected_revision=1,
+                                             request_id="new", text="Produce JSON",
+                                             source={"kind": "user", "ref": "message-2"},
+                                             supersedes=[old_id])
+        offered = self.handoffs.offer(self.sender, self.task["id"], recipient="recipient")
+        with RelayStore(self.store.path) as receiver_store:
+            receiver_tasks = TaskService(receiver_store, authorize=lambda principal, action: True)
+            received = HandoffService(receiver_tasks).accept(self.recipient, offered["id"])
+        self.assertEqual(received["packet"]["revision"], current["revision"])
+        self.assertEqual([item["text"] for item in received["packet"]["instructions"]], ["Produce JSON"])
+        self.assertEqual(received["packet"]["instructions"][0]["source"]["ref"], "message-2")
+
 
 if __name__ == "__main__":
     unittest.main()
