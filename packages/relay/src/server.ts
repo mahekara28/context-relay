@@ -15,13 +15,20 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";
+import { fileURLToPath } from "node:url";
+import {
+  proposalPreview,
+  generateProposal,
+  providerStatus,
+} from "./proposals.js";
+import { continuationPrompt, markdownPacket } from "./delivery.js";
 import { AdapterManager } from "./adapters/manager.js";
 import { CAPABILITIES } from "./adapters/types.js";
 import { RelayError } from "./model.js";
 import { RelayStore } from "./store.js";
 import { id, privateDirectory } from "./util.js";
 
-export const VERSION = "0.2.0-alpha.1";
+export const VERSION = "0.3.0-beta.1";
 export interface Connection {
   url: string;
   pid: number;
@@ -193,12 +200,32 @@ export async function startService(
       const parsed = new URL(request.url ?? "/", url);
       const path = parsed.pathname;
       const method = request.method;
-      if (path === "/" && method === "GET") {
-        json(response, 200, {
-          name: "Context Relay",
-          version: VERSION,
-          message: "Local context service. Use the relay CLI or MCP server.",
+      if (
+        method === "GET" &&
+        (path === "/" ||
+          /^\/(?:app\.js|style\.css|assets\/(?:claude|codex|opencode|goose|relay)\.svg)$/.test(
+            path,
+          ))
+      ) {
+        const file = path === "/" ? "index.html" : path.slice(1);
+        const type = file.endsWith(".js")
+          ? "text/javascript"
+          : file.endsWith(".css")
+            ? "text/css"
+            : file.endsWith(".svg")
+              ? "image/svg+xml"
+              : "text/html";
+        response.writeHead(200, {
+          "Content-Type": type + "; charset=utf-8",
+          "Cache-Control": "no-store",
+          "X-Content-Type-Options": "nosniff",
+          "Referrer-Policy": "no-referrer",
+          "Content-Security-Policy":
+            "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
         });
+        response.end(
+          readFileSync(fileURLToPath(new URL("./ui/" + file, import.meta.url))),
+        );
         return;
       }
       const supplied = String(request.headers.authorization ?? "").replace(
@@ -286,6 +313,32 @@ export async function startService(
             ? adapters.cancel(jobRoute[1]!)
             : adapters.job(jobRoute[1]!),
         );
+        return;
+      }
+      if (path === "/api/provider" && method === "GET") {
+        json(response, 200, providerStatus());
+        return;
+      }
+      if (path === "/api/proposals/preview" && method === "POST") {
+        json(response, 200, proposalPreview(store, await readBody(request)));
+        return;
+      }
+      if (path === "/api/proposals" && method === "POST") {
+        json(
+          response,
+          200,
+          await generateProposal(store, await readBody(request)),
+        );
+        return;
+      }
+      const exportRoute = path.match(/^\/api\/handoffs\/([^/]+)\/export$/);
+      if (exportRoute && method === "GET") {
+        const handoff = store.handoff(exportRoute[1]!);
+        json(response, 200, {
+          markdown: markdownPacket(handoff),
+          prompt: continuationPrompt(handoff),
+          handoff,
+        });
         return;
       }
       if (path === "/api/projects") {

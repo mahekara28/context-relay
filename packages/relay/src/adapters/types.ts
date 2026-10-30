@@ -30,7 +30,7 @@ export const CAPABILITIES = [
     capture: "Explicit sync; stable transcript events",
     mcp: "Project .mcp.json",
     delivery: "Reviewed packet file / MCP retrieval",
-    launch: false,
+    launch: true,
   },
   {
     harness: "codex",
@@ -39,7 +39,7 @@ export const CAPABILITIES = [
     capture: "Completed turns via app-server",
     mcp: "Project .codex/config.toml",
     delivery: "Reviewed packet file / MCP retrieval",
-    launch: false,
+    launch: true,
   },
   {
     harness: "opencode",

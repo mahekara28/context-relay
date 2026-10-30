@@ -34,3 +34,28 @@ jobs:
       - run: npm test
       - run: npm run test:package
       - run: npm audit --omit=dev --audit-level=high
+      - name: Pack reviewable npm artifact
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '24'
+        run: npm pack --ignore-scripts
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '24'
+        with:
+          name: context-relay-npm-beta
+          path: mahekara28-context-relay-*.tgz
+          if-no-files-found: error
+
+  browser:
+    name: workspace / Chromium
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx --no-install playwright install --with-deps chromium
+      - run: npm run test:browser

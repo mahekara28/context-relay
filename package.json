@@ -1,6 +1,6 @@
 {
   "name": "@mahekara28/context-relay",
-  "version": "0.2.0-alpha.1",
+  "version": "0.3.0-beta.1",
   "description": "Review and carry working context between coding agent sessions.",
   "type": "module",
   "license": "MIT",
@@ -21,7 +21,9 @@
   "files": [
     "dist",
     "LICENSE",
-    "docs/NPM_QUICKSTART.md"
+    "docs/NPM_QUICKSTART.md",
+    "docs/HARNESS_CONNECTIONS.md",
+    "docs/WORKSPACE.md"
   ],
   "engines": {
     "node": ">=22.16.0"
@@ -31,13 +33,16 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "npm run build && node --test packages/relay/test/*.test.mjs",
     "test:package": "node scripts/npm/package-smoke.mjs",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "test:browser": "npm run build && playwright test",
+    "demo:render": "npm run build && node scripts/npm/render-demo.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "@types/node": "24.10.0",
     "prettier": "3.6.2",
     "typescript": "5.9.3"

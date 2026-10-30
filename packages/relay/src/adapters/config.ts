@@ -129,6 +129,15 @@ export function configureMcp(
     }
     return { path, format: "toml", section: "context_relay", value: block };
   }
+  if (
+    connection.harness === "opencode" &&
+    existsSync(join(project.root, "opencode.jsonc"))
+  )
+    throw new RelayError(
+      "config_conflict",
+      "This project uses opencode.jsonc. Use capture-only and add the MCP command manually to preserve its comments and settings.",
+      409,
+    );
   const goose = connection.harness === "goose";
   const path = join(
     project.root,

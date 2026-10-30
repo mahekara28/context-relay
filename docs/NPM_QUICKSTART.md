@@ -14,7 +14,7 @@ its reviewed tarball from the checkout:
 npm ci --ignore-scripts
 npm run build
 npm pack
-npm install -g ./mahekara28-context-relay-0.1.0-alpha.1.tgz
+npm install -g ./mahekara28-context-relay-0.3.0-beta.1.tgz
 relay --help
 ```
 
@@ -96,7 +96,8 @@ local harness labels are not remote-user authentication.
 
 The service binds only to `127.0.0.1` on an available port. API requests require a
 local bearer token and reject foreign Host/Origin headers. The CLI reads its
-private connection descriptor; it never prints the access token. Do not expose
+private connection descriptor. `relay ui` prints a local browser URL containing
+the access token in its fragment; treat that URL as a credential. Do not expose
 the service through a public proxy. `relay serve` runs in the foreground;
 `relay init` starts a background process. `relay doctor` can recover a lock only
 when its recorded process no longer exists. It never kills another process.
@@ -112,3 +113,7 @@ The transport suite uses an actual MCP SDK stdio client. The package gate instal
 the tarball into a temporary directory and checks startup, checkpoint creation,
 acceptance, shutdown, persisted state and restart. CI covers Linux, macOS and
 Windows. Live model evaluation remains separate from these offline checks.
+
+## Browser workspace and connections
+
+Run `relay ui` for the bundled local UI, or `relay ui --no-open` to print its local access URL. Follow the [workspace guide](WORKSPACE.md) for source review, merge decisions, handoff export and optional Nebius drafts. The [connection guide](HARNESS_CONNECTIONS.md) documents native history capture separately from MCP access. Use `relay launch --id HANDOFF_ID` for a configured Claude Code/Codex interactive continuation; use `relay handoff export --id HANDOFF_ID` for Markdown.

@@ -13,7 +13,11 @@ import { join } from "node:path";
 import { createServer } from "node:http";
 import { RelayStore } from "../../../dist/store.js";
 import { AdapterManager } from "../../../dist/adapters/manager.js";
-import { codexEvents, gooseEvents } from "../../../dist/adapters/normalize.js";
+import {
+  claudeEvents,
+  codexEvents,
+  gooseEvents,
+} from "../../../dist/adapters/normalize.js";
 import { JsonLineRpc } from "../../../dist/adapters/rpc.js";
 function workspace(t) {
   const root = mkdtempSync(join(tmpdir(), "relay-adapters-"));
@@ -114,6 +118,14 @@ test("managed JSON and TOML preserve other settings and refuse removal after edi
   assert.match(readFileSync(toml, "utf8"), /mcp_servers.context_relay/);
   w.manager.disconnect(codex.id);
   assert.match(readFileSync(toml, "utf8"), /model = "keep"/);
+  writeFileSync(
+    join(w.projectRoot, "opencode.jsonc"),
+    "{ /* keep comments */ }",
+  );
+  assert.throws(
+    () => w.manager.connect({ projectId: w.project.id, harness: "opencode" }),
+    { code: "config_conflict" },
+  );
 });
 test(
   "configuration rejects a symlink directory even if the config does not exist",
@@ -183,6 +195,13 @@ test("Codex RPC performs a real stdio exchange and denies execution requests", a
   const rpc = new JsonLineRpc(process.execPath, [script], w.projectRoot);
   t.after(() => rpc.close());
   assert.deepEqual(await rpc.request("initialize", {}), { ready: true });
+  const malformed = join(w.root, "malformed.mjs");
+  writeFileSync(malformed, "process.stdin.on('data',()=>console.log('null'));");
+  const badRpc = new JsonLineRpc(process.execPath, [malformed], w.projectRoot);
+  t.after(() => badRpc.close());
+  await assert.rejects(() => badRpc.request("initialize", {}), {
+    code: "harness_protocol",
+  });
   const events = codexEvents([
     {
       id: "t",
@@ -228,4 +247,61 @@ test("interrupted jobs are recovered visibly, and failed discovery is never succ
   assert.equal(job.state, "failed");
   assert.equal(job.imported.length, 0);
   assert.match(job.error, /Goose/);
+});
+
+test("native Goose exports honor visibility and Claude tool results retain tool provenance", () => {
+  const native = {
+    conversation: [
+      {
+        id: "u",
+        role: "user",
+        metadata: { userVisible: true },
+        content: [{ type: "text", text: "Goal" }],
+      },
+      {
+        id: "hidden",
+        role: "assistant",
+        metadata: { userVisible: false },
+        content: [{ type: "text", text: "Internal context" }],
+      },
+      {
+        id: "tool",
+        role: "user",
+        metadata: { userVisible: true },
+        content: [
+          {
+            type: "toolResponse",
+            toolResult: {
+              status: "success",
+              value: { content: [{ type: "text", text: "Failed test" }] },
+            },
+          },
+        ],
+      },
+    ],
+  };
+  const events = gooseEvents(native);
+  assert.equal(events.length, 2);
+  assert.equal(events[1].role, "tool");
+  assert.match(events[1].text, /Failed test/);
+  const claude = claudeEvents([
+    {
+      type: "user",
+      uuid: "u",
+      message: {
+        content: [
+          { type: "text", text: "User instruction" },
+          {
+            type: "tool_result",
+            tool_use_id: "call",
+            content: "Untrusted tool output",
+          },
+        ],
+      },
+    },
+  ]);
+  assert.equal(claude.length, 2);
+  assert.equal(claude[0].role, "user");
+  assert.equal(claude[1].role, "tool");
+  assert.equal(claude[1].id, "u:tool:call");
 });

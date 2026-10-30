@@ -1,10 +1,12 @@
 #!/usr/bin/env node
+import { spawn } from "node:child_process";
 import { parseArgs } from "node:util";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { connect, ensureService, recoverDeadLock } from "./client.js";
 import { startService, VERSION } from "./server.js";
 import { dataDirectory } from "./util.js";
+import { launchPlan } from "./delivery.js";
 import { serveMcp } from "./mcp.js";
 import {
   RelayError,
@@ -18,6 +20,7 @@ const help = `Context Relay ${VERSION}
 Review and carry working context between coding sessions.
 
 Usage: relay <command> [options]
+  ui [--no-open]                Open the private local workspace
   init                          Start a private local workspace
   serve [--port 0]              Run the loopback service in the foreground
   status | stop | doctor        Inspect, stop or diagnose this workspace
@@ -34,7 +37,8 @@ Usage: relay <command> [options]
   checkpoint show --id ID       Inspect a checkpoint
   checkpoint packet --id ID     Compile a bounded continuation packet
   handoff offer --id ID --recipient codex
-  handoff show|accept|cancel --id ID [--recipient codex]
+  handoff show|export|accept|cancel --id ID [--recipient codex]
+  launch --id HANDOFF           Start a fresh interactive Claude/Codex session
   mcp --project ID --harness codex
   demo                          Create an explicitly synthetic local example
 
@@ -50,6 +54,7 @@ async function main(): Promise<void> {
       "data-dir": { type: "string" },
       source: { type: "string" },
       executable: { type: "string" },
+      "no-open": { type: "boolean" },
       "capture-only": { type: "boolean" },
       root: { type: "string" },
       name: { type: "string" },
@@ -141,6 +146,8 @@ async function main(): Promise<void> {
     "discover",
     "sync",
     "disconnect",
+    "launch",
+    "ui",
     "init",
     "project",
     "sessions",
@@ -199,6 +206,84 @@ async function main(): Promise<void> {
     }
     print(job);
     if (job.state !== "completed" || job.errors.length) process.exitCode = 1;
+    return;
+  }
+  if (command === "launch") {
+    const handoff = await client.request<Handoff>(
+      "/api/handoffs/" + encodeURIComponent(need("id")),
+    );
+    const projects = await client.request<Project[]>("/api/projects");
+    const project = projects.find(
+      (project) => project.id === handoff.packet.project.id,
+    );
+    if (!project)
+      throw new RelayError("not_found", "The handoff project is unavailable.");
+    const connections = await client.request<
+      import("./adapters/types.js").HarnessConnection[]
+    >("/api/connections?projectId=" + encodeURIComponent(project.id));
+    const connection = connections.find(
+      (c) => c.harness === handoff.recipient && c.configureMcp,
+    );
+    if (!connection)
+      throw new RelayError(
+        "connection_required",
+        "Connect the destination harness with project MCP configuration first.",
+      );
+    const fresh = await client.request<{ current: boolean; reasons: string[] }>(
+      "/api/checkpoints/" + handoff.checkpointId + "/freshness",
+    );
+    if (!fresh.current)
+      throw new RelayError("stale_source", fresh.reasons.join(" "));
+    const plan = launchPlan(handoff, project.root, connection.executable);
+    if (
+      process.platform === "win32" &&
+      !plan.command.toLowerCase().endsWith(".exe")
+    )
+      throw new RelayError(
+        "native_executable_required",
+        "On Windows, connect a native .exe path with --executable, or use the continuation prompt.",
+      );
+    const code = await new Promise<number>((resolve, reject) => {
+      const child = spawn(plan.command, plan.args, {
+        cwd: plan.cwd,
+        stdio: "inherit",
+        shell: false,
+      });
+      child.once("error", () =>
+        reject(
+          new RelayError(
+            "launch_failed",
+            "Harness could not start. Check its executable path and installation.",
+          ),
+        ),
+      );
+      child.once("exit", (code) => resolve(code ?? 1));
+    });
+    process.exitCode = code;
+    return;
+  }
+  if (command === "ui") {
+    const url = client.connection.url + "/#token=" + client.token;
+    if (!values["no-open"]) {
+      const launcher =
+        process.platform === "darwin"
+          ? "open"
+          : process.platform === "win32"
+            ? "rundll32.exe"
+            : "xdg-open";
+      const args =
+        process.platform === "win32"
+          ? ["url.dll,FileProtocolHandler", url]
+          : [url];
+      const child = spawn(launcher, args, { stdio: "ignore", detached: true });
+      child.on("error", () =>
+        console.error(
+          "Could not open a browser. Use the local URL printed below.",
+        ),
+      );
+      child.unref();
+    }
+    console.log(url);
     return;
   }
   if (command === "init") {
@@ -274,6 +359,13 @@ async function main(): Promise<void> {
       );
       return;
     }
+    if (action === "export") {
+      const exported = await client.request<{ markdown: string }>(
+        "/api/handoffs/" + encodeURIComponent(handoffId) + "/export",
+      );
+      console.log(exported.markdown);
+      return;
+    }
     if (action === "show") {
       print(
         await client.request("/api/handoffs/" + encodeURIComponent(handoffId)),
@@ -341,6 +433,48 @@ async function main(): Promise<void> {
         ],
       },
     );
+    await client.request("/api/sessions/import", {
+      projectId: project.id,
+      harness: "codex",
+      externalId: "relay-synthetic-codex",
+      title: "Example · retry boundary review",
+      events: [
+        {
+          id: "codex-1",
+          role: "user",
+          text: "Synthetic example: inspect retry boundaries for webhook delivery. Preserve the provider event ID as the idempotency key.",
+        },
+        {
+          id: "codex-2",
+          role: "assistant",
+          text: "The receiver needs a durable claim before applying a charge. A crash after the charge must not produce a second charge on retry.",
+        },
+        {
+          id: "codex-3",
+          role: "tool",
+          kind: "tool_result",
+          text: "Synthetic fixture: concurrency and crash-recovery scenarios have not been executed. These remain acceptance criteria.",
+        },
+      ],
+    });
+    await client.request("/api/sessions/import", {
+      projectId: project.id,
+      harness: "goose",
+      externalId: "relay-synthetic-goose",
+      title: "Example · recovery acceptance checklist",
+      events: [
+        {
+          id: "goose-1",
+          role: "user",
+          text: "Synthetic example: prepare acceptance criteria for the next agent. Include simultaneous duplicate deliveries and a retry after worker restart.",
+        },
+        {
+          id: "goose-2",
+          role: "assistant",
+          text: "Pending checks: exactly one charge per provider event, retention for seven days, and safe replay after a process restart. No implementation or test execution is claimed.",
+        },
+      ],
+    });
     const session = imported.session;
     const checkpoint = await client.request<Checkpoint>("/api/checkpoints", {
       projectId: project.id,
