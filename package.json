@@ -19,7 +19,13 @@
     }
   },
   "files": [
-    "dist",
+    "dist/*.js",
+    "dist/*.d.ts",
+    "dist/*.js.map",
+    "dist/adapters/*.js",
+    "dist/adapters/*.d.ts",
+    "dist/adapters/*.js.map",
+    "dist/ui",
     "LICENSE",
     "docs/NPM_QUICKSTART.md",
     "docs/HARNESS_CONNECTIONS.md",
