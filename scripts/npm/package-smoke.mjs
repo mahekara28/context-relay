@@ -58,6 +58,17 @@ try {
   ).version;
   assert.equal(run(["--version"]).trim(), expected);
   assert.match(run(["--help"]), /Context Relay/);
+  assert(packed.files.some((file) => file.path === "dist/ui/app.js"));
+  const uiUrl = new URL(run(["ui", "--no-open"]).trim());
+  assert(uiUrl.hash.startsWith("#token="));
+  const page = await fetch(uiUrl.origin);
+  assert.match(
+    page.headers.get("content-security-policy"),
+    /frame-ancestors 'none'/,
+  );
+  assert.match(await page.text(), /Context Relay/);
+  assert.equal((await fetch(uiUrl.origin + "/assets/goose.svg")).status, 200);
+  assert.equal((await fetch(uiUrl.origin + "/api/projects")).status, 401);
   const demo = JSON.parse(run(["demo"]));
   assert.equal(demo.synthetic, true);
   assert.equal(demo.status, "offered");

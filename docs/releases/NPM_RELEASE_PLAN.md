@@ -53,4 +53,7 @@ through the public registry.
 
 ## Progress
 
-- Planning and repository inspection complete; implementation in progress.
+- Runtime implemented: [PR #7](https://github.com/mahekara28/context-relay/pull/7).
+- Harness connections implemented: [PR #8](https://github.com/mahekara28/context-relay/pull/8).
+- Workspace, optional proposals, launch/export and release documentation implemented: [PR #9](https://github.com/mahekara28/context-relay/pull/9).
+- Public npm publication and live-model quality evaluation are separate pending release activities; see [verification](NPM_VERIFICATION.md).
