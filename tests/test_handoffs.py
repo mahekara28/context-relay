@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 from context_relay import ConflictError, RelayStore
+from context_relay.artifact_resolution import resolve_artifacts
 from context_relay.handoffs import HandoffService
 from context_relay.organization import AccessDenied, Principal
 from context_relay.task_service import TaskService
@@ -43,6 +44,19 @@ class HandoffTests(unittest.TestCase):
                           request_id="change", changes={"open_work": ["New item"]})
         with self.assertRaises(ConflictError):
             self.handoffs.accept(self.recipient, stale["id"])
+
+    def test_receiver_verifies_local_artifact_bytes(self):
+        path = Path(self.temporary.name) / "result.json"
+        path.write_text('{"ok":true}')
+        captured = self.tasks.capture_artifact(self.sender, self.task["id"], expected_revision=0,
+                                               request_id="capture", path="result.json")
+        offer = self.handoffs.offer(self.sender, captured["id"], recipient="recipient")
+        self.assertEqual(resolve_artifacts(offer["packet"], root=self.temporary.name),
+                         [{"path": "result.json", "status": "ok"}])
+        path.write_text('{"ok":false}')
+        self.assertEqual(resolve_artifacts(offer["packet"], root=self.temporary.name)[0]["status"], "changed")
+        path.unlink()
+        self.assertEqual(resolve_artifacts(offer["packet"], root=self.temporary.name)[0]["status"], "missing")
 
 
 if __name__ == "__main__":
