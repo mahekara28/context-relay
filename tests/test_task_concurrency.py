@@ -1,4 +1,5 @@
 import multiprocessing
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -24,6 +25,22 @@ def _competing_update(path, task_id, request_id, ready, start, results):
             results.put((request_id, "conflict"))
     finally:
         store.close()
+
+
+def _die_inside_task_transaction(path, task_id):
+    store = RelayStore(path)
+    service = TaskService(store, authorize=lambda principal, action: True)
+
+    def before_commit(task):
+        task["open_work"] = ["Uncommitted"]
+        store._connection.execute(
+            "INSERT INTO task_mutations VALUES (?, ?, ?, ?)",
+            (task_id, "crash", "uncommitted", "{}"),
+        )
+        os._exit(7)
+
+    service._mutate(Principal("team", "owner"), task_id, expected_revision=0,
+                    request_id="crash", operation="test_crash", payload={}, transform=before_commit)
 
 
 class TaskConcurrencyTests(unittest.TestCase):
@@ -87,6 +104,33 @@ class TaskConcurrencyTests(unittest.TestCase):
             finally:
                 second.close()
                 first.close()
+
+    def test_process_death_rolls_back_task_mutation_and_receipt(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = str(Path(temporary) / "tasks.db")
+            owner = Principal("team", "owner")
+            store = RelayStore(path)
+            try:
+                task = TaskService(store, authorize=lambda principal, action: True).create(
+                    owner, goal="Finish", completion_criteria=["Done"],
+                    workspace={"repository": "example", "root": temporary})
+                child = multiprocessing.get_context("spawn").Process(
+                    target=_die_inside_task_transaction, args=(path, task["id"]))
+                child.start()
+                child.join(timeout=15)
+                self.assertEqual(child.exitcode, 7)
+                self.assertEqual(TaskService(store, authorize=lambda principal, action: True).show(
+                    owner, task["id"])["revision"], 0)
+                with store._transaction():
+                    self.assertEqual(store._connection.execute(
+                        "SELECT COUNT(*) FROM task_mutations WHERE task_id=?", (task["id"],)
+                    ).fetchone()[0], 0)
+                result = TaskService(store, authorize=lambda principal, action: True).update(
+                    owner, task["id"], expected_revision=0, request_id="crash",
+                    changes={"open_work": ["Recovered"]})
+                self.assertEqual(result["revision"], 1)
+            finally:
+                store.close()
 
 
 if __name__ == "__main__":
