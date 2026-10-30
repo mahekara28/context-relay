@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="300" viewBox="0 0 1280 300" role="img" aria-labelledby="title desc">
+<title id="title">Context Relay</title><desc id="desc">Task context across agent harnesses. Python, CLI and optional MCP. Experimental source preview.</desc>
+<rect width="1280" height="300" fill="#0d1117"/>
+<g transform="translate(64 100)" fill="none" stroke="#e65241" stroke-width="5" stroke-linecap="square"><path d="M0 0H27V27H54M0 12V54H27M54 0V42H27"/></g>
+<text x="146" y="143" font-family="Helvetica Neue, Arial, sans-serif" font-size="78" font-weight="500" fill="#eff1f3" text-anchor="start">context relay</text>
+<text x="149" y="192" font-family="Helvetica Neue, Arial, sans-serif" font-size="25" font-weight="400" fill="#9ca5b1" text-anchor="start">Task context across agent harnesses.</text>
+<g fill="none" stroke="#343b45" stroke-width="2"><path d="M972 110H1208M972 142H1208M972 174H1208"/></g>
+<path d="M972 110H1048V142H1134V174H1208" fill="none" stroke="#e65241" stroke-width="3"/>
+<rect x="1127" y="135" width="14" height="14" fill="#e65241"/>
+<text x="1208" y="211" font-family="Menlo, Consolas, monospace" font-size="12" font-weight="400" fill="#9ca5b1" text-anchor="end">STATE / TRANSFER / CONTINUE</text>
+<path d="M64 235H1216" stroke="#343b45"/>
+<text x="64" y="272" font-family="Menlo, Consolas, monospace" font-size="15" font-weight="400" fill="#9ca5b1" text-anchor="start">PYTHON / CLI / MCP</text>
+<text x="1216" y="272" font-family="Menlo, Consolas, monospace" font-size="15" font-weight="400" fill="#e65241" text-anchor="end">SOURCE PREVIEW</text>
+</svg>

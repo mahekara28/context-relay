@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="655" viewBox="0 0 640 655" role="img" aria-labelledby="title desc">
+<title id="title">Local task architecture</title><desc id="desc">Project-configured Claude Code and Codex CLI, or manually configured MCP clients, call the optional stdio server. MCP, CLI and Python access the task service and local SQLite. The host supplies identity and completion checks.</desc>
+<rect x="1" y="1" width="638" height="653" rx="6" fill="#ffffff" stroke="#d9dde2"/>
+<text x="32" y="48" font-family="Menlo, Consolas, monospace" font-size="18" font-weight="400" fill="#616872" text-anchor="start">LOCAL TASK ARCHITECTURE</text>
+<text x="32" y="100" font-family="Helvetica Neue, Arial, sans-serif" font-size="28" font-weight="500" fill="#17191c" text-anchor="start">Claude Code · Codex CLI</text>
+<text x="32" y="133" font-family="Helvetica Neue, Arial, sans-serif" font-size="23" font-weight="400" fill="#616872" text-anchor="start">Other MCP clients: manual setup</text>
+<rect x="32" y="184" width="390" height="86" rx="4" fill="#f6f7f8" stroke="#d9dde2"/>
+<text x="52" y="219" font-family="Helvetica Neue, Arial, sans-serif" font-size="24" font-weight="500" fill="#17191c" text-anchor="start">MCP / stdio</text>
+<text x="52" y="248" font-family="Helvetica Neue, Arial, sans-serif" font-size="22" font-weight="400" fill="#616872" text-anchor="start">Explicit reads and reports</text>
+<rect x="32" y="340" width="390" height="86" rx="4" fill="#f6f7f8" stroke="#d9dde2"/>
+<text x="52" y="375" font-family="Helvetica Neue, Arial, sans-serif" font-size="24" font-weight="500" fill="#17191c" text-anchor="start">Task service</text>
+<text x="52" y="404" font-family="Helvetica Neue, Arial, sans-serif" font-size="22" font-weight="400" fill="#616872" text-anchor="start">Revision and handoff checks</text>
+<rect x="32" y="496" width="390" height="86" rx="4" fill="#f6f7f8" stroke="#d9dde2"/>
+<text x="52" y="531" font-family="Helvetica Neue, Arial, sans-serif" font-size="24" font-weight="500" fill="#17191c" text-anchor="start">SQLite</text>
+<text x="52" y="560" font-family="Helvetica Neue, Arial, sans-serif" font-size="22" font-weight="400" fill="#616872" text-anchor="start">Local task state and history</text>
+<path d="M224 145V184M224 270V340M224 426V496" fill="none" stroke="#e65241" stroke-width="2"/>
+<path d="M218 176L224 184L230 176M218 332L224 340L230 332M218 488L224 496L230 488" fill="none" stroke="#e65241" stroke-width="2"/>
+<text x="464" y="299" font-family="Helvetica Neue, Arial, sans-serif" font-size="22" font-weight="500" fill="#17191c" text-anchor="start">CLI /</text>
+<text x="464" y="329" font-family="Helvetica Neue, Arial, sans-serif" font-size="22" font-weight="500" fill="#17191c" text-anchor="start">Python</text>
+<path d="M516 345V383H422M430 377L422 383L430 389" fill="none" stroke="#616872" stroke-width="2"/>
+<text x="32" y="625" font-family="Helvetica Neue, Arial, sans-serif" font-size="22" font-weight="400" fill="#616872" text-anchor="start">The host controls identity and completion checks.</text>
+</svg>

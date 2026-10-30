@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="250" viewBox="0 0 640 250" role="img" aria-labelledby="title desc">
+<title id="title">Context Relay</title><desc id="desc">Task context across agent harnesses. Python, CLI and optional MCP. Experimental source preview.</desc>
+<rect width="640" height="250" fill="#0d1117"/>
+<g transform="translate(38 68)" fill="none" stroke="#e65241" stroke-width="5" stroke-linecap="square"><path d="M0 0H27V27H54M0 12V54H27M54 0V42H27"/></g>
+<text x="120" y="111" font-family="Helvetica Neue, Arial, sans-serif" font-size="57" font-weight="500" fill="#eff1f3" text-anchor="start">context relay</text>
+<text x="40" y="171" font-family="Helvetica Neue, Arial, sans-serif" font-size="26" font-weight="400" fill="#9ca5b1" text-anchor="start">Task context across agent harnesses.</text>
+<path d="M38 185H602" stroke="#343b45"/>
+<text x="38" y="222" font-family="Menlo, Consolas, monospace" font-size="16" font-weight="400" fill="#9ca5b1" text-anchor="start">PYTHON / CLI / MCP</text>
+<text x="602" y="222" font-family="Menlo, Consolas, monospace" font-size="16" font-weight="400" fill="#e65241" text-anchor="end">SOURCE PREVIEW</text>
+</svg>

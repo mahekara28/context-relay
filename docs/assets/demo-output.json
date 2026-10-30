@@ -1,0 +1,105 @@
+{
+  "original": {
+    "revision": 1,
+    "text": "Use CSV"
+  },
+  "correction": {
+    "revision": 2,
+    "previous": "Use CSV",
+    "current": "Use JSON",
+    "source": {
+      "kind": "user",
+      "ref": "message-2"
+    }
+  },
+  "handoff": {
+    "sender": "sender",
+    "recipient": "receiver",
+    "revision": 2,
+    "status": "accepted"
+  },
+  "packet": {
+    "revision": 2,
+    "goal": "Produce a regional revenue report",
+    "instructions": [
+      {
+        "text": "Use JSON",
+        "source": {
+          "kind": "user",
+          "ref": "message-2"
+        }
+      }
+    ],
+    "open_work": [
+      "Implement JSON export",
+      "Run the report oracle"
+    ]
+  },
+  "verification": {
+    "stored": false,
+    "passed": false,
+    "fresh": false
+  },
+  "transcript": [
+    {
+      "kind": "heading",
+      "text": "01  Record the instruction"
+    },
+    {
+      "kind": "output",
+      "text": "    Use CSV  /  revision 1"
+    },
+    {
+      "kind": "blank",
+      "text": ""
+    },
+    {
+      "kind": "heading",
+      "text": "02  Apply the correction"
+    },
+    {
+      "kind": "removed",
+      "text": "  - Use CSV   superseded"
+    },
+    {
+      "kind": "added",
+      "text": "  + Use JSON  active"
+    },
+    {
+      "kind": "output",
+      "text": "    source: user:message-2"
+    },
+    {
+      "kind": "blank",
+      "text": ""
+    },
+    {
+      "kind": "heading",
+      "text": "03  Hand off the current state"
+    },
+    {
+      "kind": "output",
+      "text": "    sender -> receiver  /  revision 2"
+    },
+    {
+      "kind": "accepted",
+      "text": "    handoff: accepted"
+    },
+    {
+      "kind": "output",
+      "text": "    instruction: Use JSON"
+    },
+    {
+      "kind": "output",
+      "text": "    verification: not recorded"
+    },
+    {
+      "kind": "blank",
+      "text": ""
+    },
+    {
+      "kind": "note",
+      "text": "Local example. No model or network calls."
+    }
+  ]
+}
