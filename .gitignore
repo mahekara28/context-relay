@@ -4,6 +4,7 @@ __pycache__/
 .venv/
 .venv-mcp/
 .relay/
+.mcp.json
 build/
 wheelhouse/
 dist/

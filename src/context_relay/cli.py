@@ -54,7 +54,28 @@ def main(argv: list[str] | None = None) -> int:
     mcp = sub.add_parser("mcp", help="Run the optional local MCP stdio server")
     mcp.add_argument("--db", default=".relay/tasks.db")
     mcp.add_argument("--subject", default=getpass.getuser())
+    connector = sub.add_parser("connector", help="Manage project-local harness MCP configuration")
+    connector.add_argument("harness", choices=("claude",))
+    connector.add_argument("action", choices=("configure", "diagnose", "remove"))
+    connector.add_argument("--root", default=".")
+    connector.add_argument("--python", default=sys.executable)
+    connector.add_argument("--subject", default=None)
     args = parser.parse_args(argv)
+    if args.command == "connector":
+        from .connectors import configure_claude, diagnose_claude, remove_claude
+        try:
+            if args.action == "configure":
+                result = configure_claude(args.root, python_executable=args.python,
+                                          subject=args.subject or "claude")
+            elif args.action == "remove":
+                result = remove_claude(args.root)
+            else:
+                result = diagnose_claude(args.root)
+            print(json.dumps(result, indent=2))
+            return 0
+        except (OSError, ValueError) as error:
+            print(f"Connector error: {error}", file=sys.stderr)
+            return 1
     if args.command == "mcp":
         from .mcp_server import run_mcp_server
         path = Path(args.db).resolve()
