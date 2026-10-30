@@ -50,6 +50,7 @@ Deployment uses GitHub's scoped workflow token and OIDC; no PAT is stored in the
 repository or website. Workflow actions are pinned to immutable commits.
 
 The About website field should remain `https://mahekara28.github.io/context-relay/`.
-When npm publication lands, update the installation block and beta FAQ together.
+Installation offers global npm and npx commands. Keep both modes, the beta tag,
+version pin and FAQ synchronized with verified npm releases.
 Do not claim live model evaluation, automatic history capture through MCP, or
 successful task completion from an acceptance receipt.

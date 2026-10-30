@@ -2407,6 +2407,23 @@ dialog textarea {
 .terminal-header .muted {
   color: #bec9bd;
 }
+.install-picker {
+  display: flex;
+  gap: 8px;
+  padding: 16px 22px 0;
+}
+.install-picker button {
+  color: #bec9bd;
+  border: 1px solid #485449;
+  border-radius: 4px;
+  font-size: 11px;
+  padding: 8px 12px;
+}
+.install-picker button[aria-pressed="true"] {
+  color: #222827;
+  background: #f6f5f1;
+  border-color: #f6f5f1;
+}
 .local-details a {
   font-size: 11px;
   display: inline-block;

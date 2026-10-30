@@ -46,12 +46,10 @@ test("project subpath loads every asset and links to real documentation", async 
   );
   const { version } = JSON.parse(await readFile("package.json", "utf8"));
   await expect(page.locator("#install-command")).toContainText(
-    `mahekara28-context-relay-${version}.tgz`,
+    "npm install --global @mahekara28/context-relay@beta",
   );
-  await expect(page.locator("#install-command")).not.toContainText(
-    "git switch",
-  );
-  await expect(page.locator(".install-status")).toContainText("not published");
+  await expect(page.locator("#install-command")).not.toContainText("git clone");
+  await expect(page.locator(".install-status")).toContainText(`@${version}`);
 });
 
 test("workspace tour supports keyboard navigation and full-size images", async ({
@@ -105,6 +103,15 @@ test("copy commands preserve exact terminal text and switch harnesses", async ({
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
     expected.trim(),
   );
+  await page.getByRole("button", { name: "npx · try it now" }).click();
+  await page
+    .getByRole("button", { name: "Copy install commands", exact: true })
+    .click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+    "npx @mahekara28/context-relay@beta demo\nnpx @mahekara28/context-relay@beta ui",
+  );
+  await page.getByRole("button", { name: "npm · global install" }).click();
+  await expect(page.locator("#install-command")).toHaveText(expected.trim());
   for (const harness of ["codex", "opencode", "goose", "claude"]) {
     await page.locator(`[data-harness=${harness}]`).click();
     await page

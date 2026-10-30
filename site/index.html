@@ -814,13 +814,13 @@ relay ui</pre
             <h2>A fresh thread starts here.</h2>
           </div>
           <p>
-            Build and install the beta from the repository, then open the sample
-            workspace. Node 22.16+ and npm are all you need.
+            Install the public beta from npm, then open your local workspace.
+            Node 22.16+ and npm are all you need.
           </p>
         </div>
         <div class="install-grid">
           <div class="install-copy">
-            <span class="tiny-tag accent">v{{VERSION}} · source install</span>
+            <span class="tiny-tag accent">v{{VERSION}} · public npm beta</span>
             <h3>Install. Explore. Connect.</h3>
             <p>
               The package bundles the CLI, MCP server and local interface. No
@@ -828,13 +828,16 @@ relay ui</pre
               installation.
             </p>
             <ul>
-              <li><span>1</span>Build and install the npm tarball.</li>
+              <li><span>1</span>Install the package from npm.</li>
               <li><span>2</span>Explore the synthetic demo.</li>
               <li><span>3</span>Connect a real project when ready.</li>
             </ul>
             <p class="install-status">
-              The beta is not published to the npm registry yet. These commands
-              install the package from source.
+              Use <code>@beta</code> for beta updates, or pin
+              <code>@{{VERSION}}</code> for this exact release.
+              <a href="https://www.npmjs.com/package/@mahekara28/context-relay"
+                >View on npm ↗</a
+              >.
             </p>
             <a
               class="text-link"
@@ -855,13 +858,20 @@ relay ui</pre
                 Copy commands
               </button>
             </div>
+            <div
+              class="install-picker"
+              role="group"
+              aria-label="Installation method"
+            >
+              <button data-install="npm" aria-pressed="true">
+                npm · global install
+              </button>
+              <button data-install="npx" aria-pressed="false">
+                npx · try it now
+              </button>
+            </div>
             <pre id="install-command">
-git clone https://github.com/mahekara28/context-relay.git
-cd context-relay
-npm ci
-npm pack
-npm install --global ./mahekara28-context-relay-{{VERSION}}.tgz
-
+npm install --global @mahekara28/context-relay@beta
 relay demo
 relay ui</pre
             >
@@ -985,8 +995,9 @@ relay ui</pre
             <p>
               A local npm CLI and workspace, four capture adapters, MCP access,
               checkpoint review and merging, handoff receipts, Markdown export,
-              and interactive Claude Code/Codex launch. The public npm registry
-              release and live model-quality evaluation remain pending.
+              and interactive Claude Code/Codex launch. Install the public npm
+              beta globally or run it with npx. Live model-quality evaluation
+              remains pending.
             </p>
           </details>
         </div>
