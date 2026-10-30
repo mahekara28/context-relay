@@ -186,6 +186,56 @@ class TaskService:
                 "pending_handoffs": pending_handoffs,
                 "pending_conflicts": pending_conflicts}
 
+    def record_verification(self, principal: Principal, task_id: str, *,
+                            request_id: str, report: dict, root: str) -> dict:
+        """Persist a host-run criterion report at the exact task and artifact state."""
+        self._check(principal, "task.verify")
+        if self.source_class != "host":
+            raise AccessDenied("Only the host may record verification outcomes.")
+        nonempty_string(request_id, "request_id", limit=128)
+        from .task_verification import assess_verification_freshness
+        current = self.show(principal, task_id)
+        report = clone(report)
+        if report.get("task_id") != task_id or report.get("task_revision") != current["revision"]:
+            raise ConflictError(report.get("task_revision", -1), current["revision"])
+        checks = report.get("checks")
+        if (type(report.get("passed")) is not bool or type(checks) is not list or
+            [item.get("criterion") for item in checks if type(item) is dict] != current["completion_criteria"] or
+            len(checks) != len(current["completion_criteria"]) or
+            any(type(item.get("binding")) is not dict or
+                item["binding"].get("task_revision") != current["revision"] or
+                item["binding"].get("outcome") not in ("verified", "failed")
+                for item in checks) or
+            report["passed"] != all(item["binding"]["outcome"] == "verified" for item in checks)):
+            raise ValueError("Verification report does not match task criteria and outcomes.")
+        assessment = assess_verification_freshness(current, report, root=root)
+        if any(reason in assessment["reasons"] for reason in ("task_sources_changed", "artifact_bytes_changed")):
+            raise ValueError("Verification sources changed before recording the report.")
+        if len(encode(report)) > 256000:
+            raise ValueError("Verification report exceeds 256 KiB.")
+        with self.store._transaction(write=True):
+            self.store._assert_mutable()
+            row = self._row(task_id, principal)
+            if row["revision"] != current["revision"]:
+                raise ConflictError(current["revision"], row["revision"])
+            prior = self.store._connection.execute(
+                "SELECT * FROM task_verifications WHERE task_id=? AND request_id=?",
+                (task_id, request_id),
+            ).fetchone()
+            if prior is not None:
+                if json.loads(prior["payload"]) != report:
+                    raise TaskRequestConflict("request_id was already used for another verification.")
+                return {"id": prior["id"], "task_id": task_id,
+                        "task_revision": prior["task_revision"], "passed": bool(prior["passed"])}
+            verification_id = uuid.uuid4().hex
+            self.store._connection.execute(
+                "INSERT INTO task_verifications VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (verification_id, task_id, request_id, current["revision"],
+                 report["source_digest"], int(report["passed"]), encode(report), timestamp()),
+            )
+            return {"id": verification_id, "task_id": task_id,
+                    "task_revision": current["revision"], "passed": bool(report["passed"])}
+
     def update(self, principal: Principal, task_id: str, *, expected_revision: int,
                request_id: str, changes: dict) -> dict:
         """Apply one bounded patch exactly once at a caller-observed revision."""

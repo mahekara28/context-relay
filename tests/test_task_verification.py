@@ -82,6 +82,28 @@ class TaskVerificationTests(unittest.TestCase):
             finally:
                 store.close()
 
+    def test_host_persists_fresh_verification_report_once(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            (Path(temporary) / "result.json").write_text("{}")
+            store = RelayStore()
+            try:
+                service = TaskService(store, authorize=lambda principal, action: True)
+                principal = Principal("team", "host")
+                task = service.create(principal, goal="Finish", completion_criteria=["Oracle"],
+                                      workspace={"repository": "example", "root": temporary})
+                captured = service.capture_artifact(principal, task["id"], expected_revision=0,
+                                                    request_id="artifact", path="result.json")
+                report = verify_task_criteria(captured, root=temporary,
+                                              commands={"Oracle": [sys.executable, "-c", "print('ok')"]})
+                first = service.record_verification(principal, task["id"], request_id="check-1",
+                                                    report=report, root=temporary)
+                self.assertTrue(first["passed"])
+                self.assertEqual(first, service.record_verification(principal, task["id"],
+                                                                     request_id="check-1", report=report,
+                                                                     root=temporary))
+            finally:
+                store.close()
+
 
 if __name__ == "__main__":
     unittest.main()
