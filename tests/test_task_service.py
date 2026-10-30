@@ -87,6 +87,27 @@ class TaskServiceTests(unittest.TestCase):
         self.assertTrue(identity["head"])
         self.assertTrue(identity["repository"])
 
+    def test_instruction_supersession_is_explicit_and_scoped(self):
+        task = self.create()
+        old = self.service.add_instruction(self.alice, task["id"], expected_revision=0,
+                                           request_id="old", text="Use CSV",
+                                           source={"kind": "user", "ref": "message-1"})
+        old_id = old["instructions"][0]["id"]
+        new = self.service.add_instruction(self.alice, task["id"], expected_revision=1,
+                                           request_id="new", text="Use JSON",
+                                           source={"kind": "user", "ref": "message-2"},
+                                           supersedes=[old_id])
+        self.assertEqual([item["status"] for item in new["instructions"]], ["superseded", "active"])
+        self.assertEqual(self.service.add_instruction(self.alice, task["id"], expected_revision=1,
+                                                      request_id="new", text="Use JSON",
+                                                      source={"kind": "user", "ref": "message-2"},
+                                                      supersedes=[old_id]), new)
+        with self.assertRaises(ValueError):
+            self.service.add_instruction(self.alice, task["id"], expected_revision=2,
+                                         request_id="bad", text="Use XML",
+                                         source={"kind": "user", "ref": "message-3"},
+                                         supersedes=[old_id])
+
 
 if __name__ == "__main__":
     unittest.main()

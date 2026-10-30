@@ -12,7 +12,7 @@ from typing import Callable
 from .models import ConflictError, clone, encode, nonempty_string, timestamp, validate_revision
 from .organization import AccessDenied, Principal
 from .store import RelayStore
-from .task_contract import SCHEMA_VERSION, validate_task_snapshot, validate_workspace
+from .task_contract import SCHEMA_VERSION, validate_source, validate_task_snapshot, validate_workspace
 
 
 class TaskNotFound(LookupError):
@@ -125,9 +125,20 @@ class TaskService:
         if self.source_class == "agent_report" and set(changes) != {"open_work"}:
             raise AccessDenied("Agent reports may update only open work.")
         changes = clone(changes)
+        return self._mutate(principal, task_id, expected_revision=expected_revision,
+                            request_id=request_id, operation="update", payload=changes,
+                            transform=lambda task: task.update(changes))
+
+    def _mutate(self, principal: Principal, task_id: str, *, expected_revision: int,
+                request_id: str, operation: str, payload: dict, transform: Callable[[dict], None]) -> dict:
+        """Serialize one task transition and its replay receipt in one transaction."""
+        self._check(principal, f"task.{operation}")
+        nonempty_string(task_id, "task_id", limit=128)
+        nonempty_string(request_id, "request_id", limit=128)
+        validate_revision(expected_revision)
         fingerprint = hashlib.sha256(json.dumps(
             {"principal": principal.subject, "source_class": self.source_class,
-             "expected_revision": expected_revision, "changes": changes},
+             "expected_revision": expected_revision, "operation": operation, "payload": payload},
             sort_keys=True, separators=(",", ":"), ensure_ascii=False,
         ).encode("utf-8")).hexdigest()
         with self.store._transaction(write=True):
@@ -146,7 +157,7 @@ class TaskService:
             if row["status"] != "active":
                 raise ValueError("Archived tasks must be reopened before updating.")
             task = json.loads(row["payload"])
-            task.update(changes)
+            transform(task)
             task["revision"] += 1
             task["updated_at"] = timestamp()
             task = validate_task_snapshot(task)
@@ -156,11 +167,47 @@ class TaskService:
             )
             self.store._connection.execute(
                 "INSERT INTO task_events VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (uuid.uuid4().hex, task_id, task["revision"], "update", principal.subject,
-                 self.source_class, encode(changes), task["updated_at"]),
+                (uuid.uuid4().hex, task_id, task["revision"], operation, principal.subject,
+                 self.source_class, encode(payload), task["updated_at"]),
             )
             self.store._connection.execute(
                 "INSERT INTO task_mutations VALUES (?, ?, ?, ?)",
                 (task_id, request_id, fingerprint, encode(task)),
             )
         return task
+
+    def add_instruction(self, principal: Principal, task_id: str, *, expected_revision: int,
+                        request_id: str, text: str, source: dict, scope: str = "task",
+                        supersedes: list[str] | None = None) -> dict:
+        """Record an instruction; any supersession names active predecessors exactly."""
+        if self.source_class != "host":
+            raise AccessDenied("Only the host may record authoritative instructions.")
+        _ = nonempty_string(text, "instruction text", limit=4096)
+        source = validate_source(source)
+        if source["kind"] not in ("user", "host", "file"):
+            raise ValueError("Authoritative instructions require a user, host, or file source.")
+        if scope not in ("task", "workspace", "repository"):
+            raise ValueError("instruction scope is unsupported.")
+        if supersedes is None:
+            supersedes = []
+        if type(supersedes) is not list or len(set(supersedes)) != len(supersedes):
+            raise ValueError("supersedes must be a list of distinct instruction ids.")
+        for predecessor in supersedes:
+            nonempty_string(predecessor, "superseded instruction id", limit=128)
+        payload = {"text": text, "source": source, "scope": scope, "supersedes": supersedes}
+
+        def transform(task: dict) -> None:
+            predecessors = {item["id"]: item for item in task["instructions"]}
+            for predecessor in supersedes:
+                item = predecessors.get(predecessor)
+                if item is None or item["status"] != "active" or item["scope"] != scope:
+                    raise ValueError("A superseded instruction must be active and share the new scope.")
+            for predecessor in supersedes:
+                predecessors[predecessor]["status"] = "superseded"
+            task["instructions"].append({"id": uuid.uuid4().hex, "text": text,
+                                         "source": source, "scope": scope, "status": "active",
+                                         "supersedes": supersedes})
+
+        return self._mutate(principal, task_id, expected_revision=expected_revision,
+                            request_id=request_id, operation="instruction", payload=payload,
+                            transform=transform)
