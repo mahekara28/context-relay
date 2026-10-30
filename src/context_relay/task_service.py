@@ -182,6 +182,9 @@ class TaskService:
             task = json.loads(row["payload"])
             transform(task)
             task["revision"] += 1
+            for instruction in task["instructions"]:
+                if instruction["status"] == "active" and instruction.get("expires_at_revision", 2**63) <= task["revision"]:
+                    instruction["status"] = "expired"
             task["updated_at"] = timestamp()
             task = validate_task_snapshot(task)
             self.store._connection.execute(
@@ -240,11 +243,13 @@ class TaskService:
 
     def add_instruction(self, principal: Principal, task_id: str, *, expected_revision: int,
                         request_id: str, text: str, source: dict, scope: str = "task",
-                        supersedes: list[str] | None = None) -> dict:
+                        supersedes: list[str] | None = None,
+                        expires_at_revision: int | None = None) -> dict:
         """Record an instruction; any supersession names active predecessors exactly."""
         if self.source_class != "host":
             raise AccessDenied("Only the host may record authoritative instructions.")
         _ = nonempty_string(text, "instruction text", limit=4096)
+        validate_revision(expected_revision)
         source = validate_source(source)
         if source["kind"] not in ("user", "host", "file"):
             raise ValueError("Authoritative instructions require a user, host, or file source.")
@@ -257,6 +262,10 @@ class TaskService:
         for predecessor in supersedes:
             nonempty_string(predecessor, "superseded instruction id", limit=128)
         payload = {"text": text, "source": source, "scope": scope, "supersedes": supersedes}
+        if expires_at_revision is not None:
+            if type(expires_at_revision) is not int or expires_at_revision <= expected_revision + 1:
+                raise ValueError("expires_at_revision must follow the instruction creation revision.")
+            payload["expires_at_revision"] = expires_at_revision
 
         def transform(task: dict) -> None:
             predecessors = {item["id"]: item for item in task["instructions"]}
@@ -266,9 +275,12 @@ class TaskService:
                     raise ValueError("A superseded instruction must be active and share the new scope.")
             for predecessor in supersedes:
                 predecessors[predecessor]["status"] = "superseded"
-            task["instructions"].append({"id": uuid.uuid4().hex, "text": text,
-                                         "source": source, "scope": scope, "status": "active",
-                                         "supersedes": supersedes})
+            item = {"id": uuid.uuid4().hex, "text": text,
+                    "source": source, "scope": scope, "status": "active",
+                    "supersedes": supersedes}
+            if expires_at_revision is not None:
+                item["expires_at_revision"] = expires_at_revision
+            task["instructions"].append(item)
 
         return self._mutate(principal, task_id, expected_revision=expected_revision,
                             request_id=request_id, operation="instruction", payload=payload,

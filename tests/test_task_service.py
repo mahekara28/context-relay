@@ -146,6 +146,17 @@ class TaskServiceTests(unittest.TestCase):
         self.assertEqual(difference["collections"]["instructions"]["added"][0]["source"]["ref"], "message-2")
         self.assertEqual(difference["to_revision"], 1)
 
+    def test_temporary_instruction_expires_at_revision_boundary(self):
+        task = self.create()
+        instructed = self.service.add_instruction(
+            self.alice, task["id"], expected_revision=0, request_id="temporary",
+            text="Use a draft footer", source={"kind": "user", "ref": "message-1"},
+            expires_at_revision=2)
+        self.assertEqual(instructed["instructions"][0]["status"], "active")
+        revised = self.service.update(self.alice, task["id"], expected_revision=1,
+                                      request_id="next", changes={"open_work": ["Review"]})
+        self.assertEqual(revised["instructions"][0]["status"], "expired")
+
 
 if __name__ == "__main__":
     unittest.main()
