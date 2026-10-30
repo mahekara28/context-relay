@@ -277,7 +277,7 @@ function handoffsView() {
       "A clean start, with the context.",
       "Open a new chat in the destination harness and paste its continuation prompt. MCP records acceptance when that agent claims it.",
     ) +
-    `<div class="banner warning">Acceptance confirms delivery. It does not mean the task or its tests have passed. A Markdown export is a portable fallback and does not record acceptance.</div><div class="cards spaced">${state.handoffs.map((h) => `<article class="panel handoff"><div class="row between"><div class="route row">${icon(h.recipient)}To ${names[h.recipient]}</div>${badge(h.status, h.status === "accepted" ? "good" : h.status === "offered" ? "warn" : "")}</div><h3>${escape(h.packet.goal)}</h3><p class="id">${escape(h.id)} · ${h.packet.instructions.length} instructions · ${h.packet.omitted.evidence} evidence omitted</p><p class="prompt">Ask ${names[h.recipient]} to inspect Context Relay handoff <strong>${escape(h.id)}</strong>, verify its sources and local state, then accept it before continuing.</p><div class="row"><button class="primary" data-copy="${h.id}">Copy continuation prompt</button><button data-export="${h.id}">Export Markdown</button><button data-freshness="${h.checkpointId}">Check freshness</button>${h.status === "offered" ? `<button class="quiet danger" data-cancel="${h.id}">Cancel offer</button>` : ""}</div></article>`).join("") || '<div class="empty"><h2>No handoffs yet</h2><p>Create a reviewed checkpoint to offer it to another session.</p></div>'}</div>`
+    `<div class="banner warning">Acceptance confirms delivery. It does not mean the task or its tests have passed. A Markdown export is a portable fallback and does not record acceptance.</div><div class="cards spaced">${state.handoffs.map((h) => `<article class="panel handoff"><div class="row between"><div class="route row">${icon(h.recipient)}To ${names[h.recipient]}</div>${badge(h.status, h.status === "accepted" ? "good" : h.status === "offered" ? "warn" : "")}</div><h3>${escape(h.packet.goal)}</h3><p class="help">${["claude", "codex"].includes(h.recipient) ? "Fresh terminal session: relay launch --id " + escape(h.id) + " (use the same --data-dir as this workspace)." : "Open a fresh session and paste the continuation prompt."}</p><p class="id">${escape(h.id)} · ${h.packet.instructions.length} instructions · ${h.packet.omitted.evidence} evidence omitted</p><p class="prompt">Ask ${names[h.recipient]} to inspect Context Relay handoff <strong>${escape(h.id)}</strong>, verify its sources and local state, then accept it before continuing.</p><div class="row"><button class="primary" data-copy="${h.id}">Copy continuation prompt</button><button data-export="${h.id}">Export Markdown</button><button data-freshness="${h.checkpointId}">Check freshness</button>${h.status === "offered" ? `<button class="quiet danger" data-cancel="${h.id}">Cancel offer</button>` : ""}</div></article>`).join("") || '<div class="empty"><h2>No handoffs yet</h2><p>Create a reviewed checkpoint to offer it to another session.</p></div>'}</div>`
   );
 }
 function connectionsView() {
@@ -816,4 +816,9 @@ if (token)
   });
 else login();
 
-window.addEventListener('beforeunload',event=>{if(state.draft){event.preventDefault();event.returnValue='';}});
+window.addEventListener("beforeunload", (event) => {
+  if (state.draft) {
+    event.preventDefault();
+    event.returnValue = "";
+  }
+});

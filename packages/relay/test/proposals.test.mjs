@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { RelayStore } from "../../../dist/store.js";
 import { proposalPreview, generateProposal } from "../../../dist/proposals.js";
-import { markdownPacket } from "../../../dist/delivery.js";
+import { markdownPacket, launchPlan } from "../../../dist/delivery.js";
 test("Nebius sends only selected redacted evidence, validates citations, and never writes a checkpoint", async (t) => {
   const root = mkdtempSync(join(tmpdir(), "relay-proposal-"));
   mkdirSync(join(root, "project"));
@@ -112,4 +112,15 @@ test("Nebius sends only selected redacted evidence, validates citations, and nev
   assert.match(md, /untrusted quotations/);
   assert.match(md, /> Use 7 days/);
   assert.equal(store.handoff(h.id).status, "offered");
+});
+
+test("interactive launch preserves native approvals and keeps the prompt in one argument", () => {
+  const h = { id: "synthetic-id", recipient: "codex", status: "offered" };
+  const plan = launchPlan(h, "/project with spaces");
+  assert.equal(plan.command, "codex");
+  assert.equal(plan.args.length, 1);
+  assert.match(plan.args[0], /synthetic-id/);
+  assert(!plan.args.some((arg) => arg.startsWith("--")));
+  assert.throws(() => launchPlan({ ...h, status: "accepted" }, "/project"));
+  assert.throws(() => launchPlan({ ...h, recipient: "goose" }, "/project"));
 });

@@ -27,3 +27,22 @@ export function markdownPacket(handoff: Handoff): string {
       "\n\n",
     )}\n\nOmitted evidence: ${p.omitted.evidence}\n\n## File references\n\n${list(p.artifacts.map((a) => a.path + " — SHA-256 " + a.sha256))}\n\nGit HEAD: ${p.git.head ?? "unavailable"}\n\n${p.trust}\n\nThis export does not transfer files or record MCP acceptance. Verify freshness in Relay before continuing.\n`;
 }
+
+/** An interactive launch plan. The caller retains the harness's normal approvals. */
+export function launchPlan(
+  handoff: Handoff,
+  root: string,
+  executable?: string,
+) {
+  if (handoff.status !== "offered")
+    throw new Error("Only an offered handoff can start a fresh continuation.");
+  if (!["claude", "codex"].includes(handoff.recipient))
+    throw new Error(
+      "Use the continuation prompt or Markdown export for this harness.",
+    );
+  return {
+    command: executable ?? handoff.recipient,
+    args: [continuationPrompt(handoff)],
+    cwd: root,
+  };
+}
