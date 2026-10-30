@@ -21,7 +21,7 @@ class TaskMigrationTests(unittest.TestCase):
             store = RelayStore(path)
             try:
                 with store._transaction():
-                    self.assertEqual(store._connection.execute("PRAGMA user_version").fetchone()[0], 2)
+                    self.assertEqual(store._connection.execute("PRAGMA user_version").fetchone()[0], 3)
                     self.assertEqual(store._connection.execute("SELECT name FROM sessions WHERE id='old'").fetchone()[0], "Old")
                     self.assertIsNotNone(store._connection.execute("SELECT name FROM sqlite_master WHERE name='tasks'").fetchone())
             finally:
