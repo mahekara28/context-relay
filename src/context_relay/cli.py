@@ -51,7 +51,16 @@ def main(argv: list[str] | None = None) -> int:
     accept_handoff.add_argument("handoff_id")
     inspect_handoff = handoff_sub.add_parser("inspect")
     inspect_handoff.add_argument("handoff_id")
+    mcp = sub.add_parser("mcp", help="Run the optional local MCP stdio server")
+    mcp.add_argument("--db", default=".relay/tasks.db")
+    mcp.add_argument("--subject", default=getpass.getuser())
     args = parser.parse_args(argv)
+    if args.command == "mcp":
+        from .mcp_server import run_mcp_server
+        path = Path(args.db).resolve()
+        private_directory(path.parent)
+        run_mcp_server(path, subject=args.subject)
+        return 0
     if args.command == "handoff":
         from .handoffs import HandoffService
         from .organization import Principal

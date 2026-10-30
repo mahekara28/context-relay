@@ -19,6 +19,9 @@ classifiers = [
   "Typing :: Typed",
 ]
 
+[project.optional-dependencies]
+mcp = ["mcp>=2.3,<3"]
+
 [project.scripts]
 context-relay = "context_relay.cli:main"
 
