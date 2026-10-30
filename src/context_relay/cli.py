@@ -55,22 +55,32 @@ def main(argv: list[str] | None = None) -> int:
     mcp.add_argument("--db", default=".relay/tasks.db")
     mcp.add_argument("--subject", default=getpass.getuser())
     connector = sub.add_parser("connector", help="Manage project-local harness MCP configuration")
-    connector.add_argument("harness", choices=("claude",))
+    connector.add_argument("harness", choices=("claude", "codex"))
     connector.add_argument("action", choices=("configure", "diagnose", "remove"))
     connector.add_argument("--root", default=".")
     connector.add_argument("--python", default=sys.executable)
     connector.add_argument("--subject", default=None)
     args = parser.parse_args(argv)
     if args.command == "connector":
-        from .connectors import configure_claude, diagnose_claude, remove_claude
+        from .connectors import (configure_claude, configure_codex, diagnose_claude,
+                                 diagnose_codex, remove_claude, remove_codex)
         try:
-            if args.action == "configure":
-                result = configure_claude(args.root, python_executable=args.python,
-                                          subject=args.subject or "claude")
-            elif args.action == "remove":
-                result = remove_claude(args.root)
+            if args.harness == "claude":
+                if args.action == "configure":
+                    result = configure_claude(args.root, python_executable=args.python,
+                                              subject=args.subject or "claude")
+                elif args.action == "remove":
+                    result = remove_claude(args.root)
+                else:
+                    result = diagnose_claude(args.root)
             else:
-                result = diagnose_claude(args.root)
+                if args.action == "configure":
+                    result = configure_codex(args.root, python_executable=args.python,
+                                             subject=args.subject or "codex")
+                elif args.action == "remove":
+                    result = remove_codex(args.root)
+                else:
+                    result = diagnose_codex(args.root)
             print(json.dumps(result, indent=2))
             return 0
         except (OSError, ValueError) as error:

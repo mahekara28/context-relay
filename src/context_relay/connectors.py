@@ -11,6 +11,8 @@ from .models import nonempty_string
 
 
 SERVER_NAME = "context_relay"
+_CODEX_BEGIN = "# BEGIN context-relay managed MCP server"
+_CODEX_END = "# END context-relay managed MCP server"
 
 
 def _root(project_root: str | Path) -> Path:
@@ -77,5 +79,70 @@ def diagnose_claude(project_root: str | Path) -> dict:
     entry = parsed.get("mcpServers", {}).get(SERVER_NAME)
     command = entry.get("command") if type(entry) is dict else None
     return {"configured": type(entry) is dict, "path": str(path),
+            "executable_exists": bool(command and Path(command).is_file()),
+            "project_scoped": True}
+
+
+def _codex_block(root: Path, python_executable: str | Path, subject: str) -> str:
+    entry = _claude_entry(root, python_executable, subject)
+    quoted = json.dumps
+    return (f"{_CODEX_BEGIN}\n[mcp_servers.{SERVER_NAME}]\n"
+            f"command = {quoted(entry['command'])}\n"
+            f"args = {quoted(entry['args'])}\n"
+            f"cwd = {quoted(str(root))}\n"
+            f"env = {{ PYTHONPATH = {quoted(str(root / 'src'))} }}\n"
+            f"{_CODEX_END}\n")
+
+
+def _read_codex(root: Path) -> tuple[Path, str | None, str]:
+    path = root / ".codex/config.toml"
+    digest, data = file_state(path)
+    return path, digest, "" if data is None else data.decode("utf-8")
+
+
+def configure_codex(project_root: str | Path, *, python_executable: str | Path | None = None,
+                    subject: str = "codex") -> dict:
+    root = _root(project_root)
+    path, digest, original = _read_codex(root)
+    block = _codex_block(root, python_executable or sys.executable, subject)
+    if _CODEX_BEGIN in original:
+        if not original.endswith(block):
+            raise ValueError("Existing managed Codex entry differs; inspect it before changing it.")
+        return diagnose_codex(root)
+    if f"[mcp_servers.{SERVER_NAME}]" in original:
+        raise ValueError("Existing context_relay server entry is not managed by this connector.")
+    updated = original + ("\n" if original else "") + block
+    replace_if_unchanged(path, expected_digest=digest, content=updated.encode("utf-8"))
+    return diagnose_codex(root)
+
+
+def remove_codex(project_root: str | Path) -> dict:
+    root = _root(project_root)
+    path, digest, original = _read_codex(root)
+    marker = ("\n" if not original.startswith(_CODEX_BEGIN) else "") + _CODEX_BEGIN
+    start = original.find(marker)
+    if start < 0:
+        return {"configured": False, "path": str(path)}
+    if original.count(_CODEX_BEGIN) != 1 or not original.endswith(_CODEX_END + "\n"):
+        raise ValueError("Managed Codex block has been edited; inspect it before removing it.")
+    restored = original[:start]
+    replace_if_unchanged(path, expected_digest=digest,
+                         content=restored.encode("utf-8") if restored else None)
+    return {"configured": False, "path": str(path)}
+
+
+def diagnose_codex(project_root: str | Path) -> dict:
+    root = _root(project_root)
+    path, _, content = _read_codex(root)
+    configured = _CODEX_BEGIN in content and _CODEX_END in content
+    command = None
+    if configured:
+        for line in content.splitlines():
+            if line.startswith("command = "):
+                try:
+                    command = json.loads(line.partition("=")[2].strip())
+                except json.JSONDecodeError:
+                    pass
+    return {"configured": configured, "path": str(path),
             "executable_exists": bool(command and Path(command).is_file()),
             "project_scoped": True}

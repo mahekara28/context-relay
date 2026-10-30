@@ -25,3 +25,14 @@ inspect the entry and executable path, or `connector claude remove` to remove
 only Relay's entry. The generated file is ignored by Git because it contains
 absolute local paths. Claude Code may require project server approval on first
 use. See the [Claude Code MCP project-scope documentation](https://code.claude.com/docs/en/mcp#project-scope).
+
+## Codex CLI project connection
+
+Run `context-relay connector codex configure --root .` in the same Python
+environment. This appends a marked MCP block to `.codex/config.toml` in this
+checkout. It preserves existing project settings and does not touch
+`~/.codex/config.toml`. `connector codex diagnose` reports whether the block
+and executable are present; `connector codex remove` removes the marked block.
+The generated file is ignored by Git because its paths are local. Codex loads
+project settings only for trusted projects. See [official OpenAI documentation](https://learn.chatgpt.com/docs/config-file/config-basic)
+and the [MCP configuration reference](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
