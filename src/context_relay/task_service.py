@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import hashlib
+import subprocess
 import uuid
+from pathlib import Path
 from typing import Callable
 
 from .models import ConflictError, clone, encode, nonempty_string, timestamp, validate_revision
@@ -19,6 +21,29 @@ class TaskNotFound(LookupError):
 
 class TaskRequestConflict(ValueError):
     """An idempotency key was reused for different request content."""
+
+
+def inspect_git_workspace(root: str | Path) -> dict:
+    """Capture a local worktree identity without contacting a remote server."""
+    path = Path(root).resolve(strict=True)
+    if not path.is_dir():
+        raise ValueError("workspace root must be a directory.")
+
+    def git(*arguments: str) -> str:
+        try:
+            result = subprocess.run(["git", "-C", str(path), *arguments],
+                                    capture_output=True, text=True, timeout=5, check=True)
+        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
+            raise ValueError("workspace must be a readable Git worktree with an origin remote.") from error
+        return result.stdout.strip()
+
+    worktree = Path(git("rev-parse", "--show-toplevel")).resolve(strict=True)
+    origin = git("remote", "get-url", "origin")
+    head = git("rev-parse", "HEAD")
+    if not origin or not head:
+        raise ValueError("workspace origin and HEAD must be available.")
+    return validate_workspace({"repository": origin, "root": str(path),
+                               "worktree": str(worktree), "head": head})
 
 
 class TaskService:
@@ -54,11 +79,16 @@ class TaskService:
         if self.source_class != "host":
             raise AccessDenied("Only the host may create a task.")
         nonempty_string(goal, "goal", limit=4096)
+        workspace = validate_workspace(workspace)
+        if not Path(workspace["root"]).is_absolute():
+            raise ValueError("workspace root must be an absolute path.")
+        if workspace.get("worktree") is not None and not Path(workspace["worktree"]).is_absolute():
+            raise ValueError("workspace worktree must be an absolute path.")
         now = timestamp()
         task = validate_task_snapshot({
             "schema_version": SCHEMA_VERSION, "id": uuid.uuid4().hex, "revision": 0,
             "status": "active", "goal": goal, "completion_criteria": completion_criteria,
-            "workspace": validate_workspace(workspace), "instructions": [], "evidence": [],
+            "workspace": workspace, "instructions": [], "evidence": [],
             "artifacts": [], "open_work": [] if open_work is None else open_work,
             "created_at": now, "updated_at": now,
         })

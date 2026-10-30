@@ -4,7 +4,7 @@ from pathlib import Path
 
 from context_relay import ConflictError, RelayStore
 from context_relay.organization import AccessDenied, Principal
-from context_relay.task_service import TaskNotFound, TaskRequestConflict, TaskService
+from context_relay.task_service import TaskNotFound, TaskRequestConflict, TaskService, inspect_git_workspace
 
 
 class TaskServiceTests(unittest.TestCase):
@@ -74,6 +74,18 @@ class TaskServiceTests(unittest.TestCase):
                 "SELECT source_class FROM task_events WHERE task_id=? AND revision=1", (task["id"],)
             ).fetchone()
         self.assertEqual(event["source_class"], "agent_report")
+
+    def test_workspace_root_must_be_explicit_absolute_path(self):
+        with self.assertRaisesRegex(ValueError, "absolute"):
+            self.service.create(self.alice, goal="X", completion_criteria=["Y"],
+                                workspace={"repository": "repo", "root": "relative"})
+
+    def test_inspects_real_git_worktree_identity(self):
+        repo = Path(__file__).resolve().parents[1]
+        identity = inspect_git_workspace(repo)
+        self.assertEqual(identity["root"], str(repo))
+        self.assertTrue(identity["head"])
+        self.assertTrue(identity["repository"])
 
 
 if __name__ == "__main__":
