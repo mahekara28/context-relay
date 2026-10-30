@@ -39,7 +39,7 @@ class McpAdapterTests(unittest.TestCase):
                 principal = Principal("local", "test")
                 task = TaskService(store, authorize=lambda identity, action: True).create(
                     principal, goal="Finish report", completion_criteria=["Oracle passes"],
-                    workspace={"repository": "example", "root": "/work"})
+                    workspace={"repository": "example", "root": str(Path.cwd().resolve())})
                 async with Client(build_mcp_server(store, subject="test")) as client:
                     shown = await client.call_tool("relay_task_show", {"task_id": task["id"]})
                     self.assertFalse(shown.is_error)
@@ -63,7 +63,7 @@ class McpAdapterTests(unittest.TestCase):
             try:
                 task = TaskService(store, authorize=lambda identity, action: True).create(
                     Principal("local", "test"), goal="Original", completion_criteria=["Done"],
-                    workspace={"repository": "example", "root": "/work"})
+                    workspace={"repository": "example", "root": str(Path.cwd().resolve())})
                 async with Client(build_mcp_server(store, subject="test")) as client:
                     names = [tool.name for tool in (await client.list_tools()).tools]
                     self.assertNotIn("relay_task_create", names)
@@ -93,7 +93,7 @@ class McpAdapterTests(unittest.TestCase):
                 sender = Principal("local", "sender")
                 tasks = TaskService(store, authorize=lambda identity, action: True)
                 task = tasks.create(sender, goal="Finish", completion_criteria=["Oracle passes"],
-                                    workspace={"repository": "example", "root": "/work"})
+                                    workspace={"repository": "example", "root": str(Path.cwd().resolve())})
                 offer = HandoffService(tasks).offer(sender, task["id"], recipient="receiver")
                 async with Client(build_mcp_server(store, subject="receiver")) as client:
                     accepted = await client.call_tool("relay_handoff_accept", {"handoff_id": offer["id"]})

@@ -21,7 +21,7 @@ class TaskServiceTests(unittest.TestCase):
 
     def create(self):
         return self.service.create(self.alice, goal="Finish report", completion_criteria=["Oracle passes"],
-                                   workspace={"repository": "context-relay", "root": "/work"})
+                                   workspace={"repository": "context-relay", "root": self.temporary.name})
 
     def test_create_and_read_persist_across_connections(self):
         task = self.create()
@@ -39,7 +39,7 @@ class TaskServiceTests(unittest.TestCase):
         denied = TaskService(self.store, authorize=lambda principal, action: False)
         with self.assertRaises(AccessDenied):
             denied.create(self.alice, goal="X", completion_criteria=["Y"],
-                          workspace={"repository": "repo", "root": "/work"})
+                          workspace={"repository": "repo", "root": self.temporary.name})
 
     def test_update_is_cas_and_idempotent(self):
         task = self.create()
@@ -62,7 +62,7 @@ class TaskServiceTests(unittest.TestCase):
                                 source_class="agent_report")
         with self.assertRaises(AccessDenied):
             reporting.create(self.alice, goal="Fake", completion_criteria=["Anything"],
-                             workspace={"repository": "repo", "root": "/work"})
+                             workspace={"repository": "repo", "root": self.temporary.name})
         with self.assertRaises(AccessDenied):
             reporting.update(self.alice, task["id"], expected_revision=0,
                              request_id="claim", changes={"goal": "Done"})

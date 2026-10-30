@@ -1,5 +1,6 @@
 import itertools
 import unittest
+from pathlib import Path
 
 from context_relay import RelayStore
 from context_relay.handoffs import HandoffService
@@ -19,7 +20,7 @@ class TaskLifecycleStateMachineTests(unittest.TestCase):
                     sender = Principal("team", "sender")
                     recipient = Principal("team", "recipient")
                     task = tasks.create(sender, goal="Finish", completion_criteria=["Done"],
-                                        workspace={"repository": "example", "root": "/work"})
+                                        workspace={"repository": "example", "root": str(Path.cwd().resolve())})
                     offers = []
                     for index, operation in enumerate(sequence):
                         current = tasks.show(sender, task["id"])
