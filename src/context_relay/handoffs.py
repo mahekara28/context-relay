@@ -9,7 +9,7 @@ import uuid
 from .models import ConflictError, encode, nonempty_string, timestamp
 from .organization import AccessDenied, Principal
 from .task_packet import compile_task_packet
-from .task_service import TaskNotFound, TaskService
+from .task_service import TaskService
 
 
 class HandoffNotFound(LookupError):
@@ -69,3 +69,31 @@ class HandoffService:
             record = self._record(self._row(principal, handoff_id))
         self.tasks._check(principal, "handoff.read")
         return record
+
+    def accept(self, principal: Principal, handoff_id: str) -> dict:
+        """Accept only an offer addressed to this host principal at its current revision."""
+        self.tasks._check(principal, "handoff.accept")
+        nonempty_string(handoff_id, "handoff_id", limit=128)
+        with self.store._transaction(write=True):
+            self.store._assert_mutable()
+            row = self._row(principal, handoff_id)
+            if row["recipient"] != principal.subject:
+                raise AccessDenied("Handoff recipient does not match the host principal.")
+            packet = json.loads(row["packet"])
+            if _digest(packet) != row["packet_digest"] or packet["task_id"] != row["task_id"] or packet["revision"] != row["revision"]:
+                raise ValueError("Handoff packet does not match its immutable receipt.")
+            if row["status"] == "accepted":
+                return self._record(row)
+            if row["status"] != "offered":
+                raise ValueError("Handoff is no longer available for acceptance.")
+            task = self.tasks._row(row["task_id"], principal)
+            if task["revision"] != row["revision"]:
+                raise ConflictError(row["revision"], task["revision"])
+            accepted_at = timestamp()
+            self.store._connection.execute(
+                "UPDATE handoffs SET status='accepted', accepted_at=? WHERE id=?",
+                (accepted_at, handoff_id),
+            )
+            updated = self._row(principal, handoff_id)
+        self.tasks._check(principal, "handoff.accept")
+        return self._record(updated)
