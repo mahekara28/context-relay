@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mahekara28/context-relay/blob/main/schemas/task-context-v1alpha1.schema.json",
+  "title": "Context Relay task snapshot v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "revision", "status", "goal", "completion_criteria", "workspace", "instructions", "evidence", "artifacts", "open_work", "created_at", "updated_at"],
+  "properties": {
+    "schema_version": {"const": "task-context/v1alpha1"},
+    "id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "revision": {"type": "integer", "minimum": 0},
+    "status": {"enum": ["active", "archived"]},
+    "goal": {"type": "string", "minLength": 1, "maxLength": 4096},
+    "completion_criteria": {"type": "array", "minItems": 1, "maxItems": 32, "items": {"type": "string", "minLength": 1, "maxLength": 1024}},
+    "workspace": {"$ref": "#/$defs/workspace"},
+    "instructions": {"type": "array", "maxItems": 128, "items": {"$ref": "#/$defs/instruction"}},
+    "evidence": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/evidence"}},
+    "artifacts": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/artifact"}},
+    "open_work": {"type": "array", "maxItems": 128, "items": {"type": "string", "minLength": 1, "maxLength": 1024}},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "workspace": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repository", "root"],
+      "properties": {
+        "repository": {"type": "string", "minLength": 1, "maxLength": 1024},
+        "root": {"type": "string", "minLength": 1, "maxLength": 4096},
+        "worktree": {"type": ["string", "null"], "maxLength": 4096},
+        "head": {"type": ["string", "null"], "maxLength": 128}
+      }
+    },
+    "instruction": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "text", "source", "scope", "status"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "text": {"type": "string", "minLength": 1, "maxLength": 4096},
+        "source": {"$ref": "#/$defs/source"},
+        "scope": {"enum": ["task", "workspace", "repository"]},
+        "status": {"enum": ["active", "superseded", "expired", "conflicted"]},
+        "supersedes": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 128}, "uniqueItems": true},
+        "expires_at_revision": {"type": "integer", "minimum": 1}
+      }
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "ref"],
+      "properties": {
+        "kind": {"enum": ["user", "host", "tool", "file", "agent_report"]},
+        "ref": {"type": "string", "minLength": 1, "maxLength": 1024}
+      }
+    },
+    "evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "claim", "source", "captured_at"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "claim": {"type": "string", "minLength": 1, "maxLength": 4096},
+        "source": {"$ref": "#/$defs/source"},
+        "captured_at": {"type": "string", "format": "date-time"},
+        "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+      }
+    },
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "digest", "size"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1, "maxLength": 4096},
+        "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+        "size": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

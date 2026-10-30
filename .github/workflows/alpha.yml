@@ -41,7 +41,7 @@ jobs:
           python -m pip install --no-index --no-deps --find-links wheelhouse context-relay-local
       - name: Confirm dependency-free installed import and quickstart
         run: |
-          python -I -c "import context_relay as r; from importlib.metadata import requires, version; assert r.__version__ == version('context-relay-local'); assert not requires('context-relay-local')"
+          python -I -c "import context_relay as r; from importlib.metadata import requires, version; assert r.__version__ == version('context-relay-local'); assert all('extra ==' in requirement for requirement in (requires('context-relay-local') or []))"
           python -I -m context_relay quickstart
       - name: Exercise the offline harness improvement example
         run: python examples/harness_improvement.py
@@ -75,3 +75,23 @@ jobs:
         run: |
           python scripts/verify_sdks.py --report ci-results/sdk.json
           python -m unittest discover -s tests -v
+
+  task-mcp:
+    name: Task MCP / Python 3.12 / stdio
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Install experimental task MCP extra
+        run: python -m pip install '.[mcp]'
+      - name: Verify real MCP stdio client and task state
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m unittest discover -s tests -p test_mcp_adapter.py -v
+          python -m unittest discover -s tests -p 'test_task_*.py' -v

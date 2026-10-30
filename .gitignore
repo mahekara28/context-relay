@@ -2,7 +2,10 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .venv/
+.venv-mcp/
 .relay/
+.mcp.json
+.codex/config.toml
 build/
 wheelhouse/
 dist/
@@ -38,3 +41,5 @@ evaluations/**
 !evaluations/framework-v020-fixtures.json
 !evaluations/content-integrity-v0.16-cases.json
 !evaluations/interpretation-v0.12-corpus.json
+!evaluations/continuation/
+!evaluations/continuation/**

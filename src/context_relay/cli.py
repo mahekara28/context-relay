@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
 import logging
 import sys
@@ -27,7 +28,151 @@ def main(argv: list[str] | None = None) -> int:
     init.add_argument("--memory", choices=("off", "auto", "review"), default="off",
                       help="Enable source-backed user recall without defining fields")
     init.add_argument("--protocol", choices=("plain", "ollama", "openai_chat"), default="plain")
+    task = sub.add_parser("task", help="Create and inspect portable task context")
+    task.add_argument("--db", default=".relay/tasks.db")
+    task_sub = task.add_subparsers(dest="task_command", required=True)
+    create_task = task_sub.add_parser("create", help="Create a task bound to a Git worktree")
+    create_task.add_argument("--goal", required=True)
+    create_task.add_argument("--criterion", action="append", required=True)
+    create_task.add_argument("--root", default=".")
+    create_task.add_argument("--open-work", action="append", default=[])
+    show_task = task_sub.add_parser("show", help="Show a task snapshot")
+    show_task.add_argument("task_id")
+    task_sub.add_parser("doctor", help="Show content-free task-store health and pending counts")
+    diagnose_task = task_sub.add_parser("diagnose", help="Inspect one task's context, verification and effects")
+    diagnose_task.add_argument("task_id")
+    diagnose_task.add_argument("--root", default=None)
+    instruct_task = task_sub.add_parser("instruct", help="Record a sourced instruction at a task revision")
+    instruct_task.add_argument("task_id")
+    instruct_task.add_argument("--expected-revision", type=int, required=True)
+    instruct_task.add_argument("--request-id", required=True)
+    instruct_task.add_argument("--text", required=True)
+    instruct_task.add_argument("--source-kind", choices=("user", "host", "file"), required=True)
+    instruct_task.add_argument("--source-ref", required=True)
+    instruct_task.add_argument("--scope", choices=("task", "workspace", "repository"), default="task")
+    instruct_task.add_argument("--supersedes", action="append", default=[])
+    instruct_task.add_argument("--expires-at-revision", type=int, default=None)
+    artifact_task = task_sub.add_parser("artifact", help="Capture a workspace file by digest")
+    artifact_task.add_argument("task_id")
+    artifact_task.add_argument("path")
+    artifact_task.add_argument("--expected-revision", type=int, required=True)
+    artifact_task.add_argument("--request-id", required=True)
+    handoff = sub.add_parser("handoff", help="Offer, accept, and inspect task handoffs")
+    handoff.add_argument("--db", default=".relay/tasks.db")
+    handoff.add_argument("--subject", default=getpass.getuser(),
+                         help="Local harness identity; the database must be private to this OS user")
+    handoff_sub = handoff.add_subparsers(dest="handoff_command", required=True)
+    offer_handoff = handoff_sub.add_parser("offer")
+    offer_handoff.add_argument("task_id")
+    offer_handoff.add_argument("--recipient", required=True)
+    offer_handoff.add_argument("--max-chars", type=int, default=16000)
+    accept_handoff = handoff_sub.add_parser("accept")
+    accept_handoff.add_argument("handoff_id")
+    inspect_handoff = handoff_sub.add_parser("inspect")
+    inspect_handoff.add_argument("handoff_id")
+    mcp = sub.add_parser("mcp", help="Run the optional local MCP stdio server")
+    mcp.add_argument("--db", default=".relay/tasks.db")
+    mcp.add_argument("--subject", default=getpass.getuser())
+    connector = sub.add_parser("connector", help="Manage project-local harness MCP configuration")
+    connector.add_argument("harness", choices=("claude", "codex"))
+    connector.add_argument("action", choices=("configure", "diagnose", "remove"))
+    connector.add_argument("--root", default=".")
+    connector.add_argument("--python", default=sys.executable)
+    connector.add_argument("--subject", default=None)
     args = parser.parse_args(argv)
+    if args.command == "connector":
+        from .connectors import (configure_claude, configure_codex, diagnose_claude,
+                                 diagnose_codex, remove_claude, remove_codex)
+        try:
+            if args.harness == "claude":
+                if args.action == "configure":
+                    result = configure_claude(args.root, python_executable=args.python,
+                                              subject=args.subject or "claude")
+                elif args.action == "remove":
+                    result = remove_claude(args.root)
+                else:
+                    result = diagnose_claude(args.root)
+            else:
+                if args.action == "configure":
+                    result = configure_codex(args.root, python_executable=args.python,
+                                             subject=args.subject or "codex")
+                elif args.action == "remove":
+                    result = remove_codex(args.root)
+                else:
+                    result = diagnose_codex(args.root)
+            print(json.dumps(result, indent=2))
+            return 0
+        except (OSError, ValueError) as error:
+            print(f"Connector error: {error}", file=sys.stderr)
+            return 1
+    if args.command == "mcp":
+        from .mcp_server import run_mcp_server
+        path = Path(args.db).resolve()
+        private_directory(path.parent)
+        run_mcp_server(path, subject=args.subject)
+        return 0
+    if args.command == "handoff":
+        from .handoffs import HandoffService
+        from .organization import Principal
+        from .task_service import TaskService
+        path = Path(args.db).resolve()
+        private_directory(path.parent)
+        store = RelayStore(path)
+        try:
+            handoffs = HandoffService(TaskService(store, authorize=lambda principal, action: True))
+            principal = Principal("local", args.subject)
+            if args.handoff_command == "offer":
+                result = handoffs.offer(principal, args.task_id, recipient=args.recipient,
+                                        max_chars=args.max_chars)
+            elif args.handoff_command == "accept":
+                result = handoffs.accept(principal, args.handoff_id)
+            else:
+                result = handoffs.inspect(principal, args.handoff_id)
+            print(json.dumps(result, indent=2, ensure_ascii=False))
+            return 0
+        except (OSError, ValueError, LookupError) as error:
+            print(f"Handoff error: {error}", file=sys.stderr)
+            return 1
+        finally:
+            store.close()
+    if args.command == "task":
+        from .organization import Principal
+        from .task_service import TaskService, inspect_git_workspace
+        path = Path(args.db).resolve()
+        private_directory(path.parent)
+        store = RelayStore(path)
+        try:
+            service = TaskService(store, authorize=lambda principal, action: True)
+            principal = Principal("local", getpass.getuser())
+            if args.task_command == "create":
+                result = service.create(principal, goal=args.goal,
+                                        completion_criteria=args.criterion,
+                                        workspace=inspect_git_workspace(args.root),
+                                        open_work=args.open_work)
+            elif args.task_command == "show":
+                result = service.show(principal, args.task_id)
+            elif args.task_command == "diagnose":
+                result = service.task_diagnostics(principal, args.task_id, root=args.root)
+            elif args.task_command == "instruct":
+                result = service.add_instruction(
+                    principal, args.task_id, expected_revision=args.expected_revision,
+                    request_id=args.request_id, text=args.text,
+                    source={"kind": args.source_kind, "ref": args.source_ref},
+                    scope=args.scope, supersedes=args.supersedes,
+                    expires_at_revision=args.expires_at_revision)
+            elif args.task_command == "artifact":
+                result = service.capture_artifact(
+                    principal, args.task_id, expected_revision=args.expected_revision,
+                    request_id=args.request_id, path=args.path)
+            else:
+                result = service.diagnostics(principal)
+            print(json.dumps(result, indent=2, ensure_ascii=False))
+            return 0
+        except (OSError, ValueError, LookupError) as error:
+            print(f"Task error: {error}", file=sys.stderr)
+            return 1
+        finally:
+            store.close()
     if args.command == "quickstart":
         observed = connection_demo()
         passed = observed == ["CSV", "JSON"]

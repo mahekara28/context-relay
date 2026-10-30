@@ -67,7 +67,7 @@ class RelayStore:
             self._connection.execute("PRAGMA temp_store = MEMORY")
             self._enable_wal()
             version = self._connection.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1):
+            if version not in (0, 1, 2, 3, 4, 5, 6, 7):
                 raise ValueError(f"Unsupported database schema version {version}.")
             self._connection.executescript("""
                 CREATE TABLE IF NOT EXISTS sessions (
@@ -121,7 +121,73 @@ class RelayStore:
                     previous_session_id TEXT UNIQUE REFERENCES conversations(session_id),
                     UNIQUE(root_id, ordinal)
                 );
-                PRAGMA user_version = 1;
+                CREATE TABLE IF NOT EXISTS tasks (
+                    id TEXT PRIMARY KEY, tenant TEXT NOT NULL,
+                    revision INTEGER NOT NULL, status TEXT NOT NULL,
+                    payload TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS tasks_tenant_status ON tasks(tenant, status, updated_at);
+                CREATE TABLE IF NOT EXISTS task_events (
+                    id TEXT PRIMARY KEY, task_id TEXT NOT NULL REFERENCES tasks(id),
+                    revision INTEGER NOT NULL, operation TEXT NOT NULL,
+                    principal TEXT NOT NULL, source_class TEXT NOT NULL,
+                    payload TEXT NOT NULL, created_at TEXT NOT NULL,
+                    UNIQUE(task_id, revision)
+                );
+                CREATE INDEX IF NOT EXISTS task_events_task ON task_events(task_id, revision);
+                CREATE TABLE IF NOT EXISTS task_mutations (
+                    task_id TEXT NOT NULL REFERENCES tasks(id),
+                    request_id TEXT NOT NULL, request_digest TEXT NOT NULL,
+                    result_payload TEXT NOT NULL,
+                    PRIMARY KEY(task_id, request_id)
+                );
+                CREATE TABLE IF NOT EXISTS task_revisions (
+                    task_id TEXT NOT NULL REFERENCES tasks(id), revision INTEGER NOT NULL,
+                    payload TEXT NOT NULL, PRIMARY KEY(task_id, revision)
+                );
+                INSERT OR IGNORE INTO task_revisions (task_id, revision, payload)
+                    SELECT id, revision, payload FROM tasks;
+                CREATE TABLE IF NOT EXISTS handoffs (
+                    id TEXT PRIMARY KEY, task_id TEXT NOT NULL REFERENCES tasks(id),
+                    revision INTEGER NOT NULL, recipient TEXT NOT NULL,
+                    packet TEXT NOT NULL, packet_digest TEXT NOT NULL,
+                    status TEXT NOT NULL, created_at TEXT NOT NULL,
+                    accepted_at TEXT
+                );
+                CREATE INDEX IF NOT EXISTS handoffs_task ON handoffs(task_id, created_at);
+                CREATE TABLE IF NOT EXISTS task_conflicts (
+                    id TEXT PRIMARY KEY, task_id TEXT NOT NULL REFERENCES tasks(id),
+                    request_id TEXT NOT NULL, expected_revision INTEGER NOT NULL,
+                    observed_revision INTEGER NOT NULL, proposer TEXT NOT NULL,
+                    source_class TEXT NOT NULL, changes TEXT NOT NULL,
+                    status TEXT NOT NULL, resolver TEXT, created_at TEXT NOT NULL,
+                    resolved_at TEXT, UNIQUE(task_id, request_id)
+                );
+                CREATE INDEX IF NOT EXISTS task_conflicts_pending ON task_conflicts(task_id, status);
+                CREATE TABLE IF NOT EXISTS task_effects (
+                    id TEXT PRIMARY KEY, task_id TEXT NOT NULL REFERENCES tasks(id),
+                    destination_key TEXT NOT NULL, task_revision INTEGER NOT NULL,
+                    operation TEXT NOT NULL, path TEXT NOT NULL,
+                    precondition_digest TEXT, desired_digest TEXT,
+                    status TEXT NOT NULL, created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    UNIQUE(task_id, destination_key)
+                );
+                CREATE INDEX IF NOT EXISTS task_effects_pending ON task_effects(task_id, status);
+                CREATE TABLE IF NOT EXISTS task_effect_observations (
+                    id TEXT PRIMARY KEY, effect_id TEXT NOT NULL REFERENCES task_effects(id),
+                    observed_digest TEXT, conclusion TEXT NOT NULL, observed_at TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS task_effect_observations_effect ON task_effect_observations(effect_id);
+                CREATE TABLE IF NOT EXISTS task_verifications (
+                    id TEXT PRIMARY KEY, task_id TEXT NOT NULL REFERENCES tasks(id),
+                    request_id TEXT NOT NULL, task_revision INTEGER NOT NULL,
+                    source_digest TEXT NOT NULL, passed INTEGER NOT NULL,
+                    payload TEXT NOT NULL, created_at TEXT NOT NULL,
+                    UNIQUE(task_id, request_id)
+                );
+                CREATE INDEX IF NOT EXISTS task_verifications_task ON task_verifications(task_id, created_at);
+                PRAGMA user_version = 7;
             """)
         except BaseException as error:
             if self._connection is not None:

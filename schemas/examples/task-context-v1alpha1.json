@@ -1,0 +1,17 @@
+{
+  "schema_version": "task-context/v1alpha1",
+  "id": "task-report-json",
+  "revision": 1,
+  "status": "active",
+  "goal": "Produce a JSON report of net revenue by region",
+  "completion_criteria": ["Exclude internal accounts", "Subtract refunds", "Reject unsupported formats"],
+  "workspace": {"repository": "context-relay", "root": "evaluations/continuation", "worktree": null, "head": null},
+  "instructions": [
+    {"id": "instruction-1", "text": "Use JSON output", "source": {"kind": "user", "ref": "request-2"}, "scope": "task", "status": "active", "supersedes": []}
+  ],
+  "evidence": [],
+  "artifacts": [],
+  "open_work": ["Update reporting.py", "Run the oracle"],
+  "created_at": "2026-10-30T00:00:00Z",
+  "updated_at": "2026-10-30T00:00:00Z"
+}
