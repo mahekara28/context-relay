@@ -163,8 +163,8 @@ function showStage(next) {
       : stages[stage][1];
   $("#delivery-label").textContent =
     stage === 2
-      ? `MCP → ${destination} / fresh thread`
-      : "MCP · inspect → accept → continue";
+      ? `MCP · ${destination} / fresh thread`
+      : "MCP · inspect · accept · continue";
   $$(".step-dots button").forEach((button) =>
     button.setAttribute(
       "aria-pressed",

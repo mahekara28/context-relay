@@ -463,10 +463,6 @@ a:not(.button):hover {
   border-color: var(--accent);
   color: var(--ink);
 }
-.source-mark {
-  margin-left: auto;
-  color: var(--accent);
-}
 .source-note.tool .tiny-tag {
   margin-left: auto;
 }
@@ -718,10 +714,6 @@ a:not(.button):hover {
   text-decoration: line-through;
   color: var(--muted);
 }
-.correction-visual > b {
-  font-weight: 400;
-  color: var(--muted);
-}
 .correction-visual strong {
   font-weight: 500;
   padding: 12px 14px;
@@ -742,9 +734,6 @@ a:not(.button):hover {
   width: 32px;
   height: 32px;
 }
-.switch-visual span {
-  color: var(--muted);
-}
 .use-cases h3 {
   font-size: 18px;
 }
@@ -754,9 +743,7 @@ a:not(.button):hover {
   margin-top: 13px;
 }
 .use-cases a {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: inline-block;
   margin-top: 22px;
   font-size: 11px;
   font-weight: 500;
@@ -1274,11 +1261,8 @@ a:not(.button):hover {
   padding-top: 22px;
 }
 .docs-grid h3 {
-  display: flex;
-  justify-content: space-between;
   font-size: 18px;
   margin-top: 14px;
-  gap: 10px;
 }
 .docs-grid p {
   font-size: 12px;
@@ -1896,9 +1880,6 @@ dialog textarea {
   }
   .tiny-tag {
     font-size: 7px;
-  }
-  .source-mark {
-    font-size: 10px;
   }
   .source-stack {
     gap: 5px;
