@@ -164,6 +164,28 @@ class TaskService:
             raise ValueError("offset and limit must be bounded nonnegative integers.")
         return self.show(principal, task_id)["evidence"][offset:offset + limit]
 
+    def diagnostics(self, principal: Principal) -> dict:
+        """Return content-free local task-store health and pending counts."""
+        self._check(principal, "task.diagnose")
+        with self.store._transaction():
+            connection = self.store._connection
+            counts = {status: connection.execute(
+                "SELECT COUNT(*) FROM tasks WHERE tenant=? AND status=?",
+                (principal.tenant, status),
+            ).fetchone()[0] for status in ("active", "archived")}
+            pending_handoffs = connection.execute(
+                "SELECT COUNT(*) FROM handoffs h JOIN tasks t ON t.id=h.task_id "
+                "WHERE t.tenant=? AND h.status='offered'", (principal.tenant,),
+            ).fetchone()[0]
+            pending_conflicts = connection.execute(
+                "SELECT COUNT(*) FROM task_conflicts c JOIN tasks t ON t.id=c.task_id "
+                "WHERE t.tenant=? AND c.status='pending'", (principal.tenant,),
+            ).fetchone()[0]
+            schema_version = connection.execute("PRAGMA user_version").fetchone()[0]
+        return {"schema_version": schema_version, "tasks": counts,
+                "pending_handoffs": pending_handoffs,
+                "pending_conflicts": pending_conflicts}
+
     def update(self, principal: Principal, task_id: str, *, expected_revision: int,
                request_id: str, changes: dict) -> dict:
         """Apply one bounded patch exactly once at a caller-observed revision."""

@@ -38,6 +38,7 @@ def main(argv: list[str] | None = None) -> int:
     create_task.add_argument("--open-work", action="append", default=[])
     show_task = task_sub.add_parser("show", help="Show a task snapshot")
     show_task.add_argument("task_id")
+    task_sub.add_parser("doctor", help="Show content-free task-store health and pending counts")
     handoff = sub.add_parser("handoff", help="Offer, accept, and inspect task handoffs")
     handoff.add_argument("--db", default=".relay/tasks.db")
     handoff.add_argument("--subject", default=getpass.getuser(),
@@ -130,8 +131,10 @@ def main(argv: list[str] | None = None) -> int:
                                         completion_criteria=args.criterion,
                                         workspace=inspect_git_workspace(args.root),
                                         open_work=args.open_work)
-            else:
+            elif args.task_command == "show":
                 result = service.show(principal, args.task_id)
+            else:
+                result = service.diagnostics(principal)
             print(json.dumps(result, indent=2, ensure_ascii=False))
             return 0
         except (OSError, ValueError, LookupError) as error:

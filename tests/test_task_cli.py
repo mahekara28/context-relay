@@ -33,6 +33,10 @@ class TaskCliTests(unittest.TestCase):
                 self.assertEqual(main(["handoff", "--db", database, "--subject", "receiver", "accept",
                                        offered["id"]]), 0)
             self.assertEqual(json.loads(output.getvalue())["status"], "accepted")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                self.assertEqual(main(["task", "--db", database, "doctor"]), 0)
+            self.assertEqual(json.loads(output.getvalue())["tasks"]["active"], 1)
 
 
 if __name__ == "__main__":
