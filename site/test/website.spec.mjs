@@ -122,10 +122,10 @@ test("copy commands preserve exact terminal text and switch harnesses", async ({
     );
   }
   await page
-    .getByRole("button", { name: "Copy demo command", exact: true })
+    .getByRole("button", { name: "Copy npx command", exact: true })
     .click();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
-    "relay demo && relay ui",
+    "npx @mahekara28/context-relay@beta ui",
   );
 });
 
@@ -139,14 +139,14 @@ test("clipboard denial provides a selectable dialog and restores focus", async (
   );
   await page.goto("./");
   const copy = page.getByRole("button", {
-    name: "Copy demo command",
+    name: "Copy npx command",
     exact: true,
   });
   await copy.click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(
     page.getByRole("textbox", { name: "Command to copy" }),
-  ).toHaveValue("relay demo && relay ui");
+  ).toHaveValue("npx @mahekara28/context-relay@beta ui");
   await expect(
     page.getByRole("textbox", { name: "Command to copy" }),
   ).toBeFocused();

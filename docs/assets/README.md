@@ -1,4 +1,12 @@
-# README artwork and demo
+# Project artwork
+
+## Current npm README
+
+The main README uses the warm neutral / coral artwork in [`workspace/`](workspace/ARTWORK.md), with light/dark and mobile layouts. Its banners show the public npm beta and a runnable npx command. Regenerate them with `python3 scripts/npm/render-brand.py`. The [workspace demo](workspace/README.md) is captured from the actual npm UI with synthetic data.
+
+## Earlier Python artwork and demo
+
+The files below belong to the earlier Python task-context presentation. They are retained as historical assets; the main README uses the npm artwork described above.
 
 Original vector artwork and a replay of the runnable local task example.
 The files use this repository's MIT license. No external images, fonts or
@@ -21,7 +29,7 @@ product visual; decorative animation is omitted.
 | `demo[-mobile].png` | Final state for reduced motion and direct still-image links |
 | `demo-output.json` / `demo-transcript.txt` | Checked example results and accessible transcript |
 
-The README selects light/dark artwork with `prefers-color-scheme`. At 600px
+The original presentation selected light/dark artwork with `prefers-color-scheme`. At 600px
 and below it uses separate mobile layouts. Reduced motion selects PNGs before
 any animated source. SVGs have titles and descriptions; the README provides
 alt text and the transcript. Essential facts also appear in normal Markdown.

@@ -1,18 +1,21 @@
 <picture>
-  <img src="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/hero.svg" alt="Context Relay — keep the work, change the thread. A local CLI, workspace and MCP server for coding context." width="100%" />
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/hero-dark-mobile.svg" />
+  <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/hero-mobile.svg" />
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/hero-dark.svg" />
+  <img src="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/hero.svg" alt="Context Relay — keep the work, change the thread. Public npm beta. Try npx @mahekara28/context-relay@beta ui. Node 22.16+." width="100%" />
 </picture>
 
 <p align="center">
   <a href="https://github.com/mahekara28/context-relay/actions/workflows/npm.yml"><img src="https://github.com/mahekara28/context-relay/actions/workflows/npm.yml/badge.svg" alt="npm product checks" /></a>
   <a href="https://github.com/mahekara28/context-relay/blob/main/package.json"><img src="https://img.shields.io/badge/Node-22.16%2B-456b55?labelColor=252d29" alt="Node 22.16 or newer" /></a>
-  <a href="https://github.com/mahekara28/context-relay/blob/main/docs/releases/NPM_RELEASE_PLAN.md"><img src="https://img.shields.io/badge/release-0.3.0--beta.1-c84429?labelColor=252d29" alt="Release 0.3.0 beta 1" /></a>
+  <a href="https://www.npmjs.com/package/@mahekara28/context-relay"><img src="https://img.shields.io/badge/npm-0.3.0--beta.1-c84429?labelColor=252d29" alt="npm public beta 0.3.0-beta.1" /></a>
   <a href="https://github.com/mahekara28/context-relay/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-68716b?labelColor=252d29" alt="MIT license" /></a>
 </p>
 
 <p align="center"><strong>Your next coding session should inherit the decisions, not the confusion.</strong></p>
 
 <p align="center">
-  <a href="https://mahekara28.github.io/context-relay/">Website &amp; interactive tour</a> · <a href="#why-context-relay">Why Relay</a> · <a href="#try-it-locally">Install</a> · <a href="#the-workflow">Workflow</a> · <a href="#where-mcp-fits">Architecture</a> · <a href="#what-is-verified">Verification</a>
+  <a href="https://mahekara28.github.io/context-relay/">Website &amp; interactive tour</a> · <a href="https://www.npmjs.com/package/@mahekara28/context-relay">npm package</a> · <a href="https://github.com/mahekara28/context-relay/releases/tag/npm-v0.3.0-beta.1">Release notes</a> · <a href="#why-context-relay">Why Relay</a> · <a href="#try-it-locally">Install</a> · <a href="#the-workflow">Workflow</a> · <a href="#where-mcp-fits">Architecture</a> · <a href="#what-is-verified">Verification</a>
 </p>
 
 ## Why Context Relay?
@@ -55,7 +58,7 @@ Use `@0.3.0-beta.1` instead of `@beta` to pin this release. Both methods use the
 
 The package includes the compiled CLI, local service, MCP server, SQLite store and UI assets. After installation, Relay needs no frontend build step or CDN. `relay demo` creates explicitly synthetic sessions in its own demo project. `relay stop` stops the local service.
 
-Use `--data-dir /path/to/workspace` on any command for a separate profile. The default is `~/.context-relay`. [Installation and CLI reference →](https://github.com/mahekara28/context-relay/blob/main/docs/NPM_QUICKSTART.md)
+Use `--data-dir /path/to/workspace` on any command for a separate profile. The default is `~/.context-relay`. [Installation and CLI reference](https://github.com/mahekara28/context-relay/blob/main/docs/NPM_QUICKSTART.md)
 
 ## The workflow
 
@@ -79,7 +82,12 @@ For a configured Claude Code or Codex destination, `relay launch --id HANDOFF_ID
 
 ## Where MCP fits
 
-<img src="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/architecture.svg" alt="Harness-specific capture and MCP context access connect to one local service. SQLite stores reviewed state; optional Nebius drafts require review." width="100%" />
+<picture>
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/architecture-dark-mobile.svg" />
+  <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/architecture-mobile.svg" />
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/architecture-dark.svg" />
+  <img src="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/architecture.svg" alt="The npm package runs locally. Native capture and MCP context access connect to one service. SQLite stores reviewed state; optional Nebius drafts need approval and review." width="100%" />
+</picture>
 
 **Capture and MCP solve different parts of the workflow.** Native adapters read history. MCP gives agents a standard way to inspect Relay's context and accept an addressed handoff. Installing MCP alone does not make a harness's conversation history available.
 
@@ -96,22 +104,23 @@ All four have implemented capture adapters. Native format coverage and limits ar
 
 Manual checkpoints work without a key. To request model-assisted drafts, set `NEBIUS_API_KEY` and `NEBIUS_MODEL` in the service environment and restart Relay. The UI previews the exact selected, redacted evidence before sending it. Responses must pass schema and citation validation, then return to the editor for review.
 
-No automatic summarization loop, hidden provider fallback or model-written authoritative state. [Provider setup and data flow →](https://github.com/mahekara28/context-relay/blob/main/docs/WORKSPACE.md#nebius-proposals)
+No automatic summarization loop, hidden provider fallback or model-written authoritative state. [Provider setup and data flow](https://github.com/mahekara28/context-relay/blob/main/docs/WORKSPACE.md#nebius-proposals)
 
 ## What is verified
 
 - **19 Node tests:** transactional imports, provenance, explicit merge conflicts, packet budgets, stale source/file rejection, recipient checks, adapters, provider validation and launch planning.
 - **Real transports:** an MCP stdio client, a JSON-RPC subprocess, a loopback HTTP capture source and an isolated installed Codex app-server initialization/listing check.
-- **4 Chromium workflows:** source review → handoff → export, conflict resolution, mobile/dark navigation and unauthenticated entry.
+- **4 Chromium workflows:** source review, handoff and export, conflict resolution, mobile/dark navigation and unauthenticated entry.
+- **Public npm release:** publisher and tarball integrity verified, with fresh anonymous global and npx installs, demo/UI, context packet and handoff checks. [Release artifact and verification report](https://github.com/mahekara28/context-relay/releases/tag/npm-v0.3.0-beta.1).
 - **Installed package gates:** anonymous global and npm exec/npx tarball installation, CLI/service lifecycle, bundled UI assets, authentication and restart persistence on Linux, macOS and Windows CI.
 
-The model quality benchmark remains pending: no live Nebius completion or cross-harness coding result is claimed. Acceptance proves delivery, not successful task completion. [Detailed verification and release boundaries →](https://github.com/mahekara28/context-relay/blob/main/docs/releases/NPM_VERIFICATION.md)
+The model quality benchmark remains pending: no live Nebius completion or cross-harness coding result is claimed. Acceptance proves delivery, not successful task completion. [Detailed verification and release boundaries](https://github.com/mahekara28/context-relay/blob/main/docs/releases/NPM_VERIFICATION.md)
 
 ## Local by default
 
 Relay binds to `127.0.0.1`, authenticates API requests and rejects foreign origins and host headers. The browser token is passed in a URL fragment, removed immediately and retained in the current tab's session storage. Drafts stay in memory until saved. Files are referenced by path and digest; they are not transferred.
 
-Capture and discovery are explicit. Recognized credentials are redacted before persistence, but this is best effort: inspect sensitive material before sharing it. Nebius receives only evidence you explicitly select and approve. [Workspace operations →](https://github.com/mahekara28/context-relay/blob/main/docs/WORKSPACE.md)
+Capture and discovery are explicit. Recognized credentials are redacted before persistence, but this is best effort: inspect sensitive material before sharing it. Nebius receives only evidence you explicitly select and approve. [Workspace operations](https://github.com/mahekara28/context-relay/blob/main/docs/WORKSPACE.md)
 
 ## Develop and contribute
 
