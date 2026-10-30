@@ -131,6 +131,47 @@ class TaskEffectService:
                 )
         return self.inspect(principal, effect_id)
 
+    def reconcile(self, principal: Principal, effect_id: str) -> dict:
+        """Observe the destination after interruption; never replay the effect."""
+        self.tasks._check(principal, "effect.reconcile")
+        if self.tasks.source_class != "host":
+            raise AccessDenied("Only the host may reconcile effects.")
+        effect = self.inspect(principal, effect_id)
+        if effect["status"] not in ("running", "unresolved"):
+            return effect
+        root = Path(self.tasks.show(principal, effect["task_id"])["workspace"]["root"]).resolve(strict=True)
+        target = (root / effect["path"]).resolve()
+        if not target.is_relative_to(root):
+            conclusion, actual = "unresolved", None
+        elif not target.exists():
+            actual = None
+            conclusion = "applied" if effect["operation"] == "delete_file" else (
+                "not_applied" if effect["precondition_digest"] is None else "unresolved")
+        elif not target.is_file() or target.stat().st_size > MAX_ARTIFACT_BYTES:
+            conclusion, actual = "unresolved", None
+        else:
+            actual = "sha256:" + hashlib.sha256(target.read_bytes()).hexdigest()
+            if effect["operation"] == "write_file" and actual == effect["desired_digest"]:
+                conclusion = "applied"
+            elif actual == effect["precondition_digest"]:
+                conclusion = "not_applied"
+            else:
+                conclusion = "unresolved"
+        with self.store._transaction(write=True):
+            current = self.inspect(principal, effect_id)
+            if current["status"] not in ("running", "unresolved"):
+                return current
+            now = timestamp()
+            self.store._connection.execute(
+                "INSERT INTO task_effect_observations VALUES (?, ?, ?, ?, ?)",
+                (uuid.uuid4().hex, effect_id, actual, conclusion, now),
+            )
+            self.store._connection.execute(
+                "UPDATE task_effects SET status=?, updated_at=? WHERE id=?",
+                (conclusion, now, effect_id),
+            )
+        return self.inspect(principal, effect_id)
+
 
 class EffectPreconditionChanged(RuntimeError):
     """The destination changed before execution; the callback did not run."""

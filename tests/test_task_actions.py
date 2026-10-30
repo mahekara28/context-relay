@@ -88,6 +88,35 @@ class TaskActionTests(unittest.TestCase):
             finally:
                 store.close()
 
+    def test_reconcile_uses_destination_bytes_without_replaying(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            store = RelayStore(Path(temporary) / "tasks.db")
+            try:
+                principal = Principal("team", "host")
+                tasks = TaskService(store, authorize=lambda identity, action: True)
+                task = tasks.create(principal, goal="Finish", completion_criteria=["Done"],
+                                    workspace={"repository": "example", "root": temporary})
+                effects = TaskEffectService(tasks)
+                prepared = effects.prepare(principal, task["id"], expected_revision=0,
+                                           destination_key="write", operation="write_file",
+                                           path="result.json", content=b"{}",
+                                           allowed_operations={"write_file"})
+                with store._transaction(write=True):
+                    store._connection.execute("UPDATE task_effects SET status='running' WHERE id=?",
+                                              (prepared["id"],))
+                (Path(temporary) / "result.json").write_bytes(b"{}")
+                result = effects.reconcile(principal, prepared["id"])
+                self.assertEqual(result["status"], "applied")
+                with store._transaction():
+                    observation = store._connection.execute(
+                        "SELECT conclusion, observed_digest FROM task_effect_observations WHERE effect_id=?",
+                        (prepared["id"],),
+                    ).fetchone()
+                self.assertEqual(observation["conclusion"], "applied")
+                self.assertEqual(observation["observed_digest"], prepared["desired_digest"])
+            finally:
+                store.close()
+
 
 if __name__ == "__main__":
     unittest.main()
