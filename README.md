@@ -1,9 +1,13 @@
 <p align="center">
   <picture>
-    <source media="(max-width: 600px)" srcset="docs/assets/relay-hero-mobile.svg" />
-    <img src="docs/assets/relay-hero.svg" alt="Context Relay — give the next agent a place to pick up. Versioned task context, optional MCP, local SQLite." width="100%" />
+    <source media="(prefers-reduced-motion: reduce) and (max-width: 600px)" srcset="docs/assets/relay-hero-mobile.svg" />
+    <source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/relay-hero.svg" />
+    <source media="(max-width: 600px)" srcset="docs/assets/relay-hero-mobile.gif" />
+    <img src="docs/assets/relay-hero.gif" alt="Context Relay — an illustrated handoff: CSV is explicitly replaced by JSON, revision 2 is offered, and the receiver checks and accepts the context. Task completion remains unverified." width="100%" />
   </picture>
 </p>
+
+<p align="center"><sub>Illustrated handoff · <a href="docs/assets/relay-hero.svg">View still image</a></sub></p>
 
 <h1 align="center">Context Relay</h1>
 
