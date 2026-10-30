@@ -1,0 +1,1039 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="Keep the work. Change the thread. Context Relay is a local CLI, workspace and MCP server for reviewed handoffs between coding agents."
+    />
+    <meta name="theme-color" content="#f6f5f1" />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:title"
+      content="Context Relay — keep the work, change the thread"
+    />
+    <meta
+      property="og:description"
+      content="Carry the decisions, evidence and open work into your next coding session. A local CLI, workspace and MCP server."
+    />
+    <meta
+      property="og:url"
+      content="https://mahekara28.github.io/context-relay/"
+    />
+    <meta
+      property="og:image"
+      content="https://mahekara28.github.io/context-relay/assets/social-card.png"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="canonical" href="https://mahekara28.github.io/context-relay/" />
+    <link rel="icon" href="./assets/relay.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./main.js" defer></script>
+    <title>Context Relay — keep the work, change the thread</title>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="nav-wrap wrap">
+        <a class="brand" href="#" aria-label="Context Relay home"
+          ><img src="./assets/relay.svg" width="30" height="30" alt="" /><span
+            >Context Relay</span
+          ></a
+        >
+        <nav aria-label="Main navigation">
+          <a href="#why">Why Relay</a><a href="#workspace">Workspace</a
+          ><a href="#architecture">How it works</a><a href="#docs">Docs</a>
+        </nav>
+        <div class="nav-actions">
+          <a
+            class="github button small"
+            href="https://github.com/mahekara28/context-relay"
+            ><svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 .8a11.2 11.2 0 0 0-3.54 21.82c.56.1.77-.24.77-.54v-2.09c-3.13.68-3.79-1.33-3.79-1.33-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.69.08-.69 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.62 1.22 3.26.93.1-.73.39-1.22.71-1.5-2.5-.29-5.13-1.25-5.13-5.57 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.08 1.15a10.75 10.75 0 0 1 5.6 0c2.14-1.45 3.08-1.15 3.08-1.15.62 1.55.24 2.7.12 2.98.72.79 1.15 1.79 1.15 3.02 0 4.33-2.63 5.28-5.14 5.56.4.35.76 1.04.76 2.1v3.08c0 .3.2.65.78.54A11.2 11.2 0 0 0 12 .8Z"
+              /></svg
+            ><span>GitHub</span><span aria-hidden="true">↗</span></a
+          ><button
+            class="theme-button"
+            id="theme-toggle"
+            aria-label="Switch to dark theme"
+            title="Change color theme"
+          >
+            ◐</button
+          ><a class="button primary small" href="#install"
+            >Get started <span aria-hidden="true">↗</span></a
+          >
+        </div>
+      </div>
+    </header>
+    <main id="main">
+      <section class="hero wrap">
+        <div class="hero-copy">
+          <a
+            class="release-tag"
+            href="https://github.com/mahekara28/context-relay/blob/main/docs/releases/NPM_VERIFICATION.md"
+            ><span class="status-dot"></span>v{{VERSION}}
+            <span class="tag-divider"></span> Open source · MIT
+            <span aria-hidden="true">↗</span></a
+          >
+          <h1>Keep the work.<br /><span>Change the thread.</span></h1>
+          <p class="hero-description">
+            A fresh coding session shouldn’t mean starting over. Carry the
+            decisions, evidence and open work into your next thread—even in
+            another agent.
+          </p>
+          <div class="hero-ctas">
+            <a class="button primary" href="#install"
+              >Try Context Relay <span aria-hidden="true">↗</span></a
+            ><a class="text-link" href="#workspace"
+              >See the workspace <span aria-hidden="true">↓</span></a
+            >
+          </div>
+          <div class="quick-command">
+            <div>
+              <span class="command-prefix" aria-hidden="true">$</span
+              ><code id="quick-command">relay demo &amp;&amp; relay ui</code>
+            </div>
+            <button
+              class="copy-button"
+              data-copy="quick-command"
+              aria-label="Copy demo command"
+            >
+              Copy
+            </button>
+          </div>
+          <p class="command-note">
+            After installation · Node 22.16+ · No model key needed
+          </p>
+          <div class="hero-facts">
+            <div>
+              <span class="eyebrow">Your workspace</span
+              ><strong>Local by default</strong>
+            </div>
+            <div>
+              <span class="eyebrow">Your next session</span
+              ><strong>Context, with sources</strong>
+            </div>
+          </div>
+        </div>
+        <div
+          class="relay-demo"
+          id="handoff-example"
+          aria-label="Interactive example of a context handoff"
+        >
+          <div class="demo-topline">
+            <span><i class="status-dot"></i> context-relay / local</span
+            ><span>Illustrative handoff</span>
+          </div>
+          <div class="example-source">
+            <div class="row between">
+              <div class="agent-label">
+                <img
+                  class="harness-icon"
+                  src="./assets/claude.svg"
+                  alt=""
+                  width="22"
+                  height="22"
+                /><strong>Claude Code</strong
+                ><span class="muted">/ current thread</span>
+              </div>
+              <span class="tiny-tag">source</span>
+            </div>
+            <div class="source-stack">
+              <div class="source-note old">
+                <span class="event-index">01</span
+                ><span>Keep idempotency keys for <s>24 hours.</s></span
+                ><span class="superseded">superseded</span>
+              </div>
+              <div class="source-note current">
+                <span class="event-index">02</span
+                ><span
+                  >Correction: retain keys for <strong>7 days.</strong></span
+                ><span class="source-mark">↗</span>
+              </div>
+              <div class="source-note tool">
+                <span class="event-index">03</span
+                ><span>Duplicate-delivery test is still failing.</span
+                ><span class="tiny-tag">tool</span>
+              </div>
+            </div>
+          </div>
+          <div class="relay-track">
+            <span></span
+            ><span class="track-label" id="flow-label"
+              >01 / capture source events</span
+            ><span></span>
+          </div>
+          <div class="context-packet" data-stage="0">
+            <div class="packet-heading">
+              <img
+                src="./assets/relay.svg"
+                width="27"
+                height="27"
+                alt=""
+              /><strong>Reviewed context</strong
+              ><span class="tiny-tag accent">checkpoint / 01</span>
+            </div>
+            <div class="packet-line">
+              <span>Goal</span>
+              <p>Prevent duplicate webhook charges.</p>
+            </div>
+            <div class="packet-line active">
+              <span>Keep</span>
+              <p>
+                Retain keys for 7 days.<a
+                  href="#why"
+                  aria-label="Learn how Relay preserves source evidence"
+                  >source / 02 ↗</a
+                >
+              </p>
+            </div>
+            <div class="packet-line">
+              <span>Next</span>
+              <p>Fix retry handling. Run the tests.</p>
+            </div>
+          </div>
+          <div class="relay-track bottom">
+            <span></span
+            ><span class="track-label" id="delivery-label"
+              >MCP · inspect → accept → continue</span
+            ><span></span>
+          </div>
+          <div class="destination">
+            <span class="eyebrow">Next thread</span>
+            <div
+              class="destination-tabs"
+              role="group"
+              aria-label="Choose a destination harness"
+            >
+              <button data-target="codex" aria-pressed="true">
+                <img
+                  class="harness-icon"
+                  src="./assets/codex.svg"
+                  width="22"
+                  height="22"
+                  alt=""
+                />Codex</button
+              ><button data-target="goose" aria-pressed="false">
+                <img
+                  class="harness-icon"
+                  src="./assets/goose.svg"
+                  width="22"
+                  height="22"
+                  alt=""
+                />Goose</button
+              ><button data-target="opencode" aria-pressed="false">
+                <img
+                  class="harness-icon"
+                  src="./assets/opencode.svg"
+                  width="22"
+                  height="22"
+                  alt=""
+                />OpenCode
+              </button>
+            </div>
+          </div>
+          <div class="demo-controls">
+            <div class="step-dots" role="group" aria-label="Handoff stages">
+              <button
+                data-stage="0"
+                aria-pressed="true"
+                aria-label="Show capture stage"
+              ></button
+              ><button
+                data-stage="1"
+                aria-pressed="false"
+                aria-label="Show review stage"
+              ></button
+              ><button
+                data-stage="2"
+                aria-pressed="false"
+                aria-label="Show handoff stage"
+              ></button>
+            </div>
+            <p id="flow-caption">Preserve the correction and its source.</p>
+            <button
+              id="flow-toggle"
+              class="motion-button"
+              aria-label="Pause handoff animation"
+            >
+              Pause
+            </button>
+          </div>
+        </div>
+      </section>
+      <div class="harness-strip wrap">
+        <p>Different harnesses.<br /><strong>One working context.</strong></p>
+        <div>
+          <img
+            class="harness-icon"
+            src="./assets/claude.svg"
+            alt=""
+            width="26"
+            height="26"
+          />Claude Code
+        </div>
+        <div>
+          <img
+            class="harness-icon"
+            src="./assets/codex.svg"
+            alt=""
+            width="26"
+            height="26"
+          />Codex
+        </div>
+        <div>
+          <img
+            class="harness-icon"
+            src="./assets/opencode.svg"
+            alt=""
+            width="26"
+            height="26"
+          />OpenCode
+        </div>
+        <div>
+          <img
+            class="harness-icon"
+            src="./assets/goose.svg"
+            alt=""
+            width="26"
+            height="26"
+          />Goose
+        </div>
+        <a href="#connect">Explore integrations ↗</a>
+      </div>
+
+      <section id="why" class="section wrap">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">01 / The context problem</span>
+            <h2>The thread gets longer.<br />The next step gets harder.</h2>
+          </div>
+          <p>
+            Decisions get buried, corrections compete, and unfinished work
+            disappears into a chat. Relay makes the state of the task explicit
+            before you move on.
+          </p>
+        </div>
+        <div class="use-cases">
+          <article>
+            <span class="case-number">01</span>
+            <div class="case-visual history-visual" aria-hidden="true">
+              <span></span><span></span><span></span
+              ><span class="selected-line"></span><span></span>
+            </div>
+            <h3>Start a fresh thread.</h3>
+            <p>
+              Select the events that matter and turn them into a focused
+              checkpoint. Your next session begins with a goal and open work.
+            </p>
+            <a href="#workspace">Review the source history <span>↗</span></a>
+          </article>
+          <article>
+            <span class="case-number">02</span>
+            <div class="case-visual correction-visual" aria-hidden="true">
+              <span>24 hours</span><b>→</b
+              ><strong>7 days <small>source / 02</small></strong>
+            </div>
+            <h3>Carry the correction.</h3>
+            <p>
+              Keep current instructions beside the evidence they cite. When
+              checkpoints disagree, choose the resolution explicitly.
+            </p>
+            <a href="#workflow">See the review step <span>↗</span></a>
+          </article>
+          <article>
+            <span class="case-number">03</span>
+            <div class="case-visual switch-visual" aria-hidden="true">
+              <img class="harness-icon" src="./assets/claude.svg" alt="" /><span
+                >→</span
+              ><img src="./assets/relay.svg" alt="" /><span>→</span
+              ><img class="harness-icon" src="./assets/codex.svg" alt="" />
+            </div>
+            <h3>Switch the harness.</h3>
+            <p>
+              Offer the reviewed packet through MCP, or take a readable Markdown
+              export. The destination can inspect the evidence before accepting.
+            </p>
+            <a href="#connect">Choose the next agent <span>↗</span></a>
+          </article>
+        </div>
+      </section>
+
+      <section id="workspace" class="workspace-section section">
+        <div class="wrap">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">02 / The local workspace</span>
+              <h2>See the context.<br />Decide what comes next.</h2>
+            </div>
+            <p>
+              A real interface for your coding history. Browse captured
+              sessions, review source-backed instructions, and follow a handoff
+              into its next session.
+            </p>
+          </div>
+          <div class="tour-tabs" role="tablist" aria-label="Workspace tour">
+            <button
+              role="tab"
+              id="tab-threads"
+              aria-controls="tour-panel"
+              data-tour="threads"
+              aria-selected="true"
+            >
+              01 <span>Source history</span></button
+            ><button
+              role="tab"
+              id="tab-review"
+              aria-controls="tour-panel"
+              data-tour="review"
+              aria-selected="false"
+              tabindex="-1"
+            >
+              02 <span>Review handoff</span></button
+            ><button
+              role="tab"
+              id="tab-handoff"
+              aria-controls="tour-panel"
+              data-tour="handoff"
+              aria-selected="false"
+              tabindex="-1"
+            >
+              03 <span>Continue elsewhere</span>
+            </button>
+          </div>
+          <div
+            class="workspace-window"
+            id="tour-panel"
+            role="tabpanel"
+            aria-labelledby="tab-threads"
+            tabindex="0"
+          >
+            <div class="window-bar">
+              <span class="window-dots" aria-hidden="true"
+                ><i></i><i></i><i></i></span
+              ><span>Context Relay · localhost workspace</span
+              ><a
+                id="tour-fullscreen"
+                href="./assets/threads.png"
+                target="_blank"
+                rel="noopener"
+                >View full size ↗</a
+              >
+            </div>
+            <img
+              id="tour-image"
+              src="./assets/threads.png"
+              width="1440"
+              height="1120"
+              alt="Actual Context Relay workspace showing captured Claude Code, Codex and Goose example sessions."
+              loading="lazy"
+            />
+          </div>
+          <div class="tour-caption">
+            <p id="tour-description">
+              Browse captured threads and select the source evidence your next
+              session needs.
+            </p>
+            <span>Actual product · synthetic example data</span>
+          </div>
+          <div class="tour-footer">
+            <a
+              class="text-link"
+              href="./assets/workflow.gif"
+              target="_blank"
+              rel="noopener"
+              >Watch the recorded workflow ↗</a
+            ><span
+              >No model calls or task execution in this demonstration.</span
+            >
+          </div>
+        </div>
+      </section>
+
+      <section id="workflow" class="section wrap">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">03 / A deliberate handoff</span>
+            <h2>From a long conversation<br />to a clear continuation.</h2>
+          </div>
+          <p>
+            A handoff carries the reviewed state of the work. Every checkpoint
+            keeps references back to the history it came from.
+          </p>
+        </div>
+        <ol class="workflow-steps">
+          <li>
+            <span class="step-number">01</span>
+            <h3>Capture</h3>
+            <p>
+              Connect a project. Discover matching sessions and choose what to
+              import.
+            </p>
+            <code>relay sync --id CONNECTION_ID</code>
+          </li>
+          <li>
+            <span class="step-number">02</span>
+            <h3>Review</h3>
+            <p>
+              Choose evidence, current instructions, acceptance criteria and
+              remaining work.
+            </p>
+            <code>relay ui</code>
+          </li>
+          <li>
+            <span class="step-number">03</span>
+            <h3>Checkpoint</h3>
+            <p>
+              Save an immutable snapshot. Resolve conflicting instructions
+              before a merge.
+            </p>
+            <span class="step-detail">Sources + decisions + file hashes</span>
+          </li>
+          <li>
+            <span class="step-number">04</span>
+            <h3>Continue</h3>
+            <p>
+              Open a fresh session. Inspect the offered packet, then accept it
+              through MCP.
+            </p>
+            <code>relay launch --id HANDOFF_ID</code>
+          </li>
+        </ol>
+        <p class="section-note">
+          Interactive launch is available for configured Claude Code and Codex
+          destinations. Every harness can use the copied prompt or Markdown
+          export. Acceptance records delivery, not task completion.
+        </p>
+      </section>
+
+      <section id="architecture" class="section architecture-section">
+        <div class="wrap">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">04 / Where MCP fits</span>
+              <h2>One local service.<br />Two integration paths.</h2>
+            </div>
+            <p>
+              Native adapters read session history. MCP gives destination agents
+              a standard way to inspect and accept the reviewed context.
+            </p>
+          </div>
+          <div class="architecture-board">
+            <div class="architecture-agents">
+              <div>
+                <img
+                  class="harness-icon"
+                  src="./assets/claude.svg"
+                  alt=""
+                  width="26"
+                  height="26"
+                />Claude Code
+              </div>
+              <div>
+                <img
+                  class="harness-icon"
+                  src="./assets/codex.svg"
+                  alt=""
+                  width="26"
+                  height="26"
+                />Codex
+              </div>
+              <div>
+                <img
+                  class="harness-icon"
+                  src="./assets/opencode.svg"
+                  alt=""
+                  width="26"
+                  height="26"
+                />OpenCode
+              </div>
+              <div>
+                <img
+                  class="harness-icon"
+                  src="./assets/goose.svg"
+                  alt=""
+                  width="26"
+                  height="26"
+                />Goose
+              </div>
+            </div>
+            <div class="architecture-paths">
+              <div>
+                <span class="path-direction">↓ Native history</span>
+                <h3>Capture adapters</h3>
+                <p>JSONL · app-server · local API · JSON export</p>
+              </div>
+              <div>
+                <span class="path-direction">↑ Context access</span>
+                <h3>MCP tools &amp; resources</h3>
+                <p>Inspect evidence · retrieve packet · accept handoff</p>
+              </div>
+            </div>
+            <div class="architecture-core">
+              <img src="./assets/relay.svg" width="42" height="42" alt="" />
+              <div>
+                <h3>Context Relay</h3>
+                <p>Capture → Review → Checkpoint → Handoff</p>
+              </div>
+              <span class="tiny-tag">CLI + local UI + MCP</span>
+            </div>
+            <div class="architecture-storage">
+              <div>
+                <span class="storage-icon" aria-hidden="true">▤</span>
+                <div>
+                  <h3>Private SQLite workspace</h3>
+                  <p>Events, revisions, checkpoints and receipts.</p>
+                </div>
+              </div>
+              <div>
+                <span class="storage-icon" aria-hidden="true">✳</span>
+                <div>
+                  <h3>Optional Nebius Token Factory</h3>
+                  <p>Selected evidence → validated draft → your review.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="architecture-notes">
+            <p>
+              <strong>Capture is explicit.</strong> Installing MCP alone does
+              not give Relay access to a harness’s chat history.
+            </p>
+            <p>
+              <strong>One authority.</strong> The CLI, browser and MCP server
+              share the same local state and handoff checks.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="connect" class="section wrap">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">05 / Bring your harness</span>
+            <h2>Same project.<br />Your choice of agent.</h2>
+          </div>
+          <p>
+            Connections stay scoped to a local project. Relay preserves
+            unrelated settings and removes only its own managed entry when you
+            disconnect.
+          </p>
+        </div>
+        <div class="integration-grid">
+          <article>
+            <div class="integration-title">
+              <img
+                class="harness-icon"
+                src="./assets/claude.svg"
+                alt=""
+                width="32"
+                height="32"
+              />
+              <h3>Claude Code</h3>
+            </div>
+            <span class="tiny-tag">JSONL capture</span>
+            <p>
+              Read project-matched transcripts. Add a project MCP connection and
+              launch a fresh interactive continuation.
+            </p>
+            <code>.mcp.json</code>
+          </article>
+          <article>
+            <div class="integration-title">
+              <img
+                class="harness-icon"
+                src="./assets/codex.svg"
+                alt=""
+                width="32"
+                height="32"
+              />
+              <h3>Codex</h3>
+            </div>
+            <span class="tiny-tag">App-server capture</span>
+            <p>
+              Import completed turns through the native API. Continue from an
+              addressed handoff in a fresh session.
+            </p>
+            <code>.codex/config.toml</code>
+          </article>
+          <article>
+            <div class="integration-title">
+              <img
+                class="harness-icon"
+                src="./assets/opencode.svg"
+                alt=""
+                width="32"
+                height="32"
+              />
+              <h3>OpenCode</h3>
+            </div>
+            <span class="tiny-tag">Local API capture</span>
+            <p>
+              Read completed session messages from a loopback server. Use MCP or
+              a portable Markdown packet.
+            </p>
+            <code>opencode.json</code>
+          </article>
+          <article>
+            <div class="integration-title">
+              <img
+                class="harness-icon"
+                src="./assets/goose.svg"
+                alt=""
+                width="32"
+                height="32"
+              />
+              <h3>Goose</h3>
+            </div>
+            <span class="tiny-tag">CLI export capture</span>
+            <p>
+              Import native JSON exports. Enable the generated stdio extension
+              command to receive context through MCP.
+            </p>
+            <code>.relay/goose-mcp.json</code>
+          </article>
+        </div>
+        <div class="connect-command-panel">
+          <div>
+            <h3>Connect your first harness.</h3>
+            <p>Register your project, then use its returned ID.</p>
+          </div>
+          <div class="connect-terminal">
+            <div
+              class="harness-picker"
+              role="group"
+              aria-label="Select harness command"
+            >
+              <button data-harness="claude" aria-pressed="true">
+                Claude Code</button
+              ><button data-harness="codex" aria-pressed="false">Codex</button
+              ><button data-harness="opencode" aria-pressed="false">
+                OpenCode</button
+              ><button data-harness="goose" aria-pressed="false">Goose</button>
+            </div>
+            <div class="terminal-code">
+              <pre id="connect-command">
+relay project add --root /absolute/path/to/project
+relay connect --project PROJECT_ID --harness claude
+relay ui</pre
+              >
+              <button
+                class="copy-button"
+                data-copy="connect-command"
+                aria-label="Copy connection commands"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+        </div>
+        <p class="section-note">
+          Native formats can change. See the
+          <a
+            href="https://github.com/mahekara28/context-relay/blob/main/docs/HARNESS_CONNECTIONS.md"
+            >compatibility guide</a
+          >
+          for source limits, OpenCode JSONC handling, Goose setup and Windows
+          launch requirements.
+        </p>
+      </section>
+
+      <section id="local" class="section local-section">
+        <div class="wrap local-grid">
+          <div>
+            <span class="eyebrow">06 / On your machine</span>
+            <h2>Your context.<br />Your review.<br />Your call.</h2>
+            <p>
+              Local storage and manual handoffs work without an API key. You
+              choose when source evidence goes to a model provider.
+            </p>
+            <a
+              class="text-link"
+              href="https://github.com/mahekara28/context-relay/blob/main/docs/WORKSPACE.md"
+              >Read the workspace guide ↗</a
+            >
+          </div>
+          <div class="local-details">
+            <article>
+              <span>01</span>
+              <div>
+                <h3>A private local workspace</h3>
+                <p>
+                  The service binds to 127.0.0.1. API access is authenticated,
+                  and the workspace stores its state in local SQLite.
+                </p>
+              </div>
+            </article>
+            <article>
+              <span>02</span>
+              <div>
+                <h3>Evidence you can inspect</h3>
+                <p>
+                  Source references and recorded file hashes travel with the
+                  checkpoint. Recapture native sessions before relying on
+                  freshness.
+                </p>
+              </div>
+            </article>
+            <article>
+              <span>03</span>
+              <div>
+                <h3>Nebius when you ask for it</h3>
+                <p>
+                  Preview the selected evidence, approve the request, then
+                  review the validated draft. Model output cannot create a
+                  checkpoint on its own.
+                </p>
+              </div>
+            </article>
+            <article>
+              <span>04</span>
+              <div>
+                <h3>Clear beta boundaries</h3>
+                <p>
+                  Native integrations have protocol and fixture coverage. Live
+                  cross-harness task-quality evaluation is still pending.
+                </p>
+                <a
+                  href="https://github.com/mahekara28/context-relay/blob/main/docs/releases/NPM_VERIFICATION.md"
+                  >Read the verification report ↗</a
+                >
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="install" class="section wrap install-section">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">07 / Try it on your machine</span>
+            <h2>A fresh thread starts here.</h2>
+          </div>
+          <p>
+            Build and install the beta from the repository, then open the sample
+            workspace. Node 22.16+ and npm are all you need.
+          </p>
+        </div>
+        <div class="install-grid">
+          <div class="install-copy">
+            <span class="tiny-tag accent">v{{VERSION}} · source install</span>
+            <h3>Install. Explore. Connect.</h3>
+            <p>
+              The package bundles the CLI, MCP server and local interface. No
+              Python, frontend setup or model API key is required after
+              installation.
+            </p>
+            <ul>
+              <li><span>1</span>Build and install the npm tarball.</li>
+              <li><span>2</span>Explore the synthetic demo.</li>
+              <li><span>3</span>Connect a real project when ready.</li>
+            </ul>
+            <p class="install-status">
+              The beta is not published to the npm registry yet. These commands
+              install the package from source.
+            </p>
+            <a
+              class="text-link"
+              href="https://github.com/mahekara28/context-relay/blob/main/docs/NPM_QUICKSTART.md"
+              >Full installation guide ↗</a
+            >
+          </div>
+          <div class="install-terminal">
+            <div class="terminal-header">
+              <span
+                >terminal
+                <span class="muted">/ macOS · Linux · PowerShell</span></span
+              ><button
+                class="copy-button"
+                data-copy="install-command"
+                aria-label="Copy install commands"
+              >
+                Copy commands
+              </button>
+            </div>
+            <pre id="install-command">
+git clone https://github.com/mahekara28/context-relay.git
+cd context-relay
+npm ci
+npm pack
+npm install --global ./mahekara28-context-relay-{{VERSION}}.tgz
+
+relay demo
+relay ui</pre
+            >
+            <div class="terminal-bottom">
+              <span class="status-dot"></span> Opens your own local workspace.
+            </div>
+          </div>
+        </div>
+        <div class="after-install">
+          <div>
+            <h3>Already installed?</h3>
+            <p>Open your workspace or inspect its service.</p>
+          </div>
+          <div class="mini-command">
+            <code id="open-command">relay ui</code
+            ><button
+              class="copy-button"
+              data-copy="open-command"
+              aria-label="Copy open workspace command"
+            >
+              Copy
+            </button>
+          </div>
+          <div class="mini-command">
+            <code id="status-command">relay status</code
+            ><button
+              class="copy-button"
+              data-copy="status-command"
+              aria-label="Copy status command"
+            >
+              Copy
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="docs" class="section docs-section wrap">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">08 / Go a little deeper</span>
+            <h2>Built in the open.</h2>
+          </div>
+          <p>
+            Inspect the format, understand an adapter, or help improve the next
+            release.
+          </p>
+        </div>
+        <div class="docs-grid">
+          <a
+            href="https://github.com/mahekara28/context-relay/blob/main/docs/NPM_QUICKSTART.md"
+            ><span class="eyebrow">Start here</span>
+            <h3>CLI &amp; quickstart <span>↗</span></h3>
+            <p>Install, import a session and inspect a packet.</p></a
+          ><a
+            href="https://github.com/mahekara28/context-relay/blob/main/docs/HARNESS_CONNECTIONS.md"
+            ><span class="eyebrow">Integrations</span>
+            <h3>Harness connections <span>↗</span></h3>
+            <p>Native capture paths and reversible MCP setup.</p></a
+          ><a
+            href="https://github.com/mahekara28/context-relay/blob/main/CONTRIBUTING.md"
+            ><span class="eyebrow">Contribute</span>
+            <h3>Source &amp; development <span>↗</span></h3>
+            <p>Run the checks and build a focused improvement.</p></a
+          >
+        </div>
+      </section>
+
+      <section class="section faq-section wrap" id="faq">
+        <div>
+          <span class="eyebrow">A few useful answers</span>
+          <h2>Before you relay.</h2>
+        </div>
+        <div class="faq-list">
+          <details>
+            <summary>Is this a hosted workspace?</summary>
+            <p>
+              This website introduces the project. Your actual workspace runs
+              locally through <code>relay ui</code>. The website does not
+              connect to your local service, collect conversations or run
+              terminal commands.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Does it copy my entire conversation into a new agent?
+            </summary>
+            <p>
+              You select source evidence and review a focused checkpoint
+              containing the goal, current instructions, acceptance criteria and
+              open work. Packets have a byte budget and disclose omitted
+              evidence. Hidden model state is not transferred.
+            </p>
+          </details>
+          <details>
+            <summary>What is the difference between capture and MCP?</summary>
+            <p>
+              Capture adapters read a harness’s native history when requested.
+              MCP lets a destination agent inspect Relay’s sources, retrieve a
+              packet and accept an addressed handoff. Both use the same local
+              service.
+            </p>
+          </details>
+          <details>
+            <summary>Do I need a Nebius API key?</summary>
+            <p>
+              No. Manual checkpoints and handoffs are keyless. Optional Nebius
+              drafts require a configured key and model, an evidence preview,
+              explicit consent, and your review of the result.
+            </p>
+          </details>
+          <details>
+            <summary>Does accepting a handoff mean the task is done?</summary>
+            <p>
+              No. Acceptance records delivery after checking the recipient,
+              packet integrity, captured revisions and recorded file state. The
+              receiving agent still needs to do the work and verify its results.
+            </p>
+          </details>
+          <details>
+            <summary>What does the beta support today?</summary>
+            <p>
+              A local npm CLI and workspace, four capture adapters, MCP access,
+              checkpoint review and merging, handoff receipts, Markdown export,
+              and interactive Claude Code/Codex launch. The public npm registry
+              release and live model-quality evaluation remain pending.
+            </p>
+          </details>
+        </div>
+      </section>
+      <section class="closing wrap">
+        <div>
+          <span class="eyebrow">Continue with context</span>
+          <h2>Start fresh.<br />Bring what matters.</h2>
+        </div>
+        <div>
+          <a class="button primary" href="#install"
+            >Try the beta <span aria-hidden="true">↗</span></a
+          ><a
+            class="text-link"
+            href="https://github.com/mahekara28/context-relay"
+            >Explore on GitHub ↗</a
+          >
+        </div>
+      </section>
+    </main>
+    <footer class="wrap footer">
+      <div>
+        <a class="brand" href="#"
+          ><img src="./assets/relay.svg" width="27" height="27" alt="" />Context
+          Relay</a
+        >
+        <p>Reviewed context for your next coding session.</p>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/mahekara28/context-relay">GitHub ↗</a
+        ><a href="https://github.com/mahekara28/context-relay/issues">Issues</a
+        ><a href="https://github.com/mahekara28/context-relay/blob/main/LICENSE"
+          >MIT license</a
+        ><a href="./assets/THIRD_PARTY_LICENSE.txt">Logo credits</a>
+      </div>
+      <p class="footer-note">
+        Built by <a href="https://github.com/mahekara28">Mahek Ara</a> · Hosted
+        on GitHub Pages<br />Harness names and logos identify integrations; no
+        endorsement is implied.
+      </p>
+    </footer>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <dialog id="copy-dialog">
+      <h2>Copy this command</h2>
+      <p>Your browser could not access the clipboard. Select the text below.</p>
+      <textarea readonly aria-label="Command to copy"></textarea
+      ><button class="button primary" id="close-copy-dialog">Done</button>
+    </dialog>
+  </body>
+</html>

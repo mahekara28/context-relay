@@ -41,7 +41,10 @@
     "test:package": "node scripts/npm/package-smoke.mjs",
     "prepack": "npm run build",
     "test:browser": "npm run build && playwright test",
-    "demo:render": "npm run build && node scripts/npm/render-demo.mjs"
+    "demo:render": "npm run build && node scripts/npm/render-demo.mjs",
+    "site:build": "node scripts/site/build.mjs",
+    "site:preview": "node scripts/site/preview.mjs",
+    "site:social": "node scripts/site/render-social.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",
@@ -52,5 +55,6 @@
     "@types/node": "24.10.0",
     "prettier": "3.6.2",
     "typescript": "5.9.3"
-  }
+  },
+  "homepage": "https://mahekara28.github.io/context-relay/"
 }
