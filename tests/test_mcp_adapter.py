@@ -78,6 +78,34 @@ class McpAdapterTests(unittest.TestCase):
 
         asyncio.run(run())
 
+    def test_mcp_handoff_acceptance_and_reported_claim(self):
+        from mcp import Client
+        from context_relay.handoffs import HandoffService
+        from context_relay.organization import Principal
+        from context_relay.task_service import TaskService
+
+        async def run():
+            store = RelayStore()
+            try:
+                sender = Principal("local", "sender")
+                tasks = TaskService(store, authorize=lambda identity, action: True)
+                task = tasks.create(sender, goal="Finish", completion_criteria=["Oracle passes"],
+                                    workspace={"repository": "example", "root": "/work"})
+                offer = HandoffService(tasks).offer(sender, task["id"], recipient="receiver")
+                async with Client(build_mcp_server(store, subject="receiver")) as client:
+                    accepted = await client.call_tool("relay_handoff_accept", {"handoff_id": offer["id"]})
+                    self.assertEqual(accepted.structured_content["status"], "accepted")
+                    report = await client.call_tool("relay_task_report_claim", {
+                        "task_id": task["id"], "expected_revision": 0, "request_id": "claim-1",
+                        "claim": "I changed the report"})
+                    self.assertFalse(report.is_error)
+                    self.assertEqual(report.structured_content["evidence"][0]["source"],
+                                     {"kind": "agent_report", "ref": "receiver"})
+            finally:
+                store.close()
+
+        asyncio.run(run())
+
 
 if __name__ == "__main__":
     unittest.main()

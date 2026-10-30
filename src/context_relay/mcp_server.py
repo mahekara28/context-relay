@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .handoffs import HandoffService
 from .organization import Principal
 from .store import RelayStore
 from .task_packet import compile_task_packet
@@ -23,6 +24,7 @@ def build_mcp_server(store: RelayStore, *, subject: str):
     tasks = TaskService(store, authorize=lambda host_principal, action: host_principal == principal)
     reports = TaskService(store, authorize=lambda host_principal, action: host_principal == principal,
                           source_class="agent_report")
+    handoffs = HandoffService(tasks)
     server = MCPServer("Context Relay")
 
     @server.tool(structured_output=True)
@@ -57,6 +59,30 @@ def build_mcp_server(store: RelayStore, *, subject: str):
         try:
             return reports.update(principal, task_id, expected_revision=expected_revision,
                                   request_id=request_id, changes={"open_work": open_work})
+        except (ValueError, LookupError, PermissionError) as error:
+            raise ToolError(str(error)) from None
+
+    @server.tool(structured_output=True)
+    def relay_task_report_claim(task_id: str, expected_revision: int,
+                                request_id: str, claim: str) -> dict[str, Any]:
+        """Record a model-reported claim, clearly labeled as unverified."""
+        try:
+            return reports.attach_evidence(principal, task_id, expected_revision=expected_revision,
+                                           request_id=request_id, claim=claim,
+                                           source={"kind": "agent_report", "ref": principal.subject})
+        except (ValueError, LookupError, PermissionError) as error:
+            raise ToolError(str(error)) from None
+
+    @server.tool(structured_output=True)
+    def relay_handoff_inspect(handoff_id: str) -> dict[str, Any]:
+        """Read an immutable handoff offer and its acceptance status."""
+        return handoffs.inspect(principal, handoff_id)
+
+    @server.tool(structured_output=True)
+    def relay_handoff_accept(handoff_id: str) -> dict[str, Any]:
+        """Accept a fresh handoff addressed to this local harness identity."""
+        try:
+            return handoffs.accept(principal, handoff_id)
         except (ValueError, LookupError, PermissionError) as error:
             raise ToolError(str(error)) from None
 
