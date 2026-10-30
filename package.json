@@ -44,7 +44,8 @@
     "demo:render": "npm run build && node scripts/npm/render-demo.mjs",
     "site:build": "node scripts/site/build.mjs",
     "site:preview": "node scripts/site/preview.mjs",
-    "site:social": "node scripts/site/render-social.mjs"
+    "site:social": "node scripts/site/render-social.mjs",
+    "test:site": "npm run site:build && playwright test --config playwright.site.config.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",
