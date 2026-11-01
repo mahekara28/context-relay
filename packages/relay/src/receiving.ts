@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { writeFileSync, existsSync, lstatSync } from "node:fs";
+import { chmodSync, writeFileSync, existsSync, lstatSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
@@ -324,6 +324,7 @@ export class Receiving {
         "Delivery packet cannot be a symlink.",
       );
     writeFileSync(path, markdownPacket(h), { mode: 0o600 });
+    chmodSync(path, 0o600);
     const ack = [
       process.execPath,
       fileURLToPath(new URL("./cli.js", import.meta.url)),

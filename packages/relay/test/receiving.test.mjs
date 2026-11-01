@@ -5,6 +5,8 @@ import {
   mkdirSync,
   rmSync,
   readFileSync,
+  writeFileSync,
+  chmodSync,
   statSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -93,6 +95,11 @@ test("native outbox waits for the owning host, sends once, persists, and disting
     configureMcp: false,
   });
   const h = w.offer();
+  const packetDir = join(w.dir, "data/deliveries");
+  mkdirSync(packetDir, { recursive: true });
+  const file = join(packetDir, h.id + ".md");
+  writeFileSync(file, "Previous packet");
+  if (process.platform !== "win32") chmodSync(file, 0o666);
   w.receiving.enqueue(h.id);
   await w.receiving.flush();
   assert.equal(w.receiving.get(h.id).state, "queued");
@@ -112,9 +119,10 @@ test("native outbox waits for the owning host, sends once, persists, and disting
   );
   assert.equal(calls[0].options.cwd, w.root);
   assert.equal(calls[0].options.shell, undefined);
-  const file = join(w.dir, "data/deliveries", h.id + ".md");
   assert.match(readFileSync(file, "utf8"), /Preserve the tests/);
-  assert.equal(statSync(file).mode & 0o777, 0o600);
+  // Windows reports synthetic POSIX mode bits; its file access is governed by ACLs.
+  if (process.platform !== "win32")
+    assert.equal(statSync(file).mode & 0o777, 0o600);
   w.store.accept(h.id, "codex", "native-target");
   assert.equal(w.store.handoff(h.id).status, "accepted");
   await w.receiving.close();
