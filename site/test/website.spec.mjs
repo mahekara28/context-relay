@@ -44,22 +44,34 @@ test("project subpath loads every asset and links to real documentation", async 
     "href",
     "https://mahekara28.github.io/context-relay/",
   );
-  const { version } = JSON.parse(await readFile("package.json", "utf8"));
+  const { publishedVersion } = JSON.parse(
+    await readFile("site/release.json", "utf8"),
+  );
+  const { version: developmentVersion } = JSON.parse(
+    await readFile("package.json", "utf8"),
+  );
   await expect(page.locator("#install-command")).toContainText(
     "npm install --global @mahekara28/context-relay@beta",
   );
   await expect(page.locator("#install-command")).not.toContainText("git clone");
-  await expect(page.locator(".install-status")).toContainText(`@${version}`);
+  await expect(page.locator(".install-status")).toContainText(
+    `@${publishedVersion}`,
+  );
+  await expect(page.locator(".release-tag")).toContainText(publishedVersion);
+  await expect(page.locator(".install-status")).not.toContainText(
+    developmentVersion,
+  );
+  await expect(page.locator("#workspace")).toContainText(developmentVersion);
 });
 
 test("workspace tour supports keyboard navigation and full-size images", async ({
   page,
 }) => {
   await page.goto("./");
-  await page.getByRole("tab", { name: "01 Source history" }).focus();
+  await page.getByRole("tab", { name: "01 Thread map" }).focus();
   await page.keyboard.press("ArrowRight");
   await expect(
-    page.getByRole("tab", { name: "02 Review handoff" }),
+    page.getByRole("tab", { name: "02 Review connection" }),
   ).toBeFocused();
   await expect(page.locator("#tour-panel")).toHaveAttribute(
     "aria-labelledby",
@@ -67,15 +79,15 @@ test("workspace tour supports keyboard navigation and full-size images", async (
   );
   await expect(page.locator("#tour-image")).toHaveAttribute(
     "src",
-    "./assets/review.png",
+    "./assets/thread-review.png",
   );
   await page.keyboard.press("End");
   await expect(
-    page.getByRole("tab", { name: "03 Continue elsewhere" }),
+    page.getByRole("tab", { name: "03 Delivery status" }),
   ).toHaveAttribute("aria-selected", "true");
   await expect(page.locator("#tour-fullscreen")).toHaveAttribute(
     "href",
-    "./assets/handoff.png",
+    "./assets/thread-connected.png",
   );
   await expect
     .poll(() =>
@@ -85,9 +97,7 @@ test("workspace tour supports keyboard navigation and full-size images", async (
     )
     .toBe(true);
   await page.keyboard.press("ArrowRight");
-  await expect(
-    page.getByRole("tab", { name: "01 Source history" }),
-  ).toBeFocused();
+  await expect(page.getByRole("tab", { name: "01 Thread map" })).toBeFocused();
 });
 
 test("copy commands preserve exact terminal text and switch harnesses", async ({
@@ -155,29 +165,13 @@ test("clipboard denial provides a selectable dialog and restores focus", async (
   await expect(copy).toBeFocused();
 });
 
-test("theme persists, reduced motion is quiet, and handoff controls work", async ({
+test("theme persists and the dashboard preview remains available", async ({
   page,
 }) => {
   await page.goto("./");
-  await expect(
-    page.getByRole("button", { name: "Play handoff animation" }),
-  ).toBeVisible();
-  await expect(page.locator(".context-packet")).toHaveAttribute(
-    "data-stage",
-    "0",
-  );
-  await page.locator("[data-target=goose]").click();
-  await expect(page.locator("#flow-caption")).toHaveText(
-    "Goose can inspect, accept and continue.",
-  );
-  await expect(page.locator(".context-packet")).toHaveAttribute(
-    "data-stage",
-    "2",
-  );
-  await page.getByRole("button", { name: "Show review stage" }).click();
-  await expect(page.locator(".context-packet")).toHaveAttribute(
-    "data-stage",
-    "1",
+  await expect(page.locator(".map-preview img")).toHaveAttribute(
+    "src",
+    "./assets/thread-connected.png",
   );
   await page.getByRole("button", { name: "Switch to dark theme" }).click();
   await page.reload();

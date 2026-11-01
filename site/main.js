@@ -82,19 +82,22 @@ $("#close-copy-dialog").addEventListener("click", () => copyDialog.close());
 
 const tours = {
   threads: {
-    alt: "Actual Context Relay workspace showing captured Claude Code, Codex and Goose example sessions.",
+    image: "thread-map.png",
+    alt: "Actual local thread map with four synthetic harness sessions.",
     description:
-      "Browse captured threads and select the source evidence your next session needs.",
+      "See indexed sessions from supported coding harnesses on one local canvas.",
   },
   review: {
-    alt: "Actual checkpoint editor with a reviewed seven-day retention correction and source citations.",
+    image: "thread-review.png",
+    alt: "Actual review drawer for a Claude Code to Codex connection.",
     description:
-      "Review the goal, current instructions and open work beside their source evidence.",
+      "Choose a destination and review the goal and source messages before connecting.",
   },
   handoff: {
-    alt: "Actual Context Relay handoff view with a continuation prompt, delivery state and Markdown export.",
+    image: "thread-connected.png",
+    alt: "Actual thread map showing a queued connection and its delivery status.",
     description:
-      "Offer the checkpoint to a destination and inspect its packet, receipt and continuation prompt.",
+      "See whether the handoff is saved, sent, or acknowledged by the receiving agent.",
   },
 };
 const tourButtons = $$("[data-tour]");
@@ -104,10 +107,10 @@ function selectTour(button) {
     tab.setAttribute("aria-selected", String(tab === button));
     tab.tabIndex = tab === button ? 0 : -1;
   });
-  $("#tour-image").src = `./assets/${key}.png`;
+  $("#tour-image").src = `./assets/${tours[key].image}`;
   $("#tour-image").alt = tours[key].alt;
   $("#tour-description").textContent = tours[key].description;
-  $("#tour-fullscreen").href = `./assets/${key}.png`;
+  $("#tour-fullscreen").href = `./assets/${tours[key].image}`;
   $("#tour-panel").setAttribute("aria-labelledby", button.id);
 }
 tourButtons.forEach((button, index) => {
@@ -139,79 +142,3 @@ $$("[data-harness]").forEach((button) =>
       `relay project add --root /absolute/path/to/project\nrelay connect --project PROJECT_ID --harness ${button.dataset.harness}\nrelay ui`;
   }),
 );
-
-const motionPreference = matchMedia("(prefers-reduced-motion: reduce)");
-let playing = !motionPreference.matches;
-let stage = 0;
-let destination = "Codex";
-let visible = true;
-let timer;
-const flowButton = $("#flow-toggle");
-const stages = [
-  ["01 / capture source events", "Preserve the correction and its source."],
-  ["02 / review a checkpoint", "Choose the current instruction and open work."],
-  ["03 / offer the reviewed context", ""],
-];
-function showStage(next) {
-  stage = next;
-  $(".context-packet").dataset.stage = String(stage);
-  $("#handoff-example").dataset.activeStage = String(stage);
-  $("#flow-label").textContent = stages[stage][0];
-  $("#flow-caption").textContent =
-    stage === 2
-      ? `${destination} can inspect, accept and continue.`
-      : stages[stage][1];
-  $("#delivery-label").textContent =
-    stage === 2
-      ? `MCP · ${destination} / fresh thread`
-      : "MCP · inspect · accept · continue";
-  $$(".step-dots button").forEach((button) =>
-    button.setAttribute(
-      "aria-pressed",
-      String(Number(button.dataset.stage) === stage),
-    ),
-  );
-}
-function updatePlayback() {
-  clearInterval(timer);
-  flowButton.textContent = playing ? "Pause" : "Play";
-  flowButton.setAttribute(
-    "aria-label",
-    `${playing ? "Pause" : "Play"} handoff animation`,
-  );
-  if (playing && visible && !document.hidden)
-    timer = setInterval(() => showStage((stage + 1) % 3), 4000);
-}
-flowButton.addEventListener("click", () => {
-  playing = !playing;
-  updatePlayback();
-});
-$$(".step-dots button").forEach((button) =>
-  button.addEventListener("click", () => {
-    playing = false;
-    showStage(Number(button.dataset.stage));
-    updatePlayback();
-  }),
-);
-$$("[data-target]").forEach((button) =>
-  button.addEventListener("click", () => {
-    $$("[data-target]").forEach((choice) =>
-      choice.setAttribute("aria-pressed", String(choice === button)),
-    );
-    destination = button.textContent.trim();
-    showStage(2);
-    playing = false;
-    updatePlayback();
-  }),
-);
-motionPreference.addEventListener("change", () => {
-  playing = !motionPreference.matches;
-  updatePlayback();
-});
-document.addEventListener("visibilitychange", updatePlayback);
-new IntersectionObserver(([entry]) => {
-  visible = entry.isIntersecting;
-  updatePlayback();
-}).observe($("#handoff-example"));
-showStage(0);
-updatePlayback();

@@ -36,10 +36,12 @@ npm run site:social
 npm run site:build
 ```
 
-The hero and social preview advertise the public npm beta with the same runnable npx command. The release badge links to npm; release notes link to the matching GitHub prerelease. Keep these in sync with `package.json` and the [README artwork](../docs/assets/workspace/ARTWORK.md).
+`site/release.json` records the version currently published on npm. The checkout's `package.json` can be newer during development; the site must not label its unpublished version as an npm release. The hero, social card and tour show the current development thread map with an explicit preview label. The install commands still target the published npm beta.
 
-The workspace screenshots and optional GIF are captured from the real interface
-using synthetic data. See [capture instructions](../docs/assets/workspace/README.md).
+The three thread map screenshots are captured from the real interface using
+synthetic data. Rebuild them with `npm run build` and
+`node scripts/npm/render-map.mjs`, then rebuild the social card and site.
+See [capture instructions](../docs/assets/workspace/README.md).
 Harness logos retain their [bundled attribution](../packages/relay/ui/assets/THIRD_PARTY_LICENSE.txt).
 
 ## Publish

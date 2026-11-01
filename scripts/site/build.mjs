@@ -4,7 +4,10 @@ import path from "node:path";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const output = path.join(root, "_site");
-const { version } = JSON.parse(
+const { publishedVersion } = JSON.parse(
+  await readFile(path.join(root, "site/release.json"), "utf8"),
+);
+const { version: developmentVersion } = JSON.parse(
   await readFile(path.join(root, "package.json"), "utf8"),
 );
 // A fixed allowlist keeps local workspace files, tests and source out of Pages.
@@ -24,14 +27,20 @@ const logos = [
   "goose.svg",
   "THIRD_PARTY_LICENSE.txt",
 ];
-const captures = ["threads.png", "review.png", "handoff.png", "workflow.gif"];
+const captures = [
+  "thread-map.png",
+  "thread-review.png",
+  "thread-connected.png",
+];
 await rm(output, { recursive: true, force: true });
 await mkdir(path.join(output, "assets"), { recursive: true });
 for (const name of pages) {
   const source = await readFile(path.join(root, "site", name), "utf8");
   await writeFile(
     path.join(output, name),
-    source.replaceAll("{{VERSION}}", version),
+    source
+      .replaceAll("{{PUBLISHED_VERSION}}", publishedVersion)
+      .replaceAll("{{DEV_VERSION}}", developmentVersion),
   );
 }
 for (const name of logos)
@@ -49,4 +58,6 @@ await copyFile(
   path.join(output, "assets/social-card.png"),
 );
 await writeFile(path.join(output, ".nojekyll"), "");
-console.log(`Built GitHub Pages site for Context Relay ${version} in _site/`);
+console.log(
+  `Built GitHub Pages site for npm beta ${publishedVersion} in _site/`,
+);
