@@ -1,6 +1,8 @@
-# npm README artwork
+# Published beta artwork
 
-The main README uses `hero*.svg` and `architecture*.svg`. Each has light/dark and desktop/mobile layouts; the README selects them with `<picture>` media queries. Default `hero.svg` and `architecture.svg` remain the light desktop fallback.
+The `hero*.svg` and `architecture*.svg` variants document the published
+`0.3.0-beta.1` workspace. The current main README and website use actual
+[development thread map captures](README.md) instead.
 
 The banner shows the published npm beta, the actual `npx @mahekara28/context-relay@beta ui` command, Node requirement and bundled harness logos. The architecture shows native capture and MCP as separate paths into one local service, with SQLite and optional reviewed Nebius drafts. Lines connect components without decorative arrow glyphs.
 

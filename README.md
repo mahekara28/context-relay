@@ -1,9 +1,10 @@
-<picture>
-  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/0266a810ac69952aeba54702f5fe9469b7172f4d/docs/assets/workspace/hero-dark-mobile.svg" />
-  <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/0266a810ac69952aeba54702f5fe9469b7172f4d/docs/assets/workspace/hero-mobile.svg" />
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/0266a810ac69952aeba54702f5fe9469b7172f4d/docs/assets/workspace/hero-dark.svg" />
-  <img src="https://raw.githubusercontent.com/mahekara28/context-relay/0266a810ac69952aeba54702f5fe9469b7172f4d/docs/assets/workspace/hero.svg" alt="Context Relay — keep the work, change the thread. Public npm beta. Try npx @mahekara28/context-relay@beta ui. Node 22.16+." width="100%" />
-</picture>
+# Context Relay
+
+**Keep the work. Change the thread.** Discover local coding sessions, connect them on a canvas, review what moves, and deliver an addressed handoff.
+
+![Context Relay thread map with a reviewed Claude Code to Codex connection and queued delivery](docs/assets/workspace/thread-connected.png)
+
+*The current `0.4.0-dev.0` dashboard, captured with synthetic sessions. The public npm beta is still `0.3.0-beta.1`.*
 
 <p align="center">
   <a href="https://github.com/mahekara28/context-relay/actions/workflows/npm.yml"><img src="https://github.com/mahekara28/context-relay/actions/workflows/npm.yml/badge.svg" alt="npm product checks" /></a>
@@ -28,9 +29,9 @@ npm run build
 node dist/cli.js ui --data-dir /absolute/path/to/relay-map-profile
 ```
 
-![Local thread map with a reviewed connection](docs/assets/workspace/thread-map.png)
+![Four discovered coding sessions on the local thread map](docs/assets/workspace/thread-map.png)
 
-*Development UI with synthetic fixture sessions and a test acknowledgement.*
+*Development UI captured from isolated synthetic sessions.*
 
 [Thread map interaction, architecture, limits, and local setup](docs/THREAD_MAP.md). Opening the map enables local background discovery; pause it in Sources or stop the local service with `relay stop`. Handoffs require review and acknowledgement from the receiving agent.
 
@@ -44,12 +45,9 @@ You've spent hours in a coding thread. Requirements changed. A tool failed. The 
 - **Keep the corrections.** Review instructions beside the evidence they cite. Merge checkpoints with explicit conflict choices.
 - **Continue with a receipt.** Offer an immutable packet to a destination agent through MCP, or export readable Markdown. Check source revisions, recorded files and Git HEAD before acceptance.
 
-<picture>
-  <source media="(prefers-reduced-motion: reduce)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/threads.png" />
-  <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/mobile-dark.png" />
-  <img src="https://raw.githubusercontent.com/mahekara28/context-relay/main/docs/assets/workspace/workflow.gif" alt="Real local workspace: browse a Claude Code thread, review a corrected seven-day retention instruction, offer a Codex handoff, and inspect the architecture." width="100%" />
-</picture>
-<p align="center"><sub>Actual npm workspace, synthetic example data. No model calls or task execution in this demo.<br /><a href="https://github.com/mahekara28/context-relay/blob/main/docs/assets/workspace/README.md">Demo description</a> · <a href="https://github.com/mahekara28/context-relay/blob/main/docs/assets/workspace/threads.png">Still image</a> · <a href="https://github.com/mahekara28/context-relay/blob/main/scripts/npm/render-demo.mjs">Reproduce the capture</a></sub></p>
+![Review a Claude Code to Codex connection before sending it](docs/assets/workspace/thread-review.png)
+
+*The review drawer keeps the source, destination, goal and included messages visible before delivery. [Reproduce these synthetic captures](scripts/npm/render-map.mjs).*
 
 ## Try it locally
 
@@ -98,21 +96,27 @@ For a configured Claude Code or Codex destination, `relay launch --id HANDOFF_ID
 
 ## Where MCP fits
 
-<picture>
-  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/0266a810ac69952aeba54702f5fe9469b7172f4d/docs/assets/workspace/architecture-dark-mobile.svg" />
-  <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/0266a810ac69952aeba54702f5fe9469b7172f4d/docs/assets/workspace/architecture-mobile.svg" />
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mahekara28/context-relay/0266a810ac69952aeba54702f5fe9469b7172f4d/docs/assets/workspace/architecture-dark.svg" />
-  <img src="https://raw.githubusercontent.com/mahekara28/context-relay/0266a810ac69952aeba54702f5fe9469b7172f4d/docs/assets/workspace/architecture.svg" alt="The npm package runs locally. Native capture and MCP context access connect to one service. SQLite stores reviewed state; optional Nebius drafts need approval and review." width="100%" />
-</picture>
+```mermaid
+flowchart LR
+  A[Claude Code · Codex · OpenCode · Goose] -->|Native history adapters| B[Local thread map]
+  B -->|Select sources and destination| C[Reviewed handoff]
+  C --> D[(SQLite outbox)]
+  D -->|MCP Channel| E[Claude Code session]
+  D -->|Host queue| F[Codex session]
+  D -->|Local session API| G[OpenCode session]
+  C -->|MCP packet or Markdown| H[Other destinations]
+```
 
-**Capture and MCP solve different parts of the workflow.** Native adapters read history. MCP gives agents a standard way to inspect Relay's context and accept an addressed handoff. Installing MCP alone does not make a harness's conversation history available.
+The UI renders indexed sessions and their handoffs. Native adapters read local history; MCP exposes reviewed packets and, when a Claude receiver is bound, can push a channel notification. Codex direct delivery requires a reachable existing host; OpenCode uses the same local server as capture. Goose capture is available, with MCP or Markdown for continuation.
 
-| Harness | Capture | MCP configuration | Fresh continuation |
-| --- | --- | --- | --- |
-| Claude Code | Project-filtered JSONL | `.mcp.json` | Interactive CLI launch or copied prompt |
-| Codex | App-server, completed turns | `.codex/config.toml` | Interactive CLI launch or copied prompt |
-| OpenCode | Loopback session/messages API | `opencode.json` | Copied prompt or Markdown |
-| Goose | CLI JSON list/export | Project extension command manifest | Copied prompt or Markdown |
+**Capture and MCP solve different parts of the workflow.** Installing MCP alone does not make a harness's conversation history available.
+
+| Harness | Native capture | Receiving the new handoff |
+| --- | --- | --- |
+| Claude Code | Project-filtered JSONL | Session-bound MCP Channel after one-time receiver setup |
+| Codex | App-server completed turns | Native queue on a reachable host that owns the destination thread |
+| OpenCode | Loopback session/messages API | Addressed prompt on the same running local server |
+| Goose | CLI JSON list/export | MCP retrieval or Markdown fallback; no direct dispatch |
 
 All four have implemented capture adapters. Native format coverage and limits are explicit in the [connection guide](https://github.com/mahekara28/context-relay/blob/main/docs/HARNESS_CONNECTIONS.md); they are not a claim that every harness version has been live-certified.
 
